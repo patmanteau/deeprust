@@ -1,0 +1,9 @@
+[package]
+name = "deeprust"
+version = "0.1.0"
+authors = ["Patrick Haas <patmanteau@posteo.de>"]
+
+[dependencies]
+indoc = ">= 0.2"
+clap = ">= 2.27.1"
+unicode-segmentation = ">= 1.2.0"
