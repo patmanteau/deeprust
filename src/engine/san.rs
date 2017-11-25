@@ -1,4 +1,4 @@
-use super::types::{Piece};
+use super::types::*;
 
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -8,7 +8,7 @@ pub struct SAN {
     pub to: u32,
     pub from: Option<u32>,
     pub is_capture: Option<bool>,
-    pub dep_piece: Option<Piece>,
+    pub dep_piece: Option<u32>,
     pub is_check: Option<bool>,
     pub is_mate: Option<bool>,
 }
