@@ -2,7 +2,6 @@ use std::io;
 use std::io::Write;
 
 use uci;
-use engine;
 
 fn print_version() {
     println!("deeprust v{}", env!("CARGO_PKG_VERSION"));
@@ -41,7 +40,7 @@ pub fn run() {
             "help" => print_help(),
             "version" => print_version(),
             "uci" => {
-                uci::run();
+                uci::UCIInterface::new().run();
                 break;
             }
             unknown => println!("Unknown command: {}", unknown),

@@ -55,15 +55,22 @@ impl Move {
     #[inline]
     pub fn new(from: u32, to: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
         Move {
-            m: ((from & 0x3f) << 10) | (to & 0x3f) | ((flags & 0xf) << 6) | ((extended & 0x1ff) << 16) | (((color) & 0x1) << 16) | (((piece) & 0x7) << 17),
+            m: ((from & 0x3f) << 10) | 
+               (to & 0x3f) | 
+               ((flags & 0xf) << 6) | 
+               ((extended & 0x1ff) << 16) | 
+               (((color) & 0x1) << 16) | 
+               (((piece) & 0x7) << 17),
         }
     }
 
+    #[inline]
     pub fn make_flags(is_capture: bool, is_promotion: bool,
                       is_special_0: bool, is_special_1: bool) -> u32 {
         ((is_promotion as u32) << 3) | ((is_capture as u32) << 2) | ((is_special_1 as u32) << 1) | (is_special_0 as u32)
     }
 
+    #[inline]
     pub fn make_extended(captured_piece: u32, kcastle_before: bool, qcastle_before: bool) -> u32 {
         ((qcastle_before as u32) << 4) | ((kcastle_before as u32) << 3) | ((captured_piece) & 0x7)
     }
@@ -127,8 +134,8 @@ mod tests {
 
     #[test]
     fn it_encodes_moves() {
-        for color in 0..2 {
-            for piece in 2..8 {
+        for color in 0..2 { // WHITE..BLACK
+            for piece in 2..8 { // PAWN..KING
                 for from in 0..64 {
                     for to in 0..64 {
                         for i in 0..15 {

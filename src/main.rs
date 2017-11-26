@@ -23,7 +23,8 @@ fn main() {
     if matches.is_present("cli") {
         cli::run();
     } else {
-        uci::run();
+        let mut c = uci::UCIInterface::new();
+        c.run();
     }
 }
 
