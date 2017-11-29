@@ -2,14 +2,22 @@
 extern crate indoc;
 extern crate clap;
 extern crate unicode_segmentation;
+extern crate bitwise;
+#[macro_use]
+extern crate log;
+extern crate simple_logging;
 
 use clap::{Arg, App};
+use log::LogLevelFilter;
 
 mod uci;
 mod cli;
 mod engine;
+mod bits;
 
 fn main() {
+    simple_logging::log_to_file("test.log", LogLevelFilter::Info);
+
     let matches = App::new("deeprust")
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))

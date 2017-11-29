@@ -1,3 +1,7 @@
+use ::bits;
+// use ::bitwise;
+// use bitwise::{flip_bit, test_bit};
+
 pub const WHITE: u32 = 0;
 pub const BLACK: u32 = 1;
 pub const PAWN: u32 = 2;
@@ -35,9 +39,9 @@ pub struct Move {
     //    10     1    0    1    0      promotion to rook
     //    11     1    0    1    1      promotion to queen
     //    12     1    1    0    0      capture to promotion to knight
-    //    13     1    1    0    0      capture to promotion to bishop
-    //    14     1    1    0    0      capture to promotion to rook
-    //    15     1    1    0    0      capture to promotion to queen
+    //    13     1    1    0    1      capture to promotion to bishop
+    //    14     1    1    1    0      capture to promotion to rook
+    //    15     1    1    1    1      capture to promotion to queen
     //  /
     // /
     // 10..15:  Origin square
@@ -45,20 +49,20 @@ pub struct Move {
     // 16:      Color
     // 17..19:  Moving Piece
     // 20..22:  Captured piece
-    // 23:      King castle allowed before
-    // 24:      Queen castle allowed before
+    // 23..26:  Castling rights before (KQkq)
     
     m: u32
 }
 
 impl Move {
+    /// Constructs a new Move
     #[inline]
-    pub fn new(from: u32, to: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
+    pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
         Move {
-            m: ((from & 0x3f) << 10) | 
-               (to & 0x3f) | 
+            m: ((orig & 0x3f) << 10) | 
+               (dest & 0x3f) | 
                ((flags & 0xf) << 6) | 
-               ((extended & 0x1ff) << 16) | 
+               ((extended & 0x7f) << 20) | 
                (((color) & 0x1) << 16) | 
                (((piece) & 0x7) << 17),
         }
@@ -71,61 +75,127 @@ impl Move {
     }
 
     #[inline]
-    pub fn make_extended(captured_piece: u32, kcastle_before: bool, qcastle_before: bool) -> u32 {
-        ((qcastle_before as u32) << 4) | ((kcastle_before as u32) << 3) | ((captured_piece) & 0x7)
+    pub fn make_extended(captured_piece: u32, castling_before: u32) -> u32 {
+        (castling_before << 3) | ((captured_piece) & 0x7)
     }
 
     #[inline]
-    pub fn set_from(&mut self, from: u32) {
+    pub fn set_orig(&mut self, from: u32) {
         self.m &= !0xfc00;
         self.m |= (from & 0x3f) << 10;
     }
 
     #[inline]
-    pub fn set_to(&mut self, to: u32) {
+    pub fn set_dest(&mut self, to: u32) {
         self.m &= !0x3f;
         self.m |= to & 0x3f;
     }
 
     #[inline]
-    pub fn from(&self) -> u32 {
-        (self.m >> 10) & 0x3f
+    pub fn toggle_special_0(&mut self) {
+        self.m = bits::flip_bit(self.m, 6);
     }
 
     #[inline]
-    pub fn to(&self) -> u32 {
+    pub fn toggle_special_1(&mut self) {
+        self.m = bits::flip_bit(self.m, 7);
+    }
+
+    #[inline]
+    pub fn toggle_capture(&mut self) {
+        self.m = bits::flip_bit(self.m, 8);
+    }
+
+    #[inline]
+    pub fn toggle_promotion(&mut self) {
+        self.m = bits::flip_bit(self.m, 9);
+    }
+
+    #[inline]
+    pub fn orig(&self) -> u32 {
+        // (self.m >> 10) & 0x3f
+        bits::extract_bits(self.m, 10, 6)
+    }
+
+    #[inline]
+    pub fn dest(&self) -> u32 {
         (self.m & 0x3f)
     }
 
     #[inline]
     pub fn color(&self) -> u32 {
-        ((self.m >> 16) & 0x1)
+        // ((self.m >> 16) & 0x1)
+        bits::extract_bits(self.m, 16, 1)
     }
 
     #[inline]
     pub fn piece(&self) -> u32 {
-        ((self.m >> 17) & 0x7)
+        // ((self.m >> 17) & 0x7)
+        bits::extract_bits(self.m, 17, 3)
     }
 
     #[inline]
-    pub fn is_promotion(&self) -> bool {
-        0 != (self.m >> 9) & 0x1
+    pub fn special(&self) -> u32 {
+        bits::extract_bits(self.m, 6, 2)
     }
 
     #[inline]
-    pub fn is_capture(&self) -> bool {
-        0 != (self.m >> 8) & 0x1
+    pub fn has_special_0(&self) -> bool {
+        bits::test_bit(self.m, 6)
     }
 
     #[inline]
     pub fn has_special_1(&self) -> bool {
-        0 != (self.m >> 7) & 0x1
+        bits::test_bit(self.m, 7)
     }
     
     #[inline]
-    pub fn has_special_0(&self) -> bool {
-        0 != (self.m >> 6) & 0x1
+    pub fn is_quiet(&self) -> bool {
+        0 == bits::extract_bits(self.m, 6, 4)
     }
+
+    #[inline]
+    pub fn is_capture(&self) -> bool {
+        bits::test_bit(self.m, 8)
+    }
+
+    #[inline]
+    pub fn is_capture_en_passant(&self) -> bool {
+        5 == bits::extract_bits(self.m, 6, 4)
+    }
+
+    #[inline]
+    pub fn is_double_pawn_push(&self) -> bool {
+        1 == bits::extract_bits(self.m, 6, 4)
+    }
+
+    #[inline]
+    pub fn is_promotion(&self) -> bool {
+        bits::test_bit(self.m, 9)
+    }
+
+    #[inline]
+    pub fn is_king_castle(&self) -> bool {
+        2 == bits::extract_bits(self.m, 6, 4)
+    }
+
+    #[inline]
+    pub fn is_queen_castle(&self) -> bool {
+        3 == bits::extract_bits(self.m, 6, 4)
+    }
+
+    #[inline]
+    pub fn captured_piece(&self) -> u32 {
+        // ((self.m >> 20) & 0x7)
+        bits::extract_bits(self.m, 20, 3)
+    }
+
+    #[inline]
+    pub fn castling_before(&self) -> u32 {
+        bits::extract_bits(self.m, 23, 4)
+    }
+
+    
 }
 
 #[cfg(test)]
@@ -148,8 +218,8 @@ mod tests {
                             
                             let mut mov = Move::new(from, to, color, piece, flags, 0);
                             // standard fields
-                            assert_eq!(from, mov.from());
-                            assert_eq!(to, mov.to());
+                            assert_eq!(from, mov.orig());
+                            assert_eq!(to, mov.dest());
                             assert_eq!(color, mov.color());
                             assert_eq!(piece, mov.piece());
 
@@ -159,11 +229,11 @@ mod tests {
                             assert_eq!(spc0, mov.has_special_0());
                             assert_eq!(spc1, mov.has_special_1());
 
-                            mov.set_from(63-from);
-                            mov.set_to(63-to);
+                            mov.set_orig(63-from);
+                            mov.set_dest(63-to);
                             // standard fields
-                            assert_eq!(63-from, mov.from());
-                            assert_eq!(63-to, mov.to());
+                            assert_eq!(63-from, mov.orig());
+                            assert_eq!(63-to, mov.dest());
                             assert_eq!(color, mov.color());
                             assert_eq!(piece, mov.piece());
                             
