@@ -2,6 +2,7 @@ use std::io;
 use std::io::Write;
 
 use engine;
+use engine::util;
 
 pub struct UCIInterface {
     board: engine::board::Board,
@@ -61,7 +62,7 @@ impl UCIInterface {
         for y in (0..8).rev() {
             println!("+---+---+---+---+---+---+---+---+");
             for x in 0..8 {
-                print!("| {} ", engine::board::occ_piece_code_to_str(occ[engine::board::c2s(x, y) as usize]));
+                print!("| {} ", engine::board::occ_piece_code_to_str(occ[util::square(x, y) as usize]));
                 if x == 7 {
                     println!("| {}", y+1);
                 }
@@ -73,6 +74,7 @@ impl UCIInterface {
         }
         println!();
         println!("fen: {}", self.board.to_fen());
+        println!("last_move: {:#?}", self.board.move_stack().peek());
     }
 
     fn parse(&mut self, cmd: String) {
@@ -140,5 +142,28 @@ mod tests {
         let mut c = UCIInterface::new();
         c.parse(String::from("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves d2d4 d7d5 e2e4 e7e5"));
         assert_eq!("rnbqkbnr/ppp2ppp/8/3pp3/3PP3/8/PPP2PPP/RNBQKBNR w KQkq e6 0 3", c.board.to_fen());
+
+        // castling, king moves
+        c.parse(String::from("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves e1g1"));
+        assert_eq!("8/8/8/8/8/8/8/R4RK1 b kq - 1 1", c.board.to_fen());
+        c.parse(String::from("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves e1c1"));
+        assert_eq!("8/8/8/8/8/8/8/2KR3R b kq - 1 1", c.board.to_fen());
+        c.parse(String::from("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves e8g8"));
+        assert_eq!("r4rk1/8/8/8/8/8/8/8 w KQ - 1 2", c.board.to_fen());
+        c.parse(String::from("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves e8c8"));
+        assert_eq!("2kr3r/8/8/8/8/8/8/8 w KQ - 1 2", c.board.to_fen());
+        
+        // castling, rook moves
+        c.parse(String::from("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves a1b1"));
+        assert_eq!("8/8/8/8/8/8/8/1R2K2R b Kkq - 1 1", c.board.to_fen());
+        c.parse(String::from("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves h1g1"));
+        assert_eq!("8/8/8/8/8/8/8/R3K1R1 b Qkq - 1 1", c.board.to_fen());
+        c.parse(String::from("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves a8b8"));
+        assert_eq!("1r2k2r/8/8/8/8/8/8/8 w KQk - 1 2", c.board.to_fen());
+        c.parse(String::from("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves h8g8"));
+        assert_eq!("r3k1r1/8/8/8/8/8/8/8 w KQq - 1 2", c.board.to_fen());
+        
+        c.parse(String::from("position fen 8/8/8/8/8/8/4P3/8 w KQkq - 0 1 moves e2e4"));
+        assert_eq!("8/8/8/8/4P3/8/8/8 b KQkq e3 0 1", c.board.to_fen());
     }
 }

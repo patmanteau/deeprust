@@ -33,7 +33,7 @@ impl SAN {
             return Err("Invalid square string")
         }
 
-        let file_lookup: HashMap<&str, u32> = [
+        let file_lookup: HashMap<&'static str, u32> = [
             ("a", 0),
             ("b", 1),
             ("c", 2),

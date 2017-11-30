@@ -1,15 +1,74 @@
 use ::bits;
-// use ::bitwise;
-// use bitwise::{flip_bit, test_bit};
+use std::fmt;
 
-pub const WHITE: u32 = 0;
-pub const BLACK: u32 = 1;
-pub const PAWN: u32 = 2;
-pub const KNIGHT: u32 = 3;
-pub const BISHOP: u32 = 4;
-pub const ROOK: u32 = 5;
-pub const QUEEN: u32 = 6;
-pub const KING: u32 = 7;
+/// Stores information required for unmaking moves - captured piece,
+/// castling rights, en passant square and half move clock.
+#[derive(Copy, Clone)]
+pub struct UnmakeInfo {
+    // bit mask:
+    //
+    // 0..2:    Captured piece
+    // 3:       Captured piece color
+    // 4..7:    Castling rights before (KQkq)
+    // 8..13:   En passant square
+    // 14:      En passant available
+    // 15..31:  Half move clock
+    m: u32
+}
+
+impl fmt::Debug for UnmakeInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "UnmakeInfo {{ captured_piece: {}, captured_color: {}, castling: {}, ep_square: {}, ep_available: {}, halfmoves: {} }}",
+            self.captured_piece(), self.captured_color(), self.castling(), self.ep_square(), self.ep_available(), self.halfmoves())
+    }
+}
+
+impl UnmakeInfo {
+
+    /// Constructs a new UnmakeInfo
+    #[inline]
+    pub fn new(cap_piece: u32, cap_color: u32, castling: u32,
+               ep_square: u32, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
+        UnmakeInfo {
+            m: ((halfmoves & 0x1ffff) << 15) |
+               ((ep_available as u32 & 0x1) << 14) |
+               ((ep_square & 0x3f) << 8) |
+               ((castling & 0xf) << 4) |
+               ((cap_color & 0x1) << 3) |
+               ((cap_piece) & 0x7)
+        }
+    }
+
+    #[inline]
+    pub fn captured_piece(&self) -> u32 {
+        bits::extract_bits(self.m, 0, 3)
+    }
+
+    #[inline]
+    pub fn captured_color(&self) -> u32 {
+        bits::extract_bits(self.m, 3, 1)
+    }
+
+    #[inline]
+    pub fn castling(&self) -> u32 {
+        bits::extract_bits(self.m, 4, 4)
+    }
+
+    #[inline]
+    pub fn ep_square(&self) -> u32 {
+        bits::extract_bits(self.m, 8, 6)
+    }
+
+    #[inline]
+    pub fn ep_available(&self) -> bool {
+        bits::test_bit(self.m, 14)
+    }
+
+    #[inline]
+    pub fn halfmoves(&self) -> u32 {
+        bits::extract_bits(self.m, 15, 16)
+    }
+}
 
 #[derive(Debug, Copy, Clone)]
 pub struct Move {
@@ -50,6 +109,7 @@ pub struct Move {
     // 17..19:  Moving Piece
     // 20..22:  Captured piece
     // 23..26:  Castling rights before (KQkq)
+    // 27..30:  En passant square before
     
     m: u32
 }
@@ -57,12 +117,12 @@ pub struct Move {
 impl Move {
     /// Constructs a new Move
     #[inline]
-    pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
+    // pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
+    pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32) -> Move {
         Move {
             m: ((orig & 0x3f) << 10) | 
                (dest & 0x3f) | 
                ((flags & 0xf) << 6) | 
-               ((extended & 0x7f) << 20) | 
                (((color) & 0x1) << 16) | 
                (((piece) & 0x7) << 17),
         }
@@ -74,10 +134,10 @@ impl Move {
         ((is_promotion as u32) << 3) | ((is_capture as u32) << 2) | ((is_special_1 as u32) << 1) | (is_special_0 as u32)
     }
 
-    #[inline]
-    pub fn make_extended(captured_piece: u32, castling_before: u32) -> u32 {
-        (castling_before << 3) | ((captured_piece) & 0x7)
-    }
+    // #[inline]
+    // pub fn make_extended(captured_piece: u32, castling_before: u32) -> u32 {
+    //     (castling_before << 3) | ((captured_piece) & 0x7)
+    // }
 
     #[inline]
     pub fn set_orig(&mut self, from: u32) {
@@ -122,17 +182,17 @@ impl Move {
         (self.m & 0x3f)
     }
 
-    #[inline]
-    pub fn color(&self) -> u32 {
-        // ((self.m >> 16) & 0x1)
-        bits::extract_bits(self.m, 16, 1)
-    }
+    // #[inline]
+    // pub fn color(&self) -> u32 {
+    //     // ((self.m >> 16) & 0x1)
+    //     bits::extract_bits(self.m, 16, 1)
+    // }
 
-    #[inline]
-    pub fn piece(&self) -> u32 {
-        // ((self.m >> 17) & 0x7)
-        bits::extract_bits(self.m, 17, 3)
-    }
+    // #[inline]
+    // pub fn piece(&self) -> u32 {
+    //     // ((self.m >> 17) & 0x7)
+    //     bits::extract_bits(self.m, 17, 3)
+    // }
 
     #[inline]
     pub fn special(&self) -> u32 {
@@ -184,16 +244,16 @@ impl Move {
         3 == bits::extract_bits(self.m, 6, 4)
     }
 
-    #[inline]
-    pub fn captured_piece(&self) -> u32 {
-        // ((self.m >> 20) & 0x7)
-        bits::extract_bits(self.m, 20, 3)
-    }
+    // #[inline]
+    // pub fn captured_piece(&self) -> u32 {
+    //     // ((self.m >> 20) & 0x7)
+    //     bits::extract_bits(self.m, 20, 3)
+    // }
 
-    #[inline]
-    pub fn castling_before(&self) -> u32 {
-        bits::extract_bits(self.m, 23, 4)
-    }
+    // #[inline]
+    // pub fn castling_before(&self) -> u32 {
+    //     bits::extract_bits(self.m, 23, 4)
+    // }
 
     
 }
@@ -201,6 +261,45 @@ impl Move {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn it_encodes_unmake_information() {
+        // 0..2:    Captured piece
+        // 3:       Captured piece color
+        // 4..7:    Castling rights before (KQkq)
+        // 8..13:   En passant square
+        // 14:      En passant available
+        // 15..31:  Half move clock
+        for cap_color in 0..2 {
+            for cap_piece in 2..8 {
+                for castling in 0..16 {
+                    for ep_square in 0..64 {
+                        for halfmoves in 0..256 {
+                            {
+                                let store = UnmakeInfo::new(cap_piece, cap_color, castling, ep_square, false, halfmoves);
+                                assert_eq!(cap_piece, store.captured_piece());
+                                assert_eq!(cap_color, store.captured_color());
+                                assert_eq!(castling, store.castling());
+                                assert_eq!(ep_square, store.ep_square());
+                                assert_eq!(false, store.ep_available());
+                                assert_eq!(halfmoves, store.halfmoves());
+                            }
+                            {
+                                let store = UnmakeInfo::new(cap_piece, cap_color, castling, ep_square, false, halfmoves);
+                                assert_eq!(cap_piece, store.captured_piece());
+                                assert_eq!(cap_color, store.captured_color());
+                                assert_eq!(castling, store.castling());
+                                assert_eq!(ep_square, store.ep_square());
+                                assert_eq!(false, store.ep_available());
+                                assert_eq!(halfmoves, store.halfmoves());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+    }
 
     #[test]
     fn it_encodes_moves() {
@@ -216,12 +315,12 @@ mod tests {
                             let flags = Move::make_flags(cap, prom, spc0, spc1);
                             assert_eq!(i, flags);
                             
-                            let mut mov = Move::new(from, to, color, piece, flags, 0);
+                            let mut mov = Move::new(from, to, color, piece, flags);
                             // standard fields
                             assert_eq!(from, mov.orig());
                             assert_eq!(to, mov.dest());
-                            assert_eq!(color, mov.color());
-                            assert_eq!(piece, mov.piece());
+                            // assert_eq!(color, mov.color());
+                            // assert_eq!(piece, mov.piece());
 
                             // flags
                             assert_eq!(prom, mov.is_promotion());
@@ -234,8 +333,8 @@ mod tests {
                             // standard fields
                             assert_eq!(63-from, mov.orig());
                             assert_eq!(63-to, mov.dest());
-                            assert_eq!(color, mov.color());
-                            assert_eq!(piece, mov.piece());
+                            // assert_eq!(color, mov.color());
+                            // assert_eq!(piece, mov.piece());
                             
                             // flags
                             assert_eq!(prom, mov.is_promotion());
