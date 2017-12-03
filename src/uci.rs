@@ -6,12 +6,16 @@ use engine::util;
 
 pub struct UCIInterface {
     board: engine::board::Board,
+    gen: engine::move_generator::MoveGenerator,
     run: bool,
 }
 
 impl UCIInterface {
     pub fn new() -> UCIInterface {
-        UCIInterface { board: engine::board::Board::new(), run: true }
+        UCIInterface { 
+            board: engine::board::Board::new(),
+            gen: engine::move_generator::MoveGenerator::new(),
+            run: true }
     }
 
     fn cmd_position(&mut self, cmd: Vec<&str>) {
@@ -77,6 +81,10 @@ impl UCIInterface {
         println!("last_move: {:#?}", self.board.move_stack().peek());
     }
 
+    fn cmd_bb(&self) {
+        util::bb::bb_fmt(util::bb::BB_FILE_F);
+    }
+
     fn parse(&mut self, cmd: String) {
         let tokens: Vec<&str> = cmd.trim().split_whitespace().collect();
 
@@ -85,6 +93,7 @@ impl UCIInterface {
                 "position" => self.cmd_position(tokens[1..].to_vec()),
                 "fen" => println!("{}", self.board.to_fen()),
                 "b" => self.cmd_b(),
+                "bb" => self.cmd_bb(),
                 "uci" => {
                     println!("id name deeprust v{}", env!("CARGO_PKG_VERSION"));
                     println!("id author {}", env!("CARGO_PKG_AUTHORS"));

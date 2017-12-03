@@ -1,5 +1,6 @@
 use ::bits;
 use std::fmt;
+use ::engine::types::{Sq};
 
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.
@@ -28,7 +29,7 @@ impl UnmakeInfo {
     /// Constructs a new UnmakeInfo
     #[inline]
     pub fn new(cap_piece: u32, cap_color: u32, castling: u32,
-               ep_square: u32, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
+               ep_square: Sq, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
         UnmakeInfo {
             m: ((halfmoves & 0x1ffff) << 15) |
                ((ep_available as u32 & 0x1) << 14) |
@@ -55,7 +56,7 @@ impl UnmakeInfo {
     }
 
     #[inline]
-    pub fn ep_square(&self) -> u32 {
+    pub fn ep_square(&self) -> Sq {
         bits::extract_bits(self.m, 8, 6)
     }
 
@@ -107,9 +108,6 @@ pub struct Move {
     // |
     // 16:      Color
     // 17..19:  Moving Piece
-    // 20..22:  Captured piece
-    // 23..26:  Castling rights before (KQkq)
-    // 27..30:  En passant square before
     
     m: u32
 }
@@ -118,7 +116,7 @@ impl Move {
     /// Constructs a new Move
     #[inline]
     // pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
-    pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32) -> Move {
+    pub fn new(orig: Sq, dest: Sq, color: u32, piece: u32, flags: u32) -> Move {
         Move {
             m: ((orig & 0x3f) << 10) | 
                (dest & 0x3f) | 
@@ -140,13 +138,13 @@ impl Move {
     // }
 
     #[inline]
-    pub fn set_orig(&mut self, from: u32) {
+    pub fn set_orig(&mut self, from: Sq) {
         self.m &= !0xfc00;
         self.m |= (from & 0x3f) << 10;
     }
 
     #[inline]
-    pub fn set_dest(&mut self, to: u32) {
+    pub fn set_dest(&mut self, to: Sq) {
         self.m &= !0x3f;
         self.m |= to & 0x3f;
     }
@@ -172,14 +170,14 @@ impl Move {
     }
 
     #[inline]
-    pub fn orig(&self) -> u32 {
+    pub fn orig(&self) -> Sq {
         // (self.m >> 10) & 0x3f
-        bits::extract_bits(self.m, 10, 6)
+        bits::extract_bits(self.m, 10, 6) as Sq
     }
 
     #[inline]
-    pub fn dest(&self) -> u32 {
-        (self.m & 0x3f)
+    pub fn dest(&self) -> Sq {
+        (self.m & 0x3f) as Sq
     }
 
     // #[inline]

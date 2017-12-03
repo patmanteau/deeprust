@@ -1,3 +1,4 @@
+use ::engine::types::{Sq};
 use super::util;
 use super::util::{piece, squares};
 use super::san::SAN;
@@ -13,7 +14,7 @@ pub struct Board {
     occupied: [u32; 64],
     to_move: u32,
     castling: u32,
-    en_passant: Option<u32>,
+    en_passant: Option<Sq>,
     halfmoves: u32,
     fullmoves: u32,
 
@@ -21,36 +22,12 @@ pub struct Board {
     square_bb_t: [u64; 64],
 }
 
-// pub fn c2s(x: u32, y: u32) -> u32 {
-//     (y * 8) + x
-// }
-
-/// Returns the captured piece's position in an en passant capture
-/// 
-/// # Arguments
-/// 
-/// * `ep_square` - 
-#[inline]
-pub fn lookup_ep_capture(ep_square: u32) -> u32 {
-    let table = [
-         0,  0,  0,  0,  0,  0,  0,  0, 
-         0,  0,  0,  0,  0,  0,  0,  0, 
-        24, 25, 26, 27, 28, 29, 30, 31,
-         0,  0,  0,  0,  0,  0,  0,  0, 
-         0,  0,  0,  0,  0,  0,  0,  0, 
-        32, 33, 34, 35, 36, 37, 38, 39,
-         0,  0,  0,  0,  0,  0,  0,  0, 
-         0,  0,  0,  0,  0,  0,  0,  0, 
-    ];
-    table[ep_square as usize]
-}
-
 pub fn occ_piece_code_to_str(code: u32) -> &'static str {
     match code {
         2 => "P",
         3 => "N",
         4 => "B",
-        5 => "R",
+        5 => "R", 
         6 => "Q",
         7 => "K",
         10 => "p",
@@ -93,30 +70,30 @@ impl Board {
         }
 
         // knights
-        board.set_piece(piece::KNIGHT, piece::WHITE, util::square(1, 0));
-        board.set_piece(piece::KNIGHT, piece::WHITE, util::square(6, 0));
-        board.set_piece(piece::KNIGHT, piece::BLACK, util::square(1, 7));
-        board.set_piece(piece::KNIGHT, piece::BLACK, util::square(6, 7));
+        board.set_piece(piece::KNIGHT, piece::WHITE, squares::B1);
+        board.set_piece(piece::KNIGHT, piece::WHITE, squares::G1);
+        board.set_piece(piece::KNIGHT, piece::BLACK, squares::B8);
+        board.set_piece(piece::KNIGHT, piece::BLACK, squares::G8);
 
         // bishops
-        board.set_piece(piece::BISHOP, piece::WHITE, util::square(2, 0));
-        board.set_piece(piece::BISHOP, piece::WHITE, util::square(5, 0));
-        board.set_piece(piece::BISHOP, piece::BLACK, util::square(2, 7));
-        board.set_piece(piece::BISHOP, piece::BLACK, util::square(5, 7));
+        board.set_piece(piece::BISHOP, piece::WHITE, squares::C1);
+        board.set_piece(piece::BISHOP, piece::WHITE, squares::F1);
+        board.set_piece(piece::BISHOP, piece::BLACK, squares::C8);
+        board.set_piece(piece::BISHOP, piece::BLACK, squares::F8);
 
         // rooks
-        board.set_piece(piece::ROOK, piece::WHITE, util::square(0, 0));
-        board.set_piece(piece::ROOK, piece::WHITE, util::square(7, 0));
-        board.set_piece(piece::ROOK, piece::BLACK, util::square(0, 7));
-        board.set_piece(piece::ROOK, piece::BLACK, util::square(7, 7));
+        board.set_piece(piece::ROOK, piece::WHITE, squares::A1);
+        board.set_piece(piece::ROOK, piece::WHITE, squares::H1);
+        board.set_piece(piece::ROOK, piece::BLACK, squares::A8);
+        board.set_piece(piece::ROOK, piece::BLACK, squares::H8);
 
         // queens
-        board.set_piece(piece::QUEEN, piece::WHITE, util::square(3, 0));
-        board.set_piece(piece::QUEEN, piece::BLACK, util::square(3, 7));
+        board.set_piece(piece::QUEEN, piece::WHITE, squares::D1);
+        board.set_piece(piece::QUEEN, piece::BLACK, squares::D8);
 
         // kings
-        board.set_piece(piece::KING, piece::WHITE, util::square(4, 0));
-        board.set_piece(piece::KING, piece::BLACK, util::square(4, 7));
+        board.set_piece(piece::KING, piece::WHITE, squares::E1);
+        board.set_piece(piece::KING, piece::BLACK, squares::E8);
 
         board.castling = 0xf;
         board
@@ -300,12 +277,12 @@ impl Board {
     }
 
     #[inline]
-    fn square_bb(&self, square: u32) -> u64 {
+    fn square_bb(&self, square: Sq) -> u64 {
         self.square_bb_t[square as usize]
     }
 
     #[inline]
-    fn get_piece_and_color(&self, square: u32) -> (u32, u32) {
+    fn get_piece_and_color(&self, square: Sq) -> (u32, u32) {
         let raw = self.occupied[square as usize];
         ((raw & 0x7), (raw >> 3))
     }
@@ -314,42 +291,30 @@ impl Board {
         self.bb[piece as usize] & self.bb[color as usize]
     }
 
-    fn check_piece(&self, piece: u32, color: u32, square: u32) -> bool {
+    fn check_piece(&self, piece: u32, color: u32, square: Sq) -> bool {
         0 != self.occupied[square as usize]
     }
 
     #[inline]
-    fn set_piece(&mut self, piece: u32, color: u32, to: u32) {
-        self.bb[piece as usize] |= self.square_bb(to);
-        self.bb[color as usize] |= self.square_bb(to);
+    fn set_piece(&mut self, piece: u32, color: u32, to: Sq) {
+        self.bb[color as usize] |= util::bb::BB_SQUARES[to as usize];
+        self.bb[piece as usize] |= util::bb::BB_SQUARES[to as usize];
         self.occupied[to as usize] = (color << 3) | (piece & 0x7);
     }
 
     #[inline]
-    fn remove_piece(&mut self, piece: u32, color: u32, from: u32) {
-        // self.bb[color as usize] ^= self.square_bb(from);
-        bits::flip_bit(self.bb[color as usize], from as usize);
-        // self.bb[piece as usize] ^= self.square_bb(from);
-        bits::flip_bit(self.bb[piece as usize], from as usize);
-        
+    fn remove_piece(&mut self, piece: u32, color: u32, from: Sq) {
+        self.bb[color as usize] ^= util::bb::BB_SQUARES[from as usize];
+        self.bb[piece as usize] ^= util::bb::BB_SQUARES[from as usize];
         self.occupied[from as usize] = 0;
     }
 
     #[inline]
-    fn replace_piece(&mut self, old_piece: u32, old_color: u32, new_piece: u32, new_color: u32, square: u32) {
+    fn replace_piece(&mut self, old_piece: u32, old_color: u32, new_piece: u32, new_color: u32, square: Sq) {
         self.bb[old_color as usize] ^= self.square_bb(square);
         self.bb[old_piece as usize] ^= self.square_bb(square);
         self.set_piece(new_piece, new_color, square);
     }
-
-    // pub fn piece_at_square(&self, square: u32) -> Result<(u32, u32), &'static str> {
-    //     for color in 0..2 {
-    //         for piece in 2..8 {
-    //             if 0 != (self.bb[piece as usize] & self.bb[color as usize] & self.square_bb(square)) { return Ok((piece, color)); }
-    //         }
-    //     }
-    //     return Err("No piece at square");
-    // }
 
     fn make_move(&mut self, mov: Move) {
         // fail if no piece at origin square
@@ -398,12 +363,12 @@ impl Board {
         if mov.is_quiet() {
             self.set_piece(piece, orig_color, dest_square);
         } else if mov.is_capture_en_passant() {
-            self.remove_piece(piece::PAWN, 1 ^ orig_color, lookup_ep_capture(dest_square));
+            self.remove_piece(piece::PAWN, 1 ^ orig_color, util::ep_capture_square(dest_square));
             self.set_piece(piece, orig_color, dest_square);
         } else if is_capture {
             self.replace_piece(dest_piece, dest_color, piece, orig_color, dest_square);
         } else if mov.is_double_pawn_push() {
-            self.en_passant = Some((dest_square as i32 - [8i32, -8i32][orig_color as usize]) as u32);
+            self.en_passant = Some((dest_square as i32 - [8i32, -8i32][orig_color as usize]) as Sq);
             self.set_piece(piece, orig_color, dest_square);
         } else if mov.is_king_castle() {
             self.set_piece(piece, orig_color, dest_square);
@@ -484,7 +449,7 @@ impl Board {
         if last_move.is_quiet() || last_move.is_double_pawn_push() {
             self.set_piece(piece, color, orig_square);
         } else if last_move.is_capture_en_passant() {
-            self.set_piece(piece::PAWN, 1 ^ color, lookup_ep_capture(dest_square));
+            self.set_piece(piece::PAWN, 1 ^ color, util::ep_capture_square(dest_square));
             self.set_piece(piece, color, orig_square);
         } else if was_capture {
             self.set_piece(captured_piece, captured_color, dest_square);
@@ -505,7 +470,7 @@ impl Board {
         self.to_move ^= 1;
     }
 
-    pub fn input_move(&mut self, orig: u32, dest: u32, promote_to: Option<u32>) -> Result<bool, &'static str> {
+    pub fn input_move(&mut self, orig: Sq, dest: Sq, promote_to: Option<u32>) -> Result<bool, &'static str> {
         let (mut is_capture, mut is_promotion, mut is_special_0, mut is_special_1) = (false, false, false, false);
         let (piece, color) = self.get_piece_and_color(orig);
         if 0 == piece {
@@ -727,9 +692,9 @@ mod tests {
     fn it_calculates_ep_squares_correctly() {
         for x in 0..8 {
             // white
-            assert_eq!(util::square(x, 3), lookup_ep_capture(util::square(x, 2)));
+            assert_eq!(util::square(x, 3), util::ep_capture_square(util::square(x, 2)));
             // black
-            assert_eq!(util::square(x, 4), lookup_ep_capture(util::square(x, 5)));
+            assert_eq!(util::square(x, 4), util::ep_capture_square(util::square(x, 5)));
         }
     }
 
