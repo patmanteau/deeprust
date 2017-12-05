@@ -3,6 +3,7 @@ use std::io::Write;
 
 use engine;
 use engine::util;
+use engine::util::{bb, squares};
 
 pub struct UCIInterface {
     board: engine::board::Board,
@@ -59,6 +60,32 @@ impl UCIInterface {
         }
     }
 
+    fn cmd_move(&mut self, cmd: Vec<&str>) {
+        if cmd.len() < 1 { return; }
+
+        let mut tokens = cmd.iter();
+
+        while let Some(mov) = tokens.next() {
+            if mov.len() < 4 { 
+                eprintln!("error: incomplete move");
+                return;
+            }
+            if let (Ok(from), Ok(to)) = (engine::san::SAN::square_str_to_index(&mov[0..2]), engine::san::SAN::square_str_to_index(&mov[2..4])) {
+                match self.board.input_move(from, to, None) {
+                    Ok(_) => (),
+                    Err(e) => eprintln!("error: could not make move: {}", e),
+                }
+            } else {
+                eprintln!("error: invalid move");
+                return;
+            }
+        }
+    }
+
+    fn cmd_undo(&mut self) {
+        self.board.undo_move();
+    }
+
     fn cmd_b(&self) {
         let occ = self.board.occupied();
         
@@ -78,11 +105,56 @@ impl UCIInterface {
         }
         println!();
         println!("fen: {}", self.board.to_fen());
-        println!("last_move: {:#?}", self.board.move_stack().peek());
+        if self.board.move_stack().len() > 0 {
+            println!("last_move: {:#?}", self.board.move_stack().peek());
+        }
     }
 
     fn cmd_bb(&self) {
-        util::bb::bb_fmt(util::bb::BB_FILE_F);
+        util::bb::bb_fmt(bb::north_one(self.board.bb_pawns()));
+        println!();
+        util::bb::bb_fmt(self.board.bb_empty());
+        println!();
+        util::bb::bb_fmt(bb::BB_RANKS[0]);
+        println!();
+        util::bb::bb_fmt(self.board.bb_knights() & self.board.bb_own());
+        println!();
+        util::bb::bb_fmt(bb::BB_DIAG[squares::E4 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_ANTI_DIAG[squares::E4 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_BISHOP_ATTACKS[squares::E4 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_ROOK_ATTACKS[squares::E4 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_QUEEN_ATTACKS[squares::E4 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_RAYS_WEST[squares::E1 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_RAYS_EAST[squares::E1 as usize]);
+        println!();
+        util::bb::bb_fmt(bb::BB_KG_FILL_UP_ATTACKS[squares::H1 as usize][0b111111]);
+        println!();
+        util::bb::bb_fmt(bb::diagonal_attacks(squares::D4, 0b11111111_00000000_11111111));
+        println!();
+        util::bb::bb_fmt(bb::anti_diagonal_attacks(squares::D4, 0b11111111_00000000_11111111));
+        println!();
+        util::bb::bb_fmt(bb::rank_attacks(squares::D4, 0b11000011_11111111_00000000_11111111));
+        println!();
+        util::bb::bb_fmt(bb::file_attacks(squares::D4, 0b11000011_11111111_00000000_00000000_11000011_11111111_00000000_11111111));
+        println!();
+        util::bb::bb_fmt(0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111);
+        println!();
+        util::bb::bb_fmt(bb::file_attacks(squares::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111));
+    }
+
+    fn cmd_moves(&mut self) {
+        self.gen.from_board(&self.board);
+        println!("count: {}", self.gen.moves().len());
+        for m in self.gen.moves().iter() {
+            println!("move: {:#?}", m);
+        }
+        
     }
 
     fn parse(&mut self, cmd: String) {
@@ -91,9 +163,12 @@ impl UCIInterface {
         if tokens.len() > 0 {
             match tokens[0] {
                 "position" => self.cmd_position(tokens[1..].to_vec()),
+                "m" | "move" => self.cmd_move(tokens[1..].to_vec()),
+                "u" | "undo" => self.cmd_undo(),
                 "fen" => println!("{}", self.board.to_fen()),
                 "b" => self.cmd_b(),
                 "bb" => self.cmd_bb(),
+                "g" | "generate" => self.cmd_moves(),
                 "uci" => {
                     println!("id name deeprust v{}", env!("CARGO_PKG_VERSION"));
                     println!("id author {}", env!("CARGO_PKG_AUTHORS"));

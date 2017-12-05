@@ -6,6 +6,8 @@ extern crate bitwise;
 #[macro_use]
 extern crate log;
 extern crate simple_logging;
+#[macro_use]
+extern crate lazy_static;
 
 use clap::{Arg, App};
 use log::LogLevelFilter;

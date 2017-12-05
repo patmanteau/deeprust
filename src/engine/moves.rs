@@ -1,6 +1,7 @@
 use ::bits;
 use std::fmt;
 use ::engine::types::{Sq};
+use engine::san::SAN;
 
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.
@@ -19,8 +20,8 @@ pub struct UnmakeInfo {
 
 impl fmt::Debug for UnmakeInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "UnmakeInfo {{ captured_piece: {}, captured_color: {}, castling: {}, ep_square: {}, ep_available: {}, halfmoves: {} }}",
-            self.captured_piece(), self.captured_color(), self.castling(), self.ep_square(), self.ep_available(), self.halfmoves())
+        write!(f, "UnmakeInfo {{ captured_piece: {}, captured_color: {}, castling: {}{}, ep_square: {}, ep_available: {}, halfmoves: {} }}",
+            self.captured_piece(), self.captured_color(), self.castling()[0], self.castling()[1], self.ep_square(), self.ep_available(), self.halfmoves())
     }
 }
 
@@ -28,13 +29,14 @@ impl UnmakeInfo {
 
     /// Constructs a new UnmakeInfo
     #[inline]
-    pub fn new(cap_piece: u32, cap_color: u32, castling: u32,
+    pub fn new(cap_piece: u32, cap_color: u32, castling: [u32; 2],
                ep_square: Sq, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
         UnmakeInfo {
             m: ((halfmoves & 0x1ffff) << 15) |
                ((ep_available as u32 & 0x1) << 14) |
                ((ep_square & 0x3f) << 8) |
-               ((castling & 0xf) << 4) |
+               ((castling[1] & 0x3) << 6) |
+               ((castling[0] & 0x3) << 4) |
                ((cap_color & 0x1) << 3) |
                ((cap_piece) & 0x7)
         }
@@ -51,8 +53,8 @@ impl UnmakeInfo {
     }
 
     #[inline]
-    pub fn castling(&self) -> u32 {
-        bits::extract_bits(self.m, 4, 4)
+    pub fn castling(&self) -> [u32; 2] {
+        [bits::extract_bits(self.m, 4, 2), bits::extract_bits(self.m, 6, 2)]
     }
 
     #[inline]
@@ -71,7 +73,7 @@ impl UnmakeInfo {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct Move {
     // bit mask:
     // (from https://chessprogramming.wikispaces.com/Encoding+Moves)
@@ -105,24 +107,26 @@ pub struct Move {
     //  /
     // /
     // 10..15:  Origin square
-    // |
-    // 16:      Color
-    // 17..19:  Moving Piece
     
     m: u32
+}
+
+impl fmt::Debug for Move {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Move {{ orig: {}, dest: {}, capture: {}, promotion: {}, spc0: {}, spc1: {} }}",
+            SAN::from_square(self.orig()).s, SAN::from_square(self.dest()).s, self.is_capture(), self.is_promotion(), self.has_special_0(), self.has_special_1())
+    }
 }
 
 impl Move {
     /// Constructs a new Move
     #[inline]
     // pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
-    pub fn new(orig: Sq, dest: Sq, color: u32, piece: u32, flags: u32) -> Move {
+    pub fn new(orig: Sq, dest: Sq, flags: u32) -> Move {
         Move {
             m: ((orig & 0x3f) << 10) | 
                (dest & 0x3f) | 
-               ((flags & 0xf) << 6) | 
-               (((color) & 0x1) << 16) | 
-               (((piece) & 0x7) << 17),
+               ((flags & 0xf) << 6),
         }
     }
 
@@ -270,26 +274,30 @@ mod tests {
         // 15..31:  Half move clock
         for cap_color in 0..2 {
             for cap_piece in 2..8 {
-                for castling in 0..16 {
-                    for ep_square in 0..64 {
-                        for halfmoves in 0..256 {
-                            {
-                                let store = UnmakeInfo::new(cap_piece, cap_color, castling, ep_square, false, halfmoves);
-                                assert_eq!(cap_piece, store.captured_piece());
-                                assert_eq!(cap_color, store.captured_color());
-                                assert_eq!(castling, store.castling());
-                                assert_eq!(ep_square, store.ep_square());
-                                assert_eq!(false, store.ep_available());
-                                assert_eq!(halfmoves, store.halfmoves());
-                            }
-                            {
-                                let store = UnmakeInfo::new(cap_piece, cap_color, castling, ep_square, false, halfmoves);
-                                assert_eq!(cap_piece, store.captured_piece());
-                                assert_eq!(cap_color, store.captured_color());
-                                assert_eq!(castling, store.castling());
-                                assert_eq!(ep_square, store.ep_square());
-                                assert_eq!(false, store.ep_available());
-                                assert_eq!(halfmoves, store.halfmoves());
+                for wcastling in 0..4 {
+                    for bcastling in 0..4 {
+                        for ep_square in 0..64 {
+                            for halfmoves in 0..256 {
+                                {
+                                    let store = UnmakeInfo::new(cap_piece, cap_color, [wcastling, bcastling], ep_square, false, halfmoves);
+                                    assert_eq!(cap_piece, store.captured_piece());
+                                    assert_eq!(cap_color, store.captured_color());
+                                    assert_eq!(wcastling, store.castling()[0]);
+                                    assert_eq!(bcastling, store.castling()[1]);
+                                    assert_eq!(ep_square, store.ep_square());
+                                    assert_eq!(false, store.ep_available());
+                                    assert_eq!(halfmoves, store.halfmoves());
+                                }
+                                {
+                                    let store = UnmakeInfo::new(cap_piece, cap_color, [wcastling, bcastling], ep_square, false, halfmoves);
+                                    assert_eq!(cap_piece, store.captured_piece());
+                                    assert_eq!(cap_color, store.captured_color());
+                                    assert_eq!(wcastling, store.castling()[0]);
+                                    assert_eq!(bcastling, store.castling()[1]);
+                                    assert_eq!(ep_square, store.ep_square());
+                                    assert_eq!(false, store.ep_available());
+                                    assert_eq!(halfmoves, store.halfmoves());
+                                }
                             }
                         }
                     }
@@ -313,7 +321,7 @@ mod tests {
                             let flags = Move::make_flags(cap, prom, spc0, spc1);
                             assert_eq!(i, flags);
                             
-                            let mut mov = Move::new(from, to, color, piece, flags);
+                            let mut mov = Move::new(from, to, flags);
                             // standard fields
                             assert_eq!(from, mov.orig());
                             assert_eq!(to, mov.dest());

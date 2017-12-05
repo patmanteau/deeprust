@@ -53,13 +53,32 @@ pub mod squares {
     pub const RANK_NAMES: [&'static str; 8] = [
         "1", "2", "3", "4", "5", "6", "7", "8", 
     ];
+
+    pub const EP_CAPTURE_SQUARES: [usize; 64] = [
+         0,  0,  0,  0,  0,  0,  0,  0, 
+         0,  0,  0,  0,  0,  0,  0,  0, 
+        24, 25, 26, 27, 28, 29, 30, 31,
+         0,  0,  0,  0,  0,  0,  0,  0, 
+         0,  0,  0,  0,  0,  0,  0,  0, 
+        32, 33, 34, 35, 36, 37, 38, 39,
+         0,  0,  0,  0,  0,  0,  0,  0, 
+         0,  0,  0,  0,  0,  0,  0,  0, 
+    ];
+
+    #[inline]
+    pub fn flip_square(square: Sq) -> Sq {
+        square ^ 56
+    }
 }
 
 pub mod bb {
     #![allow(dead_code)]
     
     use std::fmt;
-    use ::bits;
+    use bits;
+    use lazy_static;
+    use engine::util::squares;
+    use engine::types::{Sq, Word};
 
     macro_rules! mbb_squares {
         ($($bb_id:ident,$square:expr),*) => {
@@ -108,28 +127,255 @@ pub mod bb {
 
     pub const BB_DARK_SQUARES: u64 = 0xaa55aa55aa55aa55u64;
     pub const BB_LIGHT_SQUARES: u64 = 0x55aa55aa55aa55aau64;
+    
     pub const BB_BACKRANKS: u64 = BB_RANK_1 | BB_RANK_8;
     pub const BB_CORNERS: u64 = BB_A1 | BB_H1 | BB_A8 | BB_H8;
 
     pub const BB_EMPTY: u64 = 0u64;
     pub const BB_ALL: u64 = 0xffffffffffffffffu64;
 
-    pub const BB_PAWN_PUSHES: [u64; 64] = [
-        0, 0, 0, 0, 0, 0, 0, 0,
-
-    ];
-
+    pub const BB_NOT_FILE_A: u64 = !BB_FILE_A;
+    pub const BB_NOT_FILE_H: u64 = !BB_FILE_H;
+    
     pub fn bb_fmt(bb: u64) -> fmt::Result {
         for y in (0..8).rev() {
             for x in 0..8 {
                 print!("{}", bits::test_bit(bb, super::square(x, y) as usize) as u64);
-                // match bits::test_bit(square(x, y)) {
-                //     true => write(f, )
-                // }
             }
             println!();
         }
         Ok(())
+    }
+
+    pub fn north_one(bb: u64) -> u64 {
+        bb << 8
+    }
+
+    pub fn north_east_one(bb: u64) -> u64 {
+        (bb & BB_NOT_FILE_H) << 9
+    }
+
+    pub fn east_one(bb: u64) -> u64 {
+        (bb & BB_NOT_FILE_H) << 1
+    }
+
+    pub fn south_east_one(bb: u64) -> u64 {
+        (bb & BB_NOT_FILE_H) >> 7
+    }
+
+    pub fn south_one(bb: u64) -> u64 {
+        bb >> 8
+    }
+
+    pub fn south_west_one(bb: u64) -> u64 {
+        (bb & BB_NOT_FILE_A) >> 9
+    }
+
+    pub fn west_one(bb: u64) -> u64 {
+        (bb & BB_NOT_FILE_A) >> 1
+    }
+
+    pub fn north_west_one(bb: u64) -> u64 {
+        (bb & BB_NOT_FILE_A) << 7
+    }
+
+    /// see https://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating
+    pub fn flip_diag_a1h8(mut bb: u64) -> u64 {
+        let k1 = 0x5500550055005500;
+        let k2 = 0x3333000033330000;
+        let k4 = 0x0f0f0f0f00000000;
+       
+        let mut t = k4 & (bb ^ (bb << 28));
+        bb = bb ^ (t ^ (t >> 28));
+        t = k2 & (bb ^ (bb << 14));
+        bb = bb ^ (t ^ (t >> 14));
+        t = k1 & (bb ^ (bb <<  7));
+        bb = bb ^ (t ^ (t >>  7));
+        bb
+    }
+
+    lazy_static! {
+        pub static ref BB_KNIGHT_ATTACKS: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0..64 {
+                let orig_bb = BB_SQUARES[i];
+                arr[i] = 
+                    north_one(north_west_one(orig_bb)) |
+                    north_one(north_east_one(orig_bb)) |
+                    east_one(north_east_one(orig_bb)) |
+                    east_one(south_east_one(orig_bb)) |
+                    south_one(south_east_one(orig_bb)) |
+                    south_one(south_west_one(orig_bb)) |
+                    west_one(south_west_one(orig_bb)) |
+                    west_one(north_west_one(orig_bb));
+            }
+            arr
+        };
+
+        pub static ref BB_KING_ATTACKS: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0..64 {
+                let orig_bb = BB_SQUARES[i];
+                arr[i] =
+                    north_one(orig_bb) | north_east_one(orig_bb) |
+                    east_one(orig_bb) | south_east_one(orig_bb) |
+                    south_one(orig_bb) | south_west_one(orig_bb) |
+                    west_one(orig_bb) | north_west_one(orig_bb);
+            }
+            arr
+        };
+
+        pub static ref BB_DIAG: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0i64..64i64 {
+                let main_diag = 0x8040201008040201u64;
+                let diag = (8 * (i & 7) - (i & 56));
+                let north = -diag & (diag >> 31);
+                let south = diag & (-diag >> 31);
+
+                arr[i as usize] = (main_diag >> south) << north;
+            }
+            arr
+        };
+
+        pub static ref BB_ANTI_DIAG: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0i64..64i64 {
+                let main_diag = 0x0102040810204080u64;
+                let diag = 56 - 8 * (i & 7) - (i & 56);
+                let north = -diag & (diag >> 31);
+                let south = diag & (-diag >> 31);
+
+                arr[i as usize] = (main_diag >> south) << north;
+            }
+            arr
+        };
+
+        pub static ref BB_BISHOP_ATTACKS: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0..64 {
+                arr[i] = (BB_DIAG[i] | BB_ANTI_DIAG[i]) ^ BB_SQUARES[i];
+            }
+            arr
+        };
+
+        pub static ref BB_ROOK_ATTACKS: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0..64 {
+                arr[i] = (BB_RANKS[i >> 3] | BB_FILES[i & 7]) ^ BB_SQUARES[i];
+            }
+            arr
+        };
+
+        pub static ref BB_QUEEN_ATTACKS: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0..64 {
+                arr[i] = BB_BISHOP_ATTACKS[i] | BB_ROOK_ATTACKS[i];
+            }
+            arr
+        };
+
+        /// Attack rays for cardinal direction and square
+        pub static ref BB_RAYS_WEST: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 1..64 {
+                arr[i] = ((1u64 << i) - 1) & BB_RANKS[i >> 3];
+            }
+            arr
+        };
+
+        pub static ref BB_RAYS_EAST: [u64; 64] = {
+            let mut arr: [u64; 64] = [0; 64];
+            for i in 0..63 {
+                arr[i] = ((BB_ALL ^ ((1u64 << i) - 1)) & BB_RANKS[i >> 3]) ^ BB_SQUARES[i];
+            }
+            arr
+        };
+
+        pub static ref BB_FIRST_RANK_ATTACKS: [[u64; 64]; 8] = {
+            let mut arr: [[u64; 64]; 8] = [[0; 64]; 8];
+            for sq in 0..8 {
+                for occ in 0..64 {
+                    let mut east_attacks = BB_RAYS_EAST[sq];
+                    let east_blocker = east_attacks & (occ << 1);
+                    if (0 != east_blocker) {
+                        let blocker_square = bits::count_trailing_zeros(east_blocker);
+                        east_attacks ^= BB_RAYS_EAST[blocker_square as usize];
+                    }
+
+                    let mut west_attacks = BB_RAYS_WEST[sq];
+                    let west_blocker: u8 = ((west_attacks & (occ << 1)) & 0xff) as u8;
+                    if (0 != west_blocker) {
+                        // let blocker_square = bits::count_leading_zeros(west_blocker) - 1;
+                        let blocker_square = 7 - bits::count_leading_zeros(west_blocker);
+                        west_attacks ^= BB_RAYS_WEST[blocker_square as usize];
+                    }
+                    arr[sq as usize][occ as usize] = east_attacks | west_attacks;
+                }
+            }
+            arr
+        };
+
+        pub static ref BB_A_FILE_ATTACKS: [[u64; 64]; 8] = {
+            let diag_a1h8: u64 = 0x8040201008040201;
+            let mut arr: [[u64; 64]; 8] = [[0; 64]; 8];
+            for sq in 0..8 {
+                for occ in 0..64 {
+                    // arr[sq as usize][occ as usize] = bits::swap_bytes(flip_diag_a1h8(BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize]));
+                    arr[sq as usize][occ as usize] = flip_diag_a1h8(BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize]);
+                    // arr[sq as usize][occ as usize] = (diag_a1h8.overflowing_mul(BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize]).0 >> 0x7) & BB_FILE_A;
+                }
+            }
+            arr
+        };
+
+        pub static ref BB_KG_FILL_UP_ATTACKS: [[u64; 64]; 8] = {
+            let mut arr: [[u64; 64]; 8] = [[0; 64]; 8];
+            for sq in 0..8 {
+                for occ in 0..64 {
+                    arr[sq as usize][occ as usize] = 
+                        BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 8) |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 16) |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 24) |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 32) |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 40) |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 48) |
+                        (BB_FIRST_RANK_ATTACKS[sq as usize][occ as usize] << 56);
+                }
+            }
+            arr
+        };
+    }
+
+    /// See https://chessprogramming.wikispaces.com/Kindergarten+Bitboards
+    pub fn diagonal_attacks(square: Sq, mut occupied: u64) -> u64 {
+        let diag_mask_ex = BB_DIAG[square as usize] ^ BB_SQUARES[square as usize];
+        let north_fill = (diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+        occupied = north_fill.0 >> 58;
+        diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+    }
+
+    pub fn anti_diagonal_attacks(square: Sq, mut occupied: u64) -> u64 {
+        let anti_diag_mask_ex = BB_ANTI_DIAG[square as usize] ^ BB_SQUARES[square as usize];
+        let north_fill = (anti_diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+        occupied = north_fill.0 >> 58;
+        anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+    }
+
+    pub fn rank_attacks(square: Sq, mut occupied: u64) -> u64 {
+        let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
+        let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+        occupied = north_fill.0 >> 58;
+        rank_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+    }
+
+    pub fn file_attacks(square: Sq, mut occupied: u64) -> u64 {
+        let diag_c2h7: u64 = 0x0080402010080400;
+        let diag_c7h2: u64 = bits::swap_bytes(diag_c2h7);
+        occupied = BB_FILE_A & (occupied >> (square & 0x7));
+        occupied = (diag_c7h2.overflowing_mul(occupied).0) >> 58;
+        BB_A_FILE_ATTACKS[(square >> 0x3) as usize][occupied as usize] << (square & 0x7)
     }
 }
 

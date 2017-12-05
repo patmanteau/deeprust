@@ -16,16 +16,16 @@ impl MoveStackEntry {
 
     fn empty() -> MoveStackEntry {
         MoveStackEntry {
-            mov: Move::new(0, 0, 0, 0, 0),
-            store: UnmakeInfo::new(0, 0, 0, 0, false, 0),
+            mov: Move::new(0, 0, 0),
+            store: UnmakeInfo::new(0, 0, [0, 0], 0, false, 0),
         }
     }
 }
 
 /// Keeps a move history for unmaking moves
-#[derive(Copy, Clone)]
+// #[derive(Copy, Clone)]
 pub struct MoveStack {
-    entries: [MoveStackEntry; 2048],
+    entries: Vec<MoveStackEntry>,
     current: usize,
 }
 
@@ -35,36 +35,40 @@ impl MoveStack {
     #[inline]
     pub fn new() -> MoveStack {
         MoveStack {
-            entries: [MoveStackEntry::empty(); 2048],
+            entries: Vec::with_capacity(1024),
             current: 0,
         }
     }
 
     #[inline]
     pub fn push(&mut self, entry: MoveStackEntry) {
-        self.entries[self.current] = entry;
-        self.current += 1;
+        // self.entries[self.current] = entry;
+        // self.current += 1;
+        self.entries.push(entry)
     }
 
     #[inline]
     pub fn pop(&mut self) -> MoveStackEntry {
-        debug_assert!(0 < self.current);
-        let retval = self.entries[self.current - 1];
-        self.current -= 1;
-        retval
+        // debug_assert!(0 < self.current);
+        // let retval = self.entries[self.current - 1];
+        // self.current -= 1;
+        // retval
+        self.entries.pop().unwrap()
     }
 
     #[inline]
-    pub fn peek(&self) -> MoveStackEntry {
-        debug_assert!(0 < self.current);
-        let retval = self.entries[self.current - 1];
-        // self.current -= 1;
-        retval
+    pub fn peek(&self) -> &MoveStackEntry {
+        // debug_assert!(0 < self.current);
+        // let retval = self.entries[self.current - 1];
+        // // self.current -= 1;
+        // retval
+        self.entries.last().unwrap()
     }
 
     #[inline]
     pub fn len(&self) -> usize {
-        self.current
+        // self.current
+        self.entries.len()
     }
 }
 
