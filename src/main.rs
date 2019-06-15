@@ -1,20 +1,28 @@
-#[macro_use]
 extern crate indoc;
 extern crate clap;
 extern crate unicode_segmentation;
 //extern crate bitwise;
-#[macro_use]
 extern crate log;
 extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
 
+pub mod bitboard;
+pub mod board;
+pub mod cli;
+pub mod common;
+pub mod move_generator;
+pub mod move_stack;
+pub mod moves;
+pub mod san;
+pub mod square;
+pub mod types;
+pub mod uci;
+pub mod util;
+
+
 use clap::{Arg, App};
 use log::LevelFilter;
-
-mod uci;
-mod cli;
-mod board;
 
 fn main() {
     simple_logging::log_to_file("test.log", LevelFilter::Info);

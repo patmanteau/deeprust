@@ -1,14 +1,14 @@
 use std::io;
 use std::io::Write;
 
-use board;
-use board::bitboard::*;
-use board::util;
-use board::util::{bb, squares, piece};
-use board::move_generator::MoveGenerator;
+use board::*;
+use bitboard::*;
+use util::*;
+use san::*;
+use move_generator::MoveGenerator;
 
 pub struct UCIInterface {
-    pub board: board::Board,
+    pub board: Board,
     gen: MoveGenerator,
     run: bool,
 }
@@ -16,7 +16,7 @@ pub struct UCIInterface {
 impl UCIInterface {
     pub fn new() -> UCIInterface {
         UCIInterface { 
-            board: board::Board::new(),
+            board: Board::new(),
             gen: MoveGenerator::new(),
             run: true }
     }
@@ -27,9 +27,9 @@ impl UCIInterface {
 
         if let Some(postype) = tokens.next() {
             match postype {
-                &"startpos" => self.board = board::Board::startpos(),
+                &"startpos" => self.board = Board::startpos(),
                 &"fen" => {
-                    let s = board::Board::from_fen(cmd[1..7].join(" "));
+                    let s = Board::from_fen(cmd[1..7].join(" "));
                     match s {
                         Ok(b) => self.board = b,
                         Err(e) => {
@@ -49,7 +49,7 @@ impl UCIInterface {
                     eprintln!("error: incomplete move");
                     return;
                 }
-                if let (Ok(from), Ok(to)) = (board::san::SAN::square_str_to_index(&mov[0..2]), board::san::SAN::square_str_to_index(&mov[2..4])) {
+                if let (Ok(from), Ok(to)) = (SAN::square_str_to_index(&mov[0..2]), SAN::square_str_to_index(&mov[2..4])) {
                     match self.board.input_move(from, to, None) {
                         Ok(_) => (),
                         Err(e) => eprintln!("error: could not make move: {}", e),
@@ -72,7 +72,7 @@ impl UCIInterface {
                 eprintln!("error: incomplete move");
                 return;
             }
-            if let (Ok(from), Ok(to)) = (board::san::SAN::square_str_to_index(&mov[0..2]), board::san::SAN::square_str_to_index(&mov[2..4])) {
+            if let (Ok(from), Ok(to)) = (SAN::square_str_to_index(&mov[0..2]), SAN::square_str_to_index(&mov[2..4])) {
                 match self.board.input_move(from, to, None) {
                     Ok(_) => (),
                     Err(e) => eprintln!("error: could not make move: {}", e),
@@ -95,7 +95,7 @@ impl UCIInterface {
         for y in (0..8).rev() {
             println!("+---+---+---+---+---+---+---+---+");
             for x in 0..8 {
-                print!("| {} ", board::occ_piece_code_to_str(occ[util::square(x, y) as usize]));
+                print!("| {} ", Board::occ_piece_code_to_str(occ[square_from_coords(x, y) as usize]));
                 if x == 7 {
                     println!("| {}", y+1);
                 }

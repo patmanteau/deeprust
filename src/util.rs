@@ -1,7 +1,7 @@
 // Inspired by https://python-chess.readthedocs.io/en/latest/core.html
 #![allow(dead_code)]
 
-use board::types::{Sq, Word};
+use types::{Sq, Word};
 
 pub mod piece {
     pub const WHITE: u32 = 0;
@@ -17,7 +17,7 @@ pub mod piece {
 
 pub mod squares {
     #![allow(dead_code)]
-    use board::types::{Sq};
+    use types::{Sq};
     
     macro_rules! msq {
         ($($id:ident,$val:expr),*) => {
@@ -75,10 +75,10 @@ pub mod bb {
     
     use std::fmt;
     use lazy_static;
-    use board::common::*;
-    use board::bitboard::*;
-    use board::util::squares;
-    use board::types::{Sq, Word};
+    use common::*;
+    use bitboard::*;
+    use util::squares;
+    use types::{Sq, Word};
 
     macro_rules! mbb_squares {
         ($($bb_id:ident,$square:expr),*) => {
@@ -139,16 +139,6 @@ pub mod bb {
     pub const BB_NOT_FILE_AB: Bitboard = !(BB_FILE_A | BB_FILE_B);
     pub const BB_NOT_FILE_GH: Bitboard = !(BB_FILE_G | BB_FILE_H);
     
-    pub fn bb_fmt(bb: Bitboard) -> fmt::Result {
-        for y in (0..8).rev() {
-            for x in 0..8 {
-                print!("{}", bb.test_bit(super::square(x, y)) as u64);
-            }
-            println!();
-        }
-        Ok(())
-    }
-
     pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
     pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
     pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
@@ -360,7 +350,7 @@ pub mod bb {
 
 /// Calculates square index from file and rank index
 #[inline]
-pub fn square(x: u32, y: u32) -> Sq {
+pub fn square_from_coords(x: u32, y: u32) -> Sq {
     (y << 3) + x
 }
 

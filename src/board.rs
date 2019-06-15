@@ -1,23 +1,13 @@
-pub mod common;
-pub mod bitboard;
-pub mod square;
-pub mod types;
-pub mod util;
-pub mod san;
-pub mod moves;
-pub mod move_stack;
-pub mod move_generator;
-
-use board::common::*;
-use board::bitboard::*;
-
 use std::fmt;
 
-use board::types::{Sq};
-use board::util::{piece, squares, bb};
-use board::san::SAN;
-use board::moves::{Move, UnmakeInfo};
-use board::move_stack::{MoveStack, MoveStackEntry};
+use common::*;
+use bitboard::*;
+
+use types::{Sq};
+use util::{piece, squares, bb, square_from_coords, ep_capture_square};
+use san::SAN;
+use moves::{Move, UnmakeInfo};
+use move_stack::{MoveStack, MoveStackEntry};
 
 use std::str::FromStr;
 
@@ -44,24 +34,6 @@ impl fmt::Debug for Board {
     }
 }
 
-pub fn occ_piece_code_to_str(code: u32) -> &'static str {
-    match code {
-        2 => "P",
-        3 => "N",
-        4 => "B",
-        5 => "R", 
-        6 => "Q",
-        7 => "K",
-        10 => "p",
-        11 => "n",
-        12 => "b",
-        13 => "r",
-        14 => "q",
-        15 => "k",
-        _ => " ",
-    }
-}
-
 impl Board {
     pub fn new() -> Board {
         let mut board = Board { 
@@ -74,8 +46,25 @@ impl Board {
             fullmoves: 1,
             move_stack: MoveStack::new(),
         };
-
         board
+    }
+
+    pub fn occ_piece_code_to_str(code: u32) -> &'static str {
+        match code {
+            2 => "P",
+            3 => "N",
+            4 => "B",
+            5 => "R", 
+            6 => "Q",
+            7 => "K",
+            10 => "p",
+            11 => "n",
+            12 => "b",
+            13 => "r",
+            14 => "q",
+            15 => "k",
+            _ => " ",
+        }
     }
 
     pub fn equals(&self, board: &Board) -> bool {
@@ -113,8 +102,8 @@ impl Board {
         let mut board = Board::new();
         // pawns
         for x in 0..8 {
-            board.set_piece(piece::PAWN, piece::WHITE, util::square(x, 1));
-            board.set_piece(piece::PAWN, piece::BLACK, util::square(x, 6));
+            board.set_piece(piece::PAWN, piece::WHITE, square_from_coords(x, 1));
+            board.set_piece(piece::PAWN, piece::BLACK, square_from_coords(x, 6));
         }
 
         // knights
@@ -165,18 +154,18 @@ impl Board {
                         y -= 1;
                     } else {
                         match chr {
-                            'P' => board.set_piece(piece::PAWN, piece::WHITE, util::square(x, y)),
-                            'N' => board.set_piece(piece::KNIGHT, piece::WHITE, util::square(x, y)),
-                            'B' => board.set_piece(piece::BISHOP, piece::WHITE, util::square(x, y)),
-                            'R' => board.set_piece(piece::ROOK, piece::WHITE, util::square(x, y)),
-                            'Q' => board.set_piece(piece::QUEEN, piece::WHITE, util::square(x, y)),
-                            'K' => board.set_piece(piece::KING, piece::WHITE, util::square(x, y)),
-                            'p' => board.set_piece(piece::PAWN, piece::BLACK, util::square(x, y)),
-                            'n' => board.set_piece(piece::KNIGHT, piece::BLACK, util::square(x, y)),
-                            'b' => board.set_piece(piece::BISHOP, piece::BLACK, util::square(x, y)),
-                            'r' => board.set_piece(piece::ROOK, piece::BLACK, util::square(x, y)),
-                            'q' => board.set_piece(piece::QUEEN, piece::BLACK, util::square(x, y)),
-                            'k' => board.set_piece(piece::KING, piece::BLACK, util::square(x, y)),
+                            'P' => board.set_piece(piece::PAWN, piece::WHITE, square_from_coords(x, y)),
+                            'N' => board.set_piece(piece::KNIGHT, piece::WHITE, square_from_coords(x, y)),
+                            'B' => board.set_piece(piece::BISHOP, piece::WHITE, square_from_coords(x, y)),
+                            'R' => board.set_piece(piece::ROOK, piece::WHITE, square_from_coords(x, y)),
+                            'Q' => board.set_piece(piece::QUEEN, piece::WHITE, square_from_coords(x, y)),
+                            'K' => board.set_piece(piece::KING, piece::WHITE, square_from_coords(x, y)),
+                            'p' => board.set_piece(piece::PAWN, piece::BLACK, square_from_coords(x, y)),
+                            'n' => board.set_piece(piece::KNIGHT, piece::BLACK, square_from_coords(x, y)),
+                            'b' => board.set_piece(piece::BISHOP, piece::BLACK, square_from_coords(x, y)),
+                            'r' => board.set_piece(piece::ROOK, piece::BLACK, square_from_coords(x, y)),
+                            'q' => board.set_piece(piece::QUEEN, piece::BLACK, square_from_coords(x, y)),
+                            'k' => board.set_piece(piece::KING, piece::BLACK, square_from_coords(x, y)),
                             _ => { return Err("Invalid FEN string") },
                         }
                         x += 1;
@@ -258,14 +247,14 @@ impl Board {
         for y in (0..8).rev() {
             let mut emptycount = 0;
             for x in 0..8 {
-                if 0 == self.occupied[util::square(x, y) as usize] {
+                if 0 == self.occupied[square_from_coords(x, y) as usize] {
                     emptycount += 1;
                 } else {
                     if emptycount > 0 { 
                         fen_string.push_str(&emptycount.to_string());
                         emptycount = 0;
                     };
-                    fen_string.push_str(occ_piece_code_to_str(self.occupied[util::square(x, y) as usize]));
+                    fen_string.push_str(Self::occ_piece_code_to_str(self.occupied[square_from_coords(x, y) as usize]));
                 }
             }
             if emptycount > 0 {
@@ -457,7 +446,7 @@ impl Board {
         println!("oh-oh")
     }
 
-    fn make_move(&mut self, mov: Move) {
+    pub fn make_move(&mut self, mov: Move) {
         // fail if no piece at origin square
         // debug_assert!(self.check_piece(mov.piece(), mov.color(), mov.from()));
         
@@ -505,7 +494,7 @@ impl Board {
             self.remove_piece(orig_piece, orig_color, orig_square);
             dest_piece = piece::PAWN;
             dest_color = 1 ^ orig_color;
-            self.remove_piece(dest_piece, dest_color, util::ep_capture_square(dest_square));
+            self.remove_piece(dest_piece, dest_color, ep_capture_square(dest_square));
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if is_capture {
             self.remove_piece(orig_piece, orig_color, orig_square);
@@ -569,7 +558,7 @@ impl Board {
         self.to_move ^= 1;
     }
 
-    fn unmake_move(&mut self) {
+    pub fn unmake_move(&mut self) {
         let entry = self.move_stack.pop();
         let last_move = entry.mov;
         let unmake_info = entry.store;
@@ -623,7 +612,7 @@ impl Board {
             self.set_piece(piece, color, orig_square);
         } else if last_move.is_capture_en_passant() {
             self.remove_piece(piece, color, dest_square);
-            self.set_piece(piece::PAWN, 1 ^ color, util::ep_capture_square(dest_square));
+            self.set_piece(piece::PAWN, 1 ^ color, ep_capture_square(dest_square));
             self.set_piece(piece, color, orig_square);
         } else if was_capture {
             self.replace_piece(piece, color, captured_piece, captured_color, dest_square);
@@ -720,7 +709,7 @@ mod tests {
     use std::fs::File;
     use std::io::{BufReader, BufRead};
     use std::path::Path;
-    use board::move_generator::MoveGenerator;
+    use move_generator::MoveGenerator;
 
     #[test]
     fn it_has_correct_piece_enum_values() {
@@ -892,9 +881,9 @@ mod tests {
     fn it_calculates_ep_squares_correctly() {
         for x in 0..8 {
             // white
-            assert_eq!(util::square(x, 3), util::ep_capture_square(util::square(x, 2)));
+            assert_eq!(square_from_coords(x, 3), ep_capture_square(square_from_coords(x, 2)));
             // black
-            assert_eq!(util::square(x, 4), util::ep_capture_square(util::square(x, 5)));
+            assert_eq!(square_from_coords(x, 4), ep_capture_square(square_from_coords(x, 5)));
         }
     }
 

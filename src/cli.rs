@@ -1,3 +1,5 @@
+extern crate indoc;
+
 use std::io;
 use std::io::Write;
 
@@ -9,7 +11,7 @@ fn print_version() {
 }
 
 fn print_help() {
-    let help = indoc!("
+    let help = indoc::indoc!("
         Known commands:
             exit, quit  Exit CLI mode
             help        This page

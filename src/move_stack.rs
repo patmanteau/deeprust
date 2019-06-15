@@ -1,5 +1,5 @@
 use std::fmt;
-use board::moves::{Move, UnmakeInfo};
+use moves::{Move, UnmakeInfo};
 
 #[derive(Copy, Clone, Debug)]
 pub struct MoveStackEntry {

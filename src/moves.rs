@@ -1,7 +1,7 @@
-use board::common::*;
+use common::*;
 use std::fmt;
-use board::types::{Sq};
-use board::san::SAN;
+use types::{Sq};
+use san::SAN;
 
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.

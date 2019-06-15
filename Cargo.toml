@@ -3,6 +3,10 @@ name = "deeprust"
 version = "0.1.0"
 authors = ["Patrick Haas <patmanteau@posteo.de>"]
 
+[[bin]]
+name = "deeprust"
+path = "src/main.rs"
+
 [dependencies]
 log = "0.4.6"
 simple-logging = "2.0.2"

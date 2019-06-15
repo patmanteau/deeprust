@@ -1,4 +1,4 @@
-use board::common::*;
+use common::*;
 
 pub type Bitboard = u64;
 

@@ -1,9 +1,9 @@
 use board::Board;
-use board::common::*;
-use board::bitboard::*;
-use board::moves::Move;
-use board::util::{bb, piece, squares};
-use board::types::Sq;
+use common::*;
+use bitboard::*;
+use moves::Move;
+use util::{bb, piece, squares};
+use types::Sq;
 
 pub struct MoveGenerator {
     
@@ -366,12 +366,12 @@ impl MoveGenerator {
         let qclear = 
             !occ.test_bit(squares::D1) && !occ.test_bit(squares::C1) &&
             !occ.test_bit(squares::B1) && !MoveGenerator::is_attacked(board, piece::WHITE, squares::D1) &&
-            board.castling[piece::WHITE as usize].test_bit(1);
+            board.castling()[piece::WHITE as usize].test_bit(1);
 
         let kclear = 
             !occ.test_bit(squares::F1) && !occ.test_bit(squares::G1) &&
             !MoveGenerator::is_attacked(board, piece::WHITE, squares::F1) &&
-            board.castling[piece::WHITE as usize].test_bit(0);
+            board.castling()[piece::WHITE as usize].test_bit(0);
 
         if qclear {
             moves.push(Move::new(squares::E1 as u32, squares::C1 as u32, Move::make_flags(false, false, true, true)));
@@ -394,12 +394,12 @@ impl MoveGenerator {
         let qclear = 
             !occ.test_bit(squares::D8) && !occ.test_bit(squares::C8) &&
             !occ.test_bit(squares::B8) && !MoveGenerator::is_attacked(board, piece::BLACK, squares::D8) &&
-            board.castling[piece::BLACK as usize].test_bit(1);
+            board.castling()[piece::BLACK as usize].test_bit(1);
 
         let kclear = 
             !occ.test_bit(squares::F8) && !occ.test_bit(squares::G8) &&
             !MoveGenerator::is_attacked(board, piece::BLACK, squares::F8) &&
-            board.castling[piece::BLACK as usize].test_bit(0);
+            board.castling()[piece::BLACK as usize].test_bit(0);
 
         if qclear {
             moves.push(Move::new(squares::E8 as u32, squares::C8 as u32, Move::make_flags(false, false, true, true)));
@@ -583,9 +583,9 @@ impl MoveGenerator {
 #[cfg(test)]
 mod tests {
     use uci::UCIInterface;
-    use board::move_generator::MoveGenerator;
+    use move_generator::MoveGenerator;
     use board::Board;
-    use board::util::{squares, piece};
+    use util::{squares, piece};
 
     #[test]
     fn it_generates_pawn_moves() {
