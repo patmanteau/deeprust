@@ -10,7 +10,7 @@ extern crate simple_logging;
 extern crate lazy_static;
 
 use clap::{Arg, App};
-use log::LogLevelFilter;
+use log::LevelFilter;
 
 mod uci;
 mod cli;
@@ -18,7 +18,7 @@ mod engine;
 mod bits;
 
 fn main() {
-    simple_logging::log_to_file("test.log", LogLevelFilter::Info);
+    simple_logging::log_to_file("test.log", LevelFilter::Info);
 
     let matches = App::new("deeprust")
         .version(env!("CARGO_PKG_VERSION"))
