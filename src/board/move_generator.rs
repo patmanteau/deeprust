@@ -4,7 +4,6 @@ use board::bitboard::*;
 use board::moves::Move;
 use board::util::{bb, piece, squares};
 use board::types::Sq;
-use bits;
 
 pub struct MoveGenerator {
     

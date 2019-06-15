@@ -721,7 +721,6 @@ mod tests {
     use std::io::{BufReader, BufRead};
     use std::path::Path;
     use board::move_generator::MoveGenerator;
-    use bits;
 
     #[test]
     fn it_has_correct_piece_enum_values() {

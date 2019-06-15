@@ -15,7 +15,6 @@ use log::LevelFilter;
 mod uci;
 mod cli;
 mod board;
-mod bits;
 
 fn main() {
     simple_logging::log_to_file("test.log", LevelFilter::Info);

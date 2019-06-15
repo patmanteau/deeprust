@@ -74,7 +74,6 @@ pub mod bb {
     #![allow(dead_code)]
     
     use std::fmt;
-    use bits;
     use lazy_static;
     use board::common::*;
     use board::bitboard::*;
