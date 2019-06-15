@@ -2,7 +2,7 @@
 extern crate indoc;
 extern crate clap;
 extern crate unicode_segmentation;
-extern crate bitwise;
+//extern crate bitwise;
 #[macro_use]
 extern crate log;
 extern crate simple_logging;
@@ -14,7 +14,7 @@ use log::LevelFilter;
 
 mod uci;
 mod cli;
-mod engine;
+mod board;
 mod bits;
 
 fn main() {

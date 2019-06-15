@@ -1,21 +1,23 @@
 use std::io;
 use std::io::Write;
 
-use engine;
-use engine::util;
-use engine::util::{bb, squares};
+use board;
+use board::bitboard::*;
+use board::util;
+use board::util::{bb, squares, piece};
+use board::move_generator::MoveGenerator;
 
 pub struct UCIInterface {
-    board: engine::board::Board,
-    gen: engine::move_generator::MoveGenerator,
+    pub board: board::Board,
+    gen: MoveGenerator,
     run: bool,
 }
 
 impl UCIInterface {
     pub fn new() -> UCIInterface {
         UCIInterface { 
-            board: engine::board::Board::new(),
-            gen: engine::move_generator::MoveGenerator::new(),
+            board: board::Board::new(),
+            gen: MoveGenerator::new(),
             run: true }
     }
 
@@ -25,9 +27,9 @@ impl UCIInterface {
 
         if let Some(postype) = tokens.next() {
             match postype {
-                &"startpos" => self.board = engine::board::Board::startpos(),
+                &"startpos" => self.board = board::Board::startpos(),
                 &"fen" => {
-                    let s = engine::board::Board::from_fen(cmd[1..7].join(" "));
+                    let s = board::Board::from_fen(cmd[1..7].join(" "));
                     match s {
                         Ok(b) => self.board = b,
                         Err(e) => {
@@ -37,7 +39,7 @@ impl UCIInterface {
                     }
                     for i in 0..6 { tokens.next(); }
                 }
-                &&_ => ()
+                &_ => ()
             }
         }
 
@@ -47,7 +49,7 @@ impl UCIInterface {
                     eprintln!("error: incomplete move");
                     return;
                 }
-                if let (Ok(from), Ok(to)) = (engine::san::SAN::square_str_to_index(&mov[0..2]), engine::san::SAN::square_str_to_index(&mov[2..4])) {
+                if let (Ok(from), Ok(to)) = (board::san::SAN::square_str_to_index(&mov[0..2]), board::san::SAN::square_str_to_index(&mov[2..4])) {
                     match self.board.input_move(from, to, None) {
                         Ok(_) => (),
                         Err(e) => eprintln!("error: could not make move: {}", e),
@@ -70,7 +72,7 @@ impl UCIInterface {
                 eprintln!("error: incomplete move");
                 return;
             }
-            if let (Ok(from), Ok(to)) = (engine::san::SAN::square_str_to_index(&mov[0..2]), engine::san::SAN::square_str_to_index(&mov[2..4])) {
+            if let (Ok(from), Ok(to)) = (board::san::SAN::square_str_to_index(&mov[0..2]), board::san::SAN::square_str_to_index(&mov[2..4])) {
                 match self.board.input_move(from, to, None) {
                     Ok(_) => (),
                     Err(e) => eprintln!("error: could not make move: {}", e),
@@ -93,7 +95,7 @@ impl UCIInterface {
         for y in (0..8).rev() {
             println!("+---+---+---+---+---+---+---+---+");
             for x in 0..8 {
-                print!("| {} ", engine::board::occ_piece_code_to_str(occ[util::square(x, y) as usize]));
+                print!("| {} ", board::occ_piece_code_to_str(occ[util::square(x, y) as usize]));
                 if x == 7 {
                     println!("| {}", y+1);
                 }
@@ -105,19 +107,21 @@ impl UCIInterface {
         }
         println!();
         println!("fen: {}", self.board.to_fen());
+        println!("w in check: {}, b in check: {}", MoveGenerator::is_in_check(&self.board, piece::WHITE), MoveGenerator::is_in_check(&self.board, piece::BLACK));
         if self.board.move_stack().len() > 0 {
             println!("last_move: {:#?}", self.board.move_stack().peek());
         }
     }
 
     fn cmd_bb(&self) {
-        util::bb::bb_fmt(bb::north_one(self.board.bb_pawns()));
+        let to_move = self.board.to_move();
+        util::bb::bb_fmt(bb::north_one(self.board.bb_pawns(to_move)));
         println!();
         util::bb::bb_fmt(self.board.bb_empty());
         println!();
         util::bb::bb_fmt(bb::BB_RANKS[0]);
         println!();
-        util::bb::bb_fmt(self.board.bb_knights() & self.board.bb_own());
+        util::bb::bb_fmt(self.board.bb_knights(to_move));
         println!();
         util::bb::bb_fmt(bb::BB_DIAG[squares::E4 as usize]);
         println!();
@@ -146,18 +150,29 @@ impl UCIInterface {
         util::bb::bb_fmt(0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111);
         println!();
         util::bb::bb_fmt(bb::file_attacks(squares::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111));
+        println!("file_attacks: \n{}", bb::file_attacks(squares::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111).to_debug_string());
     }
 
     fn cmd_moves(&mut self) {
-        self.gen.from_board(&self.board);
-        println!("count: {}", self.gen.moves().len());
-        for m in self.gen.moves().iter() {
+        let moves = MoveGenerator::from_board(&self.board);
+        println!("count: {}", moves.len());
+        for m in moves.iter() {
             println!("move: {:#?}", m);
         }
         
     }
 
-    fn parse(&mut self, cmd: String) {
+    fn cmd_perft(&mut self, cmd: Vec<&str>) {
+        let mut depth = 3;
+        if cmd.len() >= 1 { 
+            depth = cmd[0].parse::<u32>().unwrap();
+        }
+
+        let movecount = MoveGenerator::perft(&mut self.board, depth);
+        println!("perft result: {}", movecount);
+    }
+
+    pub fn parse(&mut self, cmd: String) {
         let tokens: Vec<&str> = cmd.trim().split_whitespace().collect();
 
         if tokens.len() > 0 {
@@ -168,6 +183,7 @@ impl UCIInterface {
                 "fen" => println!("{}", self.board.to_fen()),
                 "b" => self.cmd_b(),
                 "bb" => self.cmd_bb(),
+                "p" | "perft" => self.cmd_perft(tokens[1..].to_vec()),
                 "g" | "generate" => self.cmd_moves(),
                 "uci" => {
                     println!("id name deeprust v{}", env!("CARGO_PKG_VERSION"));
