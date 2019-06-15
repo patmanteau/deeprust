@@ -16,7 +16,6 @@ pub mod move_stack;
 pub mod moves;
 pub mod san;
 pub mod square;
-pub mod types;
 pub mod uci;
 pub mod util;
 

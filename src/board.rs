@@ -3,8 +3,8 @@ use std::fmt;
 use common::*;
 use bitboard::*;
 
-use types::{Sq};
-use util::{piece, squares, bb, square_from_coords, ep_capture_square};
+use square::{Square, SquarePrimitives};
+use util::{piece, squares, bb, ep_capture_square};
 use san::SAN;
 use moves::{Move, UnmakeInfo};
 use move_stack::{MoveStack, MoveStackEntry};
@@ -21,7 +21,7 @@ pub struct Board {
     occupied: [u32; 64],
     to_move: u32,
     castling: [u32; 2],
-    en_passant: Option<[Sq; 2]>,
+    en_passant: Option<[Square; 2]>,
     halfmoves: u32,
     fullmoves: u32,
     move_stack: MoveStack,
@@ -102,8 +102,8 @@ impl Board {
         let mut board = Board::new();
         // pawns
         for x in 0..8 {
-            board.set_piece(piece::PAWN, piece::WHITE, square_from_coords(x, 1));
-            board.set_piece(piece::PAWN, piece::BLACK, square_from_coords(x, 6));
+            board.set_piece(piece::PAWN, piece::WHITE, Square::from_coords(x, 1));
+            board.set_piece(piece::PAWN, piece::BLACK, Square::from_coords(x, 6));
         }
 
         // knights
@@ -154,18 +154,18 @@ impl Board {
                         y -= 1;
                     } else {
                         match chr {
-                            'P' => board.set_piece(piece::PAWN, piece::WHITE, square_from_coords(x, y)),
-                            'N' => board.set_piece(piece::KNIGHT, piece::WHITE, square_from_coords(x, y)),
-                            'B' => board.set_piece(piece::BISHOP, piece::WHITE, square_from_coords(x, y)),
-                            'R' => board.set_piece(piece::ROOK, piece::WHITE, square_from_coords(x, y)),
-                            'Q' => board.set_piece(piece::QUEEN, piece::WHITE, square_from_coords(x, y)),
-                            'K' => board.set_piece(piece::KING, piece::WHITE, square_from_coords(x, y)),
-                            'p' => board.set_piece(piece::PAWN, piece::BLACK, square_from_coords(x, y)),
-                            'n' => board.set_piece(piece::KNIGHT, piece::BLACK, square_from_coords(x, y)),
-                            'b' => board.set_piece(piece::BISHOP, piece::BLACK, square_from_coords(x, y)),
-                            'r' => board.set_piece(piece::ROOK, piece::BLACK, square_from_coords(x, y)),
-                            'q' => board.set_piece(piece::QUEEN, piece::BLACK, square_from_coords(x, y)),
-                            'k' => board.set_piece(piece::KING, piece::BLACK, square_from_coords(x, y)),
+                            'P' => board.set_piece(piece::PAWN, piece::WHITE, Square::from_coords(x, y)),
+                            'N' => board.set_piece(piece::KNIGHT, piece::WHITE, Square::from_coords(x, y)),
+                            'B' => board.set_piece(piece::BISHOP, piece::WHITE, Square::from_coords(x, y)),
+                            'R' => board.set_piece(piece::ROOK, piece::WHITE, Square::from_coords(x, y)),
+                            'Q' => board.set_piece(piece::QUEEN, piece::WHITE, Square::from_coords(x, y)),
+                            'K' => board.set_piece(piece::KING, piece::WHITE, Square::from_coords(x, y)),
+                            'p' => board.set_piece(piece::PAWN, piece::BLACK, Square::from_coords(x, y)),
+                            'n' => board.set_piece(piece::KNIGHT, piece::BLACK, Square::from_coords(x, y)),
+                            'b' => board.set_piece(piece::BISHOP, piece::BLACK, Square::from_coords(x, y)),
+                            'r' => board.set_piece(piece::ROOK, piece::BLACK, Square::from_coords(x, y)),
+                            'q' => board.set_piece(piece::QUEEN, piece::BLACK, Square::from_coords(x, y)),
+                            'k' => board.set_piece(piece::KING, piece::BLACK, Square::from_coords(x, y)),
                             _ => { return Err("Invalid FEN string") },
                         }
                         x += 1;
@@ -208,8 +208,9 @@ impl Board {
             if en_passant == "-" {
                 board.en_passant = None;
             } else {
-                match SAN::square_str_to_index(en_passant) {
-                    Ok(eps) => board.en_passant = Some([eps, squares::flip_square(eps)]),
+                //match SAN::square_str_to_index(en_passant) {
+                match Square::from_san_string(en_passant) {
+                    Ok(eps) => board.en_passant = Some([eps, eps.flipped()]),
                     Err(_) => return Err("Error parsing en passant field"),
                 }
             }
@@ -247,14 +248,14 @@ impl Board {
         for y in (0..8).rev() {
             let mut emptycount = 0;
             for x in 0..8 {
-                if 0 == self.occupied[square_from_coords(x, y) as usize] {
+                if 0 == self.occupied[Square::from_coords(x, y) as usize] {
                     emptycount += 1;
                 } else {
                     if emptycount > 0 { 
                         fen_string.push_str(&emptycount.to_string());
                         emptycount = 0;
                     };
-                    fen_string.push_str(Self::occ_piece_code_to_str(self.occupied[square_from_coords(x, y) as usize]));
+                    fen_string.push_str(Self::occ_piece_code_to_str(self.occupied[Square::from_coords(x, y) as usize]));
                 }
             }
             if emptycount > 0 {
@@ -287,8 +288,8 @@ impl Board {
         // en passant
         fen_string.push(' ');
         if let Some(eps) = self.en_passant {
-            let san = SAN::from_square(eps[0]);
-            fen_string.push_str(&san.s.to_string())
+            let san = eps[0].to_san_string();
+            fen_string.push_str(&san)
         } else {
             fen_string.push('-')
         }
@@ -374,7 +375,7 @@ impl Board {
     }
 
     #[inline]
-    pub fn en_passant(&self) -> Option<[Sq; 2]> {
+    pub fn en_passant(&self) -> Option<[Square; 2]> {
         self.en_passant
     }
 
@@ -388,7 +389,7 @@ impl Board {
     }
 
     #[inline]
-    fn get_piece_and_color(&self, square: Sq) -> (u32, u32) {
+    fn get_piece_and_color(&self, square: Square) -> (u32, u32) {
         let raw = self.occupied[square as usize];
         ((raw & 0x7), (raw >> 3) & 0x1)
     }
@@ -397,12 +398,12 @@ impl Board {
     //     self.bb[piece as usize] & self.bb[color as usize]
     // }
 
-    fn check_piece(&self, piece: u32, color: u32, square: Sq) -> bool {
+    fn check_piece(&self, piece: u32, color: u32, square: Square) -> bool {
         0 < self.occupied[square as usize]
     }
 
     #[inline]
-    fn set_piece(&mut self, piece: u32, color: u32, to: Sq) {
+    fn set_piece(&mut self, piece: u32, color: u32, to: Square) {
         // update unflipped bb
         self.bb[0][color as usize].set_bit(to);
         self.bb[0][piece as usize].set_bit(to);
@@ -416,7 +417,7 @@ impl Board {
     }
 
     #[inline]
-    fn remove_piece(&mut self, piece: u32, color: u32, from: Sq) {
+    fn remove_piece(&mut self, piece: u32, color: u32, from: Square) {
         // update unflipped bb
         self.bb[0][color as usize].clear_bit(from);
         self.bb[0][piece as usize].clear_bit(from);
@@ -430,7 +431,7 @@ impl Board {
     }
 
     #[inline]
-    fn replace_piece(&mut self, old_piece: u32, old_color: u32, new_piece: u32, new_color: u32, square: Sq) {
+    fn replace_piece(&mut self, old_piece: u32, old_color: u32, new_piece: u32, new_color: u32, square: Square) {
         // remove from unflipped bb
         self.bb[0][old_color as usize].clear_bit(square);
         self.bb[0][old_piece as usize].clear_bit(square);
@@ -501,8 +502,8 @@ impl Board {
             self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
         } else if mov.is_double_pawn_push() {
             self.remove_piece(orig_piece, orig_color, orig_square);
-            let new_ep_square = (dest_square as i32 - [8i32, -8i32][orig_color as usize]) as Sq;
-            self.en_passant = Some([new_ep_square, squares::flip_square(new_ep_square)]);
+            let new_ep_square = (dest_square as i32 - [8i32, -8i32][orig_color as usize]) as Square;
+            self.en_passant = Some([new_ep_square, new_ep_square.flipped()]);
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if mov.is_king_castle() {
             self.remove_piece(orig_piece, orig_color, orig_square);
@@ -581,7 +582,7 @@ impl Board {
         // En passant comes from the unmake struct
         self.en_passant = if unmake_info.ep_available() {
             let ep_square = unmake_info.ep_square();
-            Some([ep_square, squares::flip_square(ep_square)])
+            Some([ep_square, ep_square.flipped()])
         } else {
             None
         };
@@ -592,7 +593,7 @@ impl Board {
 
         let captured_piece = unmake_info.captured_piece();
         let captured_color = unmake_info.captured_color();
-        let was_capture = 0 != captured_piece;
+        let was_capture = 0 < captured_piece;
 
         
         // promotions change pieces
@@ -639,7 +640,7 @@ impl Board {
         self.to_move ^= 1;
     }
 
-    pub fn input_move(&mut self, orig: Sq, dest: Sq, promote_to: Option<u32>) -> Result<bool, &'static str> {
+    pub fn input_move(&mut self, orig: Square, dest: Square, promote_to: Option<u32>) -> Result<bool, &'static str> {
         let (mut is_capture, mut is_promotion, mut is_special_0, mut is_special_1) = (false, false, false, false);
         let (piece, color) = self.get_piece_and_color(orig);
         let (dest_piece, dest_color) = self.get_piece_and_color(dest);
@@ -657,7 +658,7 @@ impl Board {
         }
 
         // set flags for en passant capture
-        if piece == piece::PAWN && Some([dest, squares::flip_square(dest)]) == self.en_passant {
+        if piece == piece::PAWN && Some([dest, dest.flipped()]) == self.en_passant {
             is_capture = true;
             is_special_0 = true;
             is_special_1 = false;
@@ -881,9 +882,9 @@ mod tests {
     fn it_calculates_ep_squares_correctly() {
         for x in 0..8 {
             // white
-            assert_eq!(square_from_coords(x, 3), ep_capture_square(square_from_coords(x, 2)));
+            assert_eq!(Square::from_coords(x, 3), ep_capture_square(Square::from_coords(x, 2)));
             // black
-            assert_eq!(square_from_coords(x, 4), ep_capture_square(square_from_coords(x, 5)));
+            assert_eq!(Square::from_coords(x, 4), ep_capture_square(Square::from_coords(x, 5)));
         }
     }
 
@@ -993,8 +994,8 @@ mod tests {
     fn it_unwinds_its_move_stack() {
         {
             let fen = String::from("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
-            let mut board_orig = Board::from_fen(fen.clone()).unwrap();
-            let mut board = board_orig.clone();
+            let board_orig = Board::from_fen(fen.clone()).unwrap();
+            let mut board = Board::from_fen(fen.clone()).unwrap();
             MoveGenerator::perft(&mut board, 4);
             assert_eq!(fen, board.to_fen());
             assert!(board_orig.equals(&board));

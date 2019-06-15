@@ -1,7 +1,6 @@
 // Inspired by https://python-chess.readthedocs.io/en/latest/core.html
 #![allow(dead_code)]
-
-use types::{Sq, Word};
+use square::{Square, SquarePrimitives};
 
 pub mod piece {
     pub const WHITE: u32 = 0;
@@ -17,11 +16,11 @@ pub mod piece {
 
 pub mod squares {
     #![allow(dead_code)]
-    use types::{Sq};
+    use square::{Square, SquarePrimitives};
     
     macro_rules! msq {
         ($($id:ident,$val:expr),*) => {
-            $(pub const $id: Sq = $val;)*
+            $(pub const $id: Square = $val;)*
         };
     }
 
@@ -64,10 +63,10 @@ pub mod squares {
          0,  0,  0,  0,  0,  0,  0,  0, 
     ];
 
-    #[inline]
-    pub fn flip_square(square: Sq) -> Sq {
-        square ^ 56
-    }
+    // #[inline]
+    // pub fn flip_square(square: Square) -> Square {
+    //     square ^ 56
+    // }
 }
 
 pub mod bb {
@@ -78,7 +77,7 @@ pub mod bb {
     use common::*;
     use bitboard::*;
     use util::squares;
-    use types::{Sq, Word};
+    use square::{Square, SquarePrimitives};
 
     macro_rules! mbb_squares {
         ($($bb_id:ident,$square:expr),*) => {
@@ -317,28 +316,28 @@ pub mod bb {
     }
 
     /// See https://chessprogramming.wikispaces.com/Kindergarten+Bitboards
-    pub fn diagonal_attacks(square: Sq, mut occupied: Bitboard) -> Bitboard {
+    pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
         let diag_mask_ex = BB_DIAG[square as usize] ^ BB_SQUARES[square as usize];
         let north_fill = (diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
         occupied = north_fill.0 >> 58;
         diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
     }
 
-    pub fn anti_diagonal_attacks(square: Sq, mut occupied: Bitboard) -> Bitboard {
+    pub fn anti_diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
         let anti_diag_mask_ex = BB_ANTI_DIAG[square as usize] ^ BB_SQUARES[square as usize];
         let north_fill = (anti_diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
         occupied = north_fill.0 >> 58;
         anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
     }
 
-    pub fn rank_attacks(square: Sq, mut occupied: Bitboard) -> Bitboard {
+    pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
         let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
         let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
         occupied = north_fill.0 >> 58;
         rank_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
     }
 
-    pub fn file_attacks(square: Sq, mut occupied: Bitboard) -> Bitboard {
+    pub fn file_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
         let diag_c2h7: Bitboard = 0x0080402010080400;
         let diag_c7h2: Bitboard = diag_c2h7.swap_bytes();
         occupied = BB_FILE_A & (occupied >> (square & 0x7));
@@ -348,11 +347,11 @@ pub mod bb {
 }
 
 
-/// Calculates square index from file and rank index
-#[inline]
-pub fn square_from_coords(x: u32, y: u32) -> Sq {
-    (y << 3) + x
-}
+// /// Calculates square index from file and rank index
+// #[inline]
+// pub fn square_from_coords(x: u32, y: u32) -> Square {
+//     (y << 3) + x
+// }
 
 /// Returns the captured piece's square in an en passant capture
 /// 
@@ -366,7 +365,7 @@ pub fn square_from_coords(x: u32, y: u32) -> Sq {
 /// assert_eq!(squares::D4, lookup_ep_capture(squares::D3));
 /// ```
 #[inline]
-pub fn ep_capture_square(ep_square: Sq) -> Sq {
+pub fn ep_capture_square(ep_square: Square) -> Square {
     let table = [
          0,  0,  0,  0,  0,  0,  0,  0, 
          0,  0,  0,  0,  0,  0,  0,  0, 

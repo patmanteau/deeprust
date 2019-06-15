@@ -1,7 +1,7 @@
 use common::*;
 use std::fmt;
-use types::{Sq};
 use san::SAN;
+use square::{Square, SquarePrimitives};
 
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.
@@ -30,7 +30,7 @@ impl UnmakeInfo {
     /// Constructs a new UnmakeInfo
     #[inline]
     pub fn new(cap_piece: u32, cap_color: u32, castling: [u32; 2],
-               ep_square: Sq, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
+               ep_square: Square, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
         UnmakeInfo {
             m: ((halfmoves & 0x1ffff) << 15) |
                ((ep_available as u32 & 0x1) << 14) |
@@ -58,8 +58,8 @@ impl UnmakeInfo {
     }
 
     #[inline]
-    pub fn ep_square(&self) -> Sq {
-        self.m.extract_bits(8, 6)
+    pub fn ep_square(&self) -> Square {
+        self.m.extract_bits(8, 6) as Square
     }
 
     #[inline]
@@ -154,7 +154,7 @@ impl Move {
     /// Constructs a new Move
     #[inline]
     // pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
-    pub fn new(orig: Sq, dest: Sq, flags: u32) -> Move {
+    pub fn new(orig: Square, dest: Square, flags: u32) -> Move {
         Move {
             m: ((orig & 0x3f) << 10) | 
                (dest & 0x3f) | 
@@ -174,13 +174,13 @@ impl Move {
     // }
 
     #[inline]
-    pub fn set_orig(&mut self, from: Sq) {
+    pub fn set_orig(&mut self, from: Square) {
         self.m &= !0xfc00;
         self.m |= (from & 0x3f) << 10;
     }
 
     #[inline]
-    pub fn set_dest(&mut self, to: Sq) {
+    pub fn set_dest(&mut self, to: Square) {
         self.m &= !0x3f;
         self.m |= to & 0x3f;
     }
@@ -206,14 +206,14 @@ impl Move {
     }
 
     #[inline]
-    pub fn orig(&self) -> Sq {
+    pub fn orig(&self) -> Square {
         // (self.m >> 10) & 0x3f
-        self.m.extract_bits(10, 6) as Sq
+        self.m.extract_bits(10, 6) as Square
     }
 
     #[inline]
-    pub fn dest(&self) -> Sq {
-        (self.m & 0x3f) as Sq
+    pub fn dest(&self) -> Square {
+        (self.m & 0x3f) as Square
     }
 
     // #[inline]

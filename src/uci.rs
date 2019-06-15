@@ -6,6 +6,7 @@ use bitboard::*;
 use util::*;
 use san::*;
 use move_generator::MoveGenerator;
+use square::{Square, SquarePrimitives};
 
 pub struct UCIInterface {
     pub board: Board,
@@ -95,7 +96,7 @@ impl UCIInterface {
         for y in (0..8).rev() {
             println!("+---+---+---+---+---+---+---+---+");
             for x in 0..8 {
-                print!("| {} ", Board::occ_piece_code_to_str(occ[square_from_coords(x, y) as usize]));
+                print!("| {} ", Board::occ_piece_code_to_str(occ[Square::from_coords(x, y) as usize]));
                 if x == 7 {
                     println!("| {}", y+1);
                 }

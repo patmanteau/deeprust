@@ -1,10 +1,11 @@
 use common::*;
+use square::{Square, SquarePrimitives};
 
 pub type Bitboard = u64;
 
 pub trait BitboardPrimitives {
     fn count(self) -> u32;
-    fn scan(self) -> u32;
+    fn scan(self) -> Square;
     
     fn to_debug_string(&self) -> String;
 }
@@ -16,8 +17,8 @@ impl BitboardPrimitives for Bitboard {
     }
 
     #[inline]
-    fn scan(self) -> u32 {
-        self.trailing_zeros()
+    fn scan(self) -> Square {
+        self.trailing_zeros() as Square
     }
 
     fn to_debug_string(&self) -> String {

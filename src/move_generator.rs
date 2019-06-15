@@ -3,7 +3,7 @@ use common::*;
 use bitboard::*;
 use moves::Move;
 use util::{bb, piece, squares};
-use types::Sq;
+use square::{Square, SquarePrimitives};
 
 pub struct MoveGenerator {
     
@@ -45,7 +45,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    pub fn is_attacked(board: &Board, color: u32, target: Sq) -> bool {
+    pub fn is_attacked(board: &Board, color: u32, target: Square) -> bool {
         let occupied = board.bb_own(color) | board.bb_opponent(color);
 
         if 63 < target {
@@ -612,7 +612,8 @@ mod tests {
         assert_eq!(4, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
 
-        board = Board::from_fen(String::from("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1 moves d7d5")).unwrap();
+        board = Board::from_fen(String::from("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1")).unwrap();
+        board.input_move(squares::D7, squares::D5, None);
         assert_eq!(1, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(1, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(2, MoveGenerator::from_board(&board).len());
