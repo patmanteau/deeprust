@@ -29,10 +29,10 @@ impl BitboardPrimitives for Bitboard {
         for i in 0..8 {
             out.push_str("|");
             for j in 0..8 {
-                let s = 8 * i + j;
+                let s = 8 * (7-i) + j;
                 out.push_str(&format!("{:b}", self.test_bit(s) as usize));
             }
-            out.push_str(&format!("|{}\n", i + 1));
+            out.push_str(&format!("|{}\n", (7-i) + 1));
         }
         out.push_str("+--------+\n abcdefgh\n");
         out

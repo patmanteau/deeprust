@@ -115,41 +115,22 @@ impl UCIInterface {
 
     fn cmd_bb(&self) {
         let to_move = self.board.to_move();
-        util::bb::bb_fmt(bb::north_one(self.board.bb_pawns(to_move)));
-        println!();
-        util::bb::bb_fmt(self.board.bb_empty());
-        println!();
-        util::bb::bb_fmt(bb::BB_RANKS[0]);
-        println!();
-        util::bb::bb_fmt(self.board.bb_knights(to_move));
-        println!();
-        util::bb::bb_fmt(bb::BB_DIAG[squares::E4 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_ANTI_DIAG[squares::E4 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_BISHOP_ATTACKS[squares::E4 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_ROOK_ATTACKS[squares::E4 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_QUEEN_ATTACKS[squares::E4 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_RAYS_WEST[squares::E1 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_RAYS_EAST[squares::E1 as usize]);
-        println!();
-        util::bb::bb_fmt(bb::BB_KG_FILL_UP_ATTACKS[squares::H1 as usize][0b111111]);
-        println!();
-        util::bb::bb_fmt(bb::diagonal_attacks(squares::D4, 0b11111111_00000000_11111111));
-        println!();
-        util::bb::bb_fmt(bb::anti_diagonal_attacks(squares::D4, 0b11111111_00000000_11111111));
-        println!();
-        util::bb::bb_fmt(bb::rank_attacks(squares::D4, 0b11000011_11111111_00000000_11111111));
-        println!();
-        util::bb::bb_fmt(bb::file_attacks(squares::D4, 0b11000011_11111111_00000000_00000000_11000011_11111111_00000000_11111111));
-        println!();
-        util::bb::bb_fmt(0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111);
-        println!();
-        util::bb::bb_fmt(bb::file_attacks(squares::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111));
+        println!("{}", bb::north_one(self.board.bb_pawns(to_move)).to_debug_string());
+        println!("{}", self.board.bb_empty().to_debug_string());
+        println!("{}", bb::BB_RANKS[0].to_debug_string());
+        println!("{}", self.board.bb_knights(to_move).to_debug_string());
+        println!("{}", bb::BB_DIAG[squares::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_ANTI_DIAG[squares::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_BISHOP_ATTACKS[squares::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_ROOK_ATTACKS[squares::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_QUEEN_ATTACKS[squares::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_RAYS_WEST[squares::E1 as usize].to_debug_string());
+        println!("{}", bb::BB_RAYS_EAST[squares::E1 as usize].to_debug_string());
+        println!("{}", bb::BB_KG_FILL_UP_ATTACKS[squares::H1 as usize][0b111111].to_debug_string());
+        println!("{}", bb::diagonal_attacks(squares::D4, 0b11111111_00000000_11111111).to_debug_string());
+        println!("{}", bb::anti_diagonal_attacks(squares::D4, 0b11111111_00000000_11111111).to_debug_string());
+        println!("{}", bb::file_attacks(squares::D4, 0b11000011_11111111_00000000_00000000_11000011_11111111_00000000_11111111).to_debug_string());
+        println!("{}", 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111.to_debug_string());
         println!("file_attacks: \n{}", bb::file_attacks(squares::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111).to_debug_string());
     }
 
