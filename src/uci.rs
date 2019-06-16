@@ -3,7 +3,7 @@ use std::io::Write;
 
 use board::*;
 use bitboard::{self, Bitboard, BitboardPrimitives};
-use util::*;
+use piece;
 use move_generator::MoveGenerator;
 use square::{self, Square, SquarePrimitives};
 

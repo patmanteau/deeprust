@@ -14,6 +14,7 @@ pub mod common;
 pub mod move_generator;
 pub mod move_stack;
 pub mod moves;
+pub mod piece;
 pub mod square;
 pub mod uci;
 pub mod util;

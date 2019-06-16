@@ -2,7 +2,7 @@ use board::Board;
 use common::*;
 use bitboard::{self, Bitboard, BitboardPrimitives};
 use moves::Move;
-use util::piece;
+use piece;
 use square::{self, Square, SquarePrimitives};
 
 pub struct MoveGenerator {
@@ -585,7 +585,7 @@ mod tests {
     use uci::UCIInterface;
     use move_generator::MoveGenerator;
     use board::Board;
-    use util::piece;
+    use piece;
     use square;
 
     #[test]

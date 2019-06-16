@@ -4,7 +4,7 @@ use common::*;
 use bitboard::*;
 
 use square::{self, Square, SquarePrimitives};
-use util::{piece, bb, ep_capture_square};
+use piece;
 use moves::{Move, UnmakeInfo};
 use move_stack::{MoveStack, MoveStackEntry};
 
@@ -494,7 +494,7 @@ impl Board {
             self.remove_piece(orig_piece, orig_color, orig_square);
             dest_piece = piece::PAWN;
             dest_color = 1 ^ orig_color;
-            self.remove_piece(dest_piece, dest_color, ep_capture_square(dest_square));
+            self.remove_piece(dest_piece, dest_color, square::ep_capture_square(dest_square));
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if is_capture {
             self.remove_piece(orig_piece, orig_color, orig_square);
@@ -612,7 +612,7 @@ impl Board {
             self.set_piece(piece, color, orig_square);
         } else if last_move.is_capture_en_passant() {
             self.remove_piece(piece, color, dest_square);
-            self.set_piece(piece::PAWN, 1 ^ color, ep_capture_square(dest_square));
+            self.set_piece(piece::PAWN, 1 ^ color, square::ep_capture_square(dest_square));
             self.set_piece(piece, color, orig_square);
         } else if was_capture {
             self.replace_piece(piece, color, captured_piece, captured_color, dest_square);
@@ -882,9 +882,9 @@ mod tests {
     fn it_calculates_ep_squares_correctly() {
         for x in 0..8 {
             // white
-            assert_eq!(Square::from_coords(x, 3), ep_capture_square(Square::from_coords(x, 2)));
+            assert_eq!(Square::from_coords(x, 3), square::ep_capture_square(Square::from_coords(x, 2)));
             // black
-            assert_eq!(Square::from_coords(x, 4), ep_capture_square(Square::from_coords(x, 5)));
+            assert_eq!(Square::from_coords(x, 4), square::ep_capture_square(Square::from_coords(x, 5)));
         }
     }
 
