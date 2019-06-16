@@ -5,17 +5,16 @@ use square::{Square, SquarePrimitives};
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.
 #[derive(Copy, Clone)]
-pub struct UnmakeInfo {
-    // bit mask:
-    //
-    // 0..2:    Captured piece
-    // 3:       Captured piece color
-    // 4..7:    Castling rights before (KQkq)
-    // 8..13:   En passant square
-    // 14:      En passant available
-    // 15..31:  Half move clock
-    m: u32
-}
+pub struct UnmakeInfo(u32);
+// bit mask:
+//
+// 0..2:    Captured piece
+// 3:       Captured piece color
+// 4..7:    Castling rights before (KQkq)
+// 8..13:   En passant square
+// 14:      En passant available
+// 15..31:  Half move clock
+
 
 impl fmt::Debug for UnmakeInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -27,53 +26,54 @@ impl fmt::Debug for UnmakeInfo {
 impl UnmakeInfo {
 
     /// Constructs a new UnmakeInfo
-    //#[inline]
+    #[inline]
     pub fn new(cap_piece: u32, cap_color: u32, castling: [u32; 2],
                ep_square: Square, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
-        UnmakeInfo {
-            m: ((halfmoves & 0x1ffff) << 15) |
-               ((ep_available as u32 & 0x1) << 14) |
-               ((ep_square & 0x3f) << 8) |
-               ((castling[1] & 0x3) << 6) |
-               ((castling[0] & 0x3) << 4) |
-               ((cap_color & 0x1) << 3) |
-               ((cap_piece) & 0x7)
-        }
+        UnmakeInfo (
+            ((halfmoves & 0x1ffff) << 15) |
+            ((ep_available as u32 & 0x1) << 14) |
+            ((ep_square as u32 & 0x3f) << 8) |
+            ((castling[1] & 0x3) << 6) |
+            ((castling[0] & 0x3) << 4) |
+            ((cap_color & 0x1) << 3) |
+            ((cap_piece) & 0x7)
+        )
     }
 
-    //#[inline]
+    #[inline]
     pub fn captured_piece(&self) -> u32 {
-        self.m.extract_bits(0, 3)
+        self.0.extract_bits(0, 3)
     }
 
-    //#[inline]
+    #[inline]
     pub fn captured_color(&self) -> u32 {
-        self.m.extract_bits(3, 1)
+        self.0.extract_bits(3, 1)
     }
 
-    //#[inline]
+    #[inline]
     pub fn castling(&self) -> [u32; 2] {
-        [self.m.extract_bits(4, 2), self.m.extract_bits(6, 2)]
+        [self.0.extract_bits(4, 2), self.0.extract_bits(6, 2)]
     }
 
     #[inline]
     pub fn ep_square(&self) -> Square {
-        self.m.extract_bits(8, 6) as Square
+        self.0.extract_bits(8, 6) as Square
     }
 
     #[inline]
     pub fn ep_available(&self) -> bool {
-        self.m.test_bit(14)
+        self.0.test_bit(14)
     }
 
     #[inline]
     pub fn halfmoves(&self) -> u32 {
-        self.m.extract_bits(15, 16)
+        self.0.extract_bits(15, 16)
     }
 }
 
+pub type Movesize = u16;
 #[derive(Copy, Clone)]
-pub struct Move {
+pub struct Move(Movesize);
     // bit mask:
     // (from https://chessprogramming.wikispaces.com/Encoding+Moves)
     // 
@@ -107,7 +107,157 @@ pub struct Move {
     // /
     // 10..15:  Origin square
     
-    m: u32
+
+pub const MOV_QUIET: Movesize =       0b0000;
+pub const MOV_DPP: Movesize =         0b0001;
+
+pub const MOV_K_CASTLE: Movesize =    0b0010;
+pub const MOV_Q_CASTLE: Movesize =    0b0011;
+
+pub const MOV_CAPTURE: Movesize =     0b0100;
+pub const MOV_CAPTURE_EP: Movesize =  0b0101;
+
+pub const MOV_PROM_QUEEN: Movesize =  0b1011;
+pub const MOV_PROM_ROOK: Movesize =   0b1010;
+pub const MOV_PROM_BISHOP: Movesize = 0b1001;
+pub const MOV_PROM_KNIGHT: Movesize = 0b1000;
+
+impl Move {
+    /// Constructs a new Move
+    #[inline]
+    // pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
+    pub fn new(orig: Square, dest: Square, flags: u16) -> Self {
+        Move((((orig as u16) & 0x3f) << 10) | 
+              ((dest as u16) & 0x3f) | 
+              ((flags & 0xf) << 6))
+    }
+
+    #[inline]
+    pub fn make_flags(is_capture: bool, is_promotion: bool,
+                      is_special_0: bool, is_special_1: bool) -> u16 {
+        ((is_promotion as u16) << 3) | ((is_capture as u16) << 2) | ((is_special_1 as u16) << 1) | (is_special_0 as u16)
+    }
+
+    // #[inline]
+    // pub fn make_extended(captured_piece: u32, castling_before: u32) -> u32 {
+    //     (castling_before << 3) | ((captured_piece) & 0x7)
+    // }
+
+    #[inline]
+    pub fn set_orig(&mut self, from: Square) {
+        self.0 &= !0xfc00;
+        self.0 |= (from & 0x3f) << 10;
+    }
+
+    #[inline]
+    pub fn set_dest(&mut self, to: Square) {
+        self.0 &= !0x3f;
+        self.0 |= to & 0x3f;
+    }
+
+    #[inline]
+    pub fn toggle_special_0(&mut self) {
+        self.0.flip_bit(6);
+    }
+
+    #[inline]
+    pub fn toggle_special_1(&mut self) {
+        self.0.flip_bit(7);
+    }
+
+    #[inline]
+    pub fn toggle_capture(&mut self) {
+        self.0.flip_bit(8);
+    }
+
+    #[inline]
+    pub fn toggle_promotion(&mut self) {
+        self.0.flip_bit(9);
+    }
+
+    #[inline]
+    pub fn orig(&self) -> Square {
+        // (self.0.m >> 10) & 0x3f
+        self.0.extract_bits(10, 6) as Square
+    }
+
+    #[inline]
+    pub fn dest(&self) -> Square {
+        (self.0 & 0x3f) as Square
+    }
+
+    // #[inline]
+    // pub fn color(&self) -> u32 {
+    //     // ((self.0.m >> 16) & 0x1)
+    //     bits::extract_bits(self.0.m, 16, 1)
+    // }
+
+    // #[inline]
+    // pub fn piece(&self) -> u32 {
+    //     // ((self.0.m >> 17) & 0x7)
+    //     bits::extract_bits(self.0.m, 17, 3)
+    // }
+
+    #[inline]
+    pub fn special(&self) -> u16 {
+        self.0.extract_bits(6, 2)
+    }
+
+    #[inline]
+    pub fn has_special_0(&self) -> bool {
+        self.0.test_bit(6)
+    }
+
+    #[inline]
+    pub fn has_special_1(&self) -> bool {
+        self.0.test_bit(7)
+    }
+    
+    #[inline]
+    pub fn is_quiet(&self) -> bool {
+        MOV_QUIET == self.0.extract_bits(6, 4)
+    }
+
+    #[inline]
+    pub fn is_capture(&self) -> bool {
+        self.0.test_bit(8)
+    }
+
+    #[inline]
+    pub fn is_capture_en_passant(&self) -> bool {
+        MOV_CAPTURE_EP == self.0.extract_bits(6, 4)
+    }
+
+    #[inline]
+    pub fn is_double_pawn_push(&self) -> bool {
+        MOV_DPP == self.0.extract_bits(6, 4)
+    }
+
+    #[inline]
+    pub fn is_promotion(&self) -> bool {
+        self.0.test_bit(9)
+    }
+
+    #[inline]
+    pub fn is_king_castle(&self) -> bool {
+        MOV_K_CASTLE == self.0.extract_bits(6, 4)
+    }
+
+    #[inline]
+    pub fn is_queen_castle(&self) -> bool {
+        MOV_Q_CASTLE == self.0.extract_bits(6, 4)
+    }
+
+    // #[inline]
+    // pub fn captured_piece(&self) -> u32 {
+    //     // ((self.0.m >> 20) & 0x7)
+    //     self.0.extract_bits(20, 3)
+    // }
+
+    // #[inline]
+    // pub fn castling_before(&self) -> u32 {
+    //     self.0.extract_bits(23, 4)
+    // }
 }
 
 impl fmt::Debug for Move {
@@ -122,20 +272,6 @@ impl fmt::Debug for Move {
     }
 }
 
-pub const MOV_QUIET: u32 =       0b0000;
-pub const MOV_DPP: u32 =         0b0001;
-
-pub const MOV_K_CASTLE: u32 =    0b0010;
-pub const MOV_Q_CASTLE: u32 =    0b0011;
-
-pub const MOV_CAPTURE: u32 =     0b0100;
-pub const MOV_CAPTURE_EP: u32 =  0b0101;
-
-pub const MOV_PROM_QUEEN: u32 =  0b1011;
-pub const MOV_PROM_ROOK: u32 =   0b1010;
-pub const MOV_PROM_BISHOP: u32 = 0b1001;
-pub const MOV_PROM_KNIGHT: u32 = 0b1000;
-
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}{}",
@@ -148,148 +284,7 @@ impl fmt::Display for Move {
     }
 }
 
-// TODO: Make Move a trait
-impl Move {
-    /// Constructs a new Move
-    #[inline]
-    // pub fn new(orig: u32, dest: u32, color: u32, piece: u32, flags: u32, extended: u32) -> Move {
-    pub fn new(orig: Square, dest: Square, flags: u32) -> Move {
-        Move {
-            m: ((orig & 0x3f) << 10) | 
-               (dest & 0x3f) | 
-               ((flags & 0xf) << 6),
-        }
-    }
 
-    #[inline]
-    pub fn make_flags(is_capture: bool, is_promotion: bool,
-                      is_special_0: bool, is_special_1: bool) -> u32 {
-        ((is_promotion as u32) << 3) | ((is_capture as u32) << 2) | ((is_special_1 as u32) << 1) | (is_special_0 as u32)
-    }
-
-    // #[inline]
-    // pub fn make_extended(captured_piece: u32, castling_before: u32) -> u32 {
-    //     (castling_before << 3) | ((captured_piece) & 0x7)
-    // }
-
-    #[inline]
-    pub fn set_orig(&mut self, from: Square) {
-        self.m &= !0xfc00;
-        self.m |= (from & 0x3f) << 10;
-    }
-
-    #[inline]
-    pub fn set_dest(&mut self, to: Square) {
-        self.m &= !0x3f;
-        self.m |= to & 0x3f;
-    }
-
-    #[inline]
-    pub fn toggle_special_0(&mut self) {
-        self.m.flip_bit(6);
-    }
-
-    #[inline]
-    pub fn toggle_special_1(&mut self) {
-        self.m.flip_bit(7);
-    }
-
-    #[inline]
-    pub fn toggle_capture(&mut self) {
-        self.m.flip_bit(8);
-    }
-
-    #[inline]
-    pub fn toggle_promotion(&mut self) {
-        self.m.flip_bit(9);
-    }
-
-    #[inline]
-    pub fn orig(&self) -> Square {
-        // (self.m >> 10) & 0x3f
-        self.m.extract_bits(10, 6) as Square
-    }
-
-    #[inline]
-    pub fn dest(&self) -> Square {
-        (self.m & 0x3f) as Square
-    }
-
-    // #[inline]
-    // pub fn color(&self) -> u32 {
-    //     // ((self.m >> 16) & 0x1)
-    //     bits::extract_bits(self.m, 16, 1)
-    // }
-
-    // #[inline]
-    // pub fn piece(&self) -> u32 {
-    //     // ((self.m >> 17) & 0x7)
-    //     bits::extract_bits(self.m, 17, 3)
-    // }
-
-    #[inline]
-    pub fn special(&self) -> u32 {
-        self.m.extract_bits(6, 2)
-    }
-
-    #[inline]
-    pub fn has_special_0(&self) -> bool {
-        self.m.test_bit(6)
-    }
-
-    #[inline]
-    pub fn has_special_1(&self) -> bool {
-        self.m.test_bit(7)
-    }
-    
-    #[inline]
-    pub fn is_quiet(&self) -> bool {
-        MOV_QUIET == self.m.extract_bits(6, 4)
-    }
-
-    #[inline]
-    pub fn is_capture(&self) -> bool {
-        self.m.test_bit(8)
-    }
-
-    #[inline]
-    pub fn is_capture_en_passant(&self) -> bool {
-        MOV_CAPTURE_EP == self.m.extract_bits(6, 4)
-    }
-
-    #[inline]
-    pub fn is_double_pawn_push(&self) -> bool {
-        MOV_DPP == self.m.extract_bits(6, 4)
-    }
-
-    #[inline]
-    pub fn is_promotion(&self) -> bool {
-        self.m.test_bit(9)
-    }
-
-    #[inline]
-    pub fn is_king_castle(&self) -> bool {
-        MOV_K_CASTLE == self.m.extract_bits(6, 4)
-    }
-
-    #[inline]
-    pub fn is_queen_castle(&self) -> bool {
-        MOV_Q_CASTLE == self.m.extract_bits(6, 4)
-    }
-
-    // #[inline]
-    // pub fn captured_piece(&self) -> u32 {
-    //     // ((self.m >> 20) & 0x7)
-    //     self.m.extract_bits(20, 3)
-    // }
-
-    // #[inline]
-    // pub fn castling_before(&self) -> u32 {
-    //     self.m.extract_bits(23, 4)
-    // }
-
-    
-}
 
 #[cfg(test)]
 mod tests {

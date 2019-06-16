@@ -3,8 +3,8 @@ use std::fmt;
 use common::*;
 use bitboard::*;
 
-use square::{Square, SquarePrimitives};
-use util::{piece, squares, bb, ep_capture_square};
+use square::{self, Square, SquarePrimitives};
+use util::{piece, bb, ep_capture_square};
 use moves::{Move, UnmakeInfo};
 use move_stack::{MoveStack, MoveStackEntry};
 
@@ -106,30 +106,30 @@ impl Board {
         }
 
         // knights
-        board.set_piece(piece::KNIGHT, piece::WHITE, squares::B1);
-        board.set_piece(piece::KNIGHT, piece::WHITE, squares::G1);
-        board.set_piece(piece::KNIGHT, piece::BLACK, squares::B8);
-        board.set_piece(piece::KNIGHT, piece::BLACK, squares::G8);
+        board.set_piece(piece::KNIGHT, piece::WHITE, square::B1);
+        board.set_piece(piece::KNIGHT, piece::WHITE, square::G1);
+        board.set_piece(piece::KNIGHT, piece::BLACK, square::B8);
+        board.set_piece(piece::KNIGHT, piece::BLACK, square::G8);
 
         // bishops
-        board.set_piece(piece::BISHOP, piece::WHITE, squares::C1);
-        board.set_piece(piece::BISHOP, piece::WHITE, squares::F1);
-        board.set_piece(piece::BISHOP, piece::BLACK, squares::C8);
-        board.set_piece(piece::BISHOP, piece::BLACK, squares::F8);
+        board.set_piece(piece::BISHOP, piece::WHITE, square::C1);
+        board.set_piece(piece::BISHOP, piece::WHITE, square::F1);
+        board.set_piece(piece::BISHOP, piece::BLACK, square::C8);
+        board.set_piece(piece::BISHOP, piece::BLACK, square::F8);
 
         // rooks
-        board.set_piece(piece::ROOK, piece::WHITE, squares::A1);
-        board.set_piece(piece::ROOK, piece::WHITE, squares::H1);
-        board.set_piece(piece::ROOK, piece::BLACK, squares::A8);
-        board.set_piece(piece::ROOK, piece::BLACK, squares::H8);
+        board.set_piece(piece::ROOK, piece::WHITE, square::A1);
+        board.set_piece(piece::ROOK, piece::WHITE, square::H1);
+        board.set_piece(piece::ROOK, piece::BLACK, square::A8);
+        board.set_piece(piece::ROOK, piece::BLACK, square::H8);
 
         // queens
-        board.set_piece(piece::QUEEN, piece::WHITE, squares::D1);
-        board.set_piece(piece::QUEEN, piece::BLACK, squares::D8);
+        board.set_piece(piece::QUEEN, piece::WHITE, square::D1);
+        board.set_piece(piece::QUEEN, piece::BLACK, square::D8);
 
         // kings
-        board.set_piece(piece::KING, piece::WHITE, squares::E1);
-        board.set_piece(piece::KING, piece::BLACK, squares::E8);
+        board.set_piece(piece::KING, piece::WHITE, square::E1);
+        board.set_piece(piece::KING, piece::BLACK, square::E8);
 
         board.castling = [3, 3];
         board
@@ -480,7 +480,7 @@ impl Board {
 
         // promotions change pieces
         if mov.is_promotion() { 
-            let prom_piece = mov.special() + 3;
+            let prom_piece = mov.special() as u32 + 3;
             self.remove_piece(orig_piece, orig_color, orig_square);
             if is_capture {
                 self.replace_piece(dest_piece, dest_color, prom_piece, orig_color, dest_square);
@@ -891,28 +891,28 @@ mod tests {
     fn it_makes_moves() {
         if let Ok(mut board) = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")) {
             assert_eq!(0, board.move_stack.len());
-            board.input_move(squares::D7, squares::D6, None);
+            board.input_move(square::D7, square::D6, None);
             assert_eq!(1, board.move_stack.len());
             assert_eq!(None, board.en_passant);
             let move_stack_entry = board.move_stack.peek();
-            assert_eq!(move_stack_entry.mov.orig(), squares::D7);
-            assert_eq!(move_stack_entry.mov.dest(), squares::D6);
+            assert_eq!(move_stack_entry.mov.orig(), square::D7);
+            assert_eq!(move_stack_entry.mov.dest(), square::D6);
 
             assert!(move_stack_entry.store.ep_available());
-            assert_eq!(squares::D3, move_stack_entry.store.ep_square());
+            assert_eq!(square::D3, move_stack_entry.store.ep_square());
         }
 
         let mut board = Board::from_fen(String::from("8/3p4/8/4P/8/8/8/8 b - - 0 1")).unwrap();
-        board.input_move(squares::D7, squares::D5, None);
-        board.input_move(squares::E5, squares::D6, None);
-        assert_eq!(0, board.occupied[squares::D5 as usize]);
+        board.input_move(square::D7, square::D5, None);
+        board.input_move(square::E5, square::D6, None);
+        assert_eq!(0, board.occupied[square::D5 as usize]);
     }
 
     #[test]
     fn it_unmakes_moves() {
         if let Ok(mut board) = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::D7, squares::D5, None);
+            board.input_move(square::D7, square::D5, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
@@ -921,28 +921,28 @@ mod tests {
         // castling, king moves
         if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::E1, squares::G1, None);
+            board.input_move(square::E1, square::G1, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
         }
         if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::E1, squares::C1, None);
+            board.input_move(square::E1, square::C1, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
         }
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::E8, squares::G8, None);
+            board.input_move(square::E8, square::G8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
         }
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::E8, squares::C8, None);
+            board.input_move(square::E8, square::C8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
@@ -951,28 +951,28 @@ mod tests {
         // castling, rook moves
         if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::A1, squares::B1, None);
+            board.input_move(square::A1, square::B1, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
         }
         if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::H1, squares::G1, None);
+            board.input_move(square::H1, square::G1, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
         }
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::A8, squares::B8, None);
+            board.input_move(square::A8, square::B8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
         }
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::H8, squares::G8, None);
+            board.input_move(square::H8, square::G8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
@@ -980,8 +980,8 @@ mod tests {
 
         if let Ok(mut board) = Board::from_fen(String::from("8/3p4/8/4P/8/8/8/8 b - - 0 1")) {
             let before_unmake = board.to_fen();
-            board.input_move(squares::D7, squares::D5, None);
-            board.input_move(squares::E5, squares::D6, None);
+            board.input_move(square::D7, square::D5, None);
+            board.input_move(square::E5, square::D6, None);
             board.undo_move();
             board.undo_move();
             let after_unmake = board.to_fen();

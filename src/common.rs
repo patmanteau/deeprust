@@ -60,5 +60,6 @@ macro_rules!  twiddle_impl {
     };
 }
 
+twiddle_impl!(u16);
 twiddle_impl!(u32);
 twiddle_impl!(u64);

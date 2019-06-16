@@ -5,7 +5,7 @@ use board::*;
 use bitboard::*;
 use util::*;
 use move_generator::MoveGenerator;
-use square::{Square, SquarePrimitives};
+use square::{self, Square, SquarePrimitives};
 
 pub struct UCIInterface {
     pub board: Board,
@@ -119,19 +119,19 @@ impl UCIInterface {
         println!("{}", self.board.bb_empty().to_debug_string());
         println!("{}", bb::BB_RANKS[0].to_debug_string());
         println!("{}", self.board.bb_knights(to_move).to_debug_string());
-        println!("{}", bb::BB_DIAG[squares::E4 as usize].to_debug_string());
-        println!("{}", bb::BB_ANTI_DIAG[squares::E4 as usize].to_debug_string());
-        println!("{}", bb::BB_BISHOP_ATTACKS[squares::E4 as usize].to_debug_string());
-        println!("{}", bb::BB_ROOK_ATTACKS[squares::E4 as usize].to_debug_string());
-        println!("{}", bb::BB_QUEEN_ATTACKS[squares::E4 as usize].to_debug_string());
-        println!("{}", bb::BB_RAYS_WEST[squares::E1 as usize].to_debug_string());
-        println!("{}", bb::BB_RAYS_EAST[squares::E1 as usize].to_debug_string());
-        println!("{}", bb::BB_KG_FILL_UP_ATTACKS[squares::H1 as usize][0b111111].to_debug_string());
-        println!("{}", bb::diagonal_attacks(squares::D4, 0b11111111_00000000_11111111).to_debug_string());
-        println!("{}", bb::anti_diagonal_attacks(squares::D4, 0b11111111_00000000_11111111).to_debug_string());
-        println!("{}", bb::file_attacks(squares::D4, 0b11000011_11111111_00000000_00000000_11000011_11111111_00000000_11111111).to_debug_string());
+        println!("{}", bb::BB_DIAG[square::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_ANTI_DIAG[square::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_BISHOP_ATTACKS[square::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_ROOK_ATTACKS[square::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_QUEEN_ATTACKS[square::E4 as usize].to_debug_string());
+        println!("{}", bb::BB_RAYS_WEST[square::E1 as usize].to_debug_string());
+        println!("{}", bb::BB_RAYS_EAST[square::E1 as usize].to_debug_string());
+        println!("{}", bb::BB_KG_FILL_UP_ATTACKS[square::H1 as usize][0b111111].to_debug_string());
+        println!("{}", bb::diagonal_attacks(square::D4, 0b11111111_00000000_11111111).to_debug_string());
+        println!("{}", bb::anti_diagonal_attacks(square::D4, 0b11111111_00000000_11111111).to_debug_string());
+        println!("{}", bb::file_attacks(square::D4, 0b11000011_11111111_00000000_00000000_11000011_11111111_00000000_11111111).to_debug_string());
         println!("{}", 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111.to_debug_string());
-        println!("file_attacks: \n{}", bb::file_attacks(squares::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111).to_debug_string());
+        println!("file_attacks: \n{}", bb::file_attacks(square::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111).to_debug_string());
     }
 
     fn cmd_moves(&mut self) {

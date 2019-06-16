@@ -2,8 +2,8 @@ use board::Board;
 use common::*;
 use bitboard::*;
 use moves::Move;
-use util::{bb, piece, squares};
-use square::{Square, SquarePrimitives};
+use util::{bb, piece};
+use square::{self, Square, SquarePrimitives};
 
 pub struct MoveGenerator {
     
@@ -193,7 +193,7 @@ impl MoveGenerator {
             }
 
             if 0 != double_push {
-                let to = double_push.scan() as u32;
+                let to = double_push.scan() as u16;
                 moves.push(Move::new(from, to, Move::make_flags(false, false, true, false)));
             }            
             pawns.clear_bit(from);
@@ -359,25 +359,25 @@ impl MoveGenerator {
         let occ = board.bb_own(piece::WHITE) | board.bb_opponent(piece::WHITE);
         let mut moves = Vec::with_capacity(16);
         
-        if MoveGenerator::is_attacked(board, piece::WHITE, squares::E1) {
+        if MoveGenerator::is_attacked(board, piece::WHITE, square::E1) {
             return moves
         }
 
         let qclear = 
-            !occ.test_bit(squares::D1) && !occ.test_bit(squares::C1) &&
-            !occ.test_bit(squares::B1) && !MoveGenerator::is_attacked(board, piece::WHITE, squares::D1) &&
+            !occ.test_bit(square::D1) && !occ.test_bit(square::C1) &&
+            !occ.test_bit(square::B1) && !MoveGenerator::is_attacked(board, piece::WHITE, square::D1) &&
             board.castling()[piece::WHITE as usize].test_bit(1);
 
         let kclear = 
-            !occ.test_bit(squares::F1) && !occ.test_bit(squares::G1) &&
-            !MoveGenerator::is_attacked(board, piece::WHITE, squares::F1) &&
+            !occ.test_bit(square::F1) && !occ.test_bit(square::G1) &&
+            !MoveGenerator::is_attacked(board, piece::WHITE, square::F1) &&
             board.castling()[piece::WHITE as usize].test_bit(0);
 
         if qclear {
-            moves.push(Move::new(squares::E1 as u32, squares::C1 as u32, Move::make_flags(false, false, true, true)));
+            moves.push(Move::new(square::E1, square::C1, Move::make_flags(false, false, true, true)));
         }
         if kclear {
-            moves.push(Move::new(squares::E1 as u32, squares::G1 as u32, Move::make_flags(false, false, false, true)));
+            moves.push(Move::new(square::E1, square::G1, Move::make_flags(false, false, false, true)));
         }
         moves
     }
@@ -387,25 +387,25 @@ impl MoveGenerator {
         let occ = board.bb_own(piece::BLACK) | board.bb_opponent(piece::BLACK);
         let mut moves = Vec::with_capacity(16);
 
-        if MoveGenerator::is_attacked(board, piece::BLACK, squares::E8) {
+        if MoveGenerator::is_attacked(board, piece::BLACK, square::E8) {
             return moves
         }
 
         let qclear = 
-            !occ.test_bit(squares::D8) && !occ.test_bit(squares::C8) &&
-            !occ.test_bit(squares::B8) && !MoveGenerator::is_attacked(board, piece::BLACK, squares::D8) &&
+            !occ.test_bit(square::D8) && !occ.test_bit(square::C8) &&
+            !occ.test_bit(square::B8) && !MoveGenerator::is_attacked(board, piece::BLACK, square::D8) &&
             board.castling()[piece::BLACK as usize].test_bit(1);
 
         let kclear = 
-            !occ.test_bit(squares::F8) && !occ.test_bit(squares::G8) &&
-            !MoveGenerator::is_attacked(board, piece::BLACK, squares::F8) &&
+            !occ.test_bit(square::F8) && !occ.test_bit(square::G8) &&
+            !MoveGenerator::is_attacked(board, piece::BLACK, square::F8) &&
             board.castling()[piece::BLACK as usize].test_bit(0);
 
         if qclear {
-            moves.push(Move::new(squares::E8 as u32, squares::C8 as u32, Move::make_flags(false, false, true, true)));
+            moves.push(Move::new(square::E8, square::C8, Move::make_flags(false, false, true, true)));
         }
         if kclear {
-            moves.push(Move::new(squares::E8 as u32, squares::G8 as u32, Move::make_flags(false, false, false, true)));
+            moves.push(Move::new(square::E8, square::G8, Move::make_flags(false, false, false, true)));
         }
         moves
     }
@@ -585,14 +585,15 @@ mod tests {
     use uci::UCIInterface;
     use move_generator::MoveGenerator;
     use board::Board;
-    use util::{squares, piece};
+    use util::piece;
+    use square;
 
     #[test]
     fn it_generates_pawn_moves() {
         let mut board = Board::startpos();
         
         assert_eq!(16, MoveGenerator::gen_white_pawn_pushes(&board).len());
-        board.input_move(squares::E2, squares::E4, None);
+        board.input_move(square::E2, square::E4, None);
         assert_eq!(16, MoveGenerator::gen_black_pawn_pushes(&board).len());
 
         board = Board::from_fen(String::from("8/PPPPPPPP/8/8/8/8/8/8 w - - 0 1")).unwrap();
@@ -613,7 +614,7 @@ mod tests {
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
 
         board = Board::from_fen(String::from("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1")).unwrap();
-        board.input_move(squares::D7, squares::D5, None);
+        board.input_move(square::D7, square::D5, None);
         assert_eq!(1, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(1, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(2, MoveGenerator::from_board(&board).len());
@@ -623,12 +624,12 @@ mod tests {
     fn it_generates_king_moves() {
         // position startpos moves e2e4 e7e5 g1f3 g8f6 f1d3 f8d6
         let mut board = Board::startpos();
-        board.input_move(squares::E2, squares::E4, None);
-        board.input_move(squares::E7, squares::E5, None);
-        board.input_move(squares::G1, squares::F3, None);
-        board.input_move(squares::G8, squares::F6, None);
-        board.input_move(squares::F1, squares::D3, None);
-        board.input_move(squares::F8, squares::D6, None);
+        board.input_move(square::E2, square::E4, None);
+        board.input_move(square::E7, square::E5, None);
+        board.input_move(square::G1, square::F3, None);
+        board.input_move(square::G8, square::F6, None);
+        board.input_move(square::F1, square::D3, None);
+        board.input_move(square::F8, square::D6, None);
         assert_eq!(2, MoveGenerator::gen_king_moves(&board, piece::WHITE).len());
         assert_eq!(1, MoveGenerator::gen_wking_castle(&board).len());
     }
