@@ -1,3 +1,4 @@
+use std::fmt;
 use board::Board;
 use common::*;
 use bitboard::{self, Bitboard, BitboardPrimitives};
@@ -5,6 +6,42 @@ use moves::Move;
 use piece;
 use color::{self, Color};
 use square::{self, Square, SquarePrimitives};
+
+pub struct PerftContext {
+    nodes: u128,
+    captures: u128,
+    ep: u128,
+    castles: u128,
+    promotions: u128,
+    checks: u128,
+    disco_checks: u128,
+    double_checks: u128,
+    checkmates: u128,
+}
+
+impl PerftContext {
+    pub fn new() -> PerftContext {
+        PerftContext {
+            nodes: 0,
+            captures: 0,
+            ep: 0,
+            castles: 0,
+            promotions: 0,
+            checks: 0,
+            disco_checks: 0,
+            double_checks: 0,
+            checkmates: 0,
+        }
+    }
+}
+
+impl fmt::Display for PerftContext {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Nodes: {}, Captures: {}, EP: {}, Castles: {}, Promos: {}, Checks: {}, Discochecks: {}, Double checks: {}, Checkmates: {}", 
+                self.nodes, self.captures, self.ep, self.castles, self.promotions,
+                self.checks, self.disco_checks, self.double_checks, self.checkmates)
+    }
+}
 
 pub struct MoveGenerator {
     
@@ -17,9 +54,23 @@ impl MoveGenerator {
         }
     }
 
-    pub fn perft(board: &mut Board, depth: u32) -> u64 {
+    pub fn perft(board: &mut Board, ctx: &mut PerftContext, depth: u32) {
         if depth == 0 {
-            return 1;
+            ctx.nodes += 1;
+            if board.move_stack().len() > 0 {
+                let mov = board.move_stack().peek().mov;
+                if mov.is_capture() { ctx.captures += 1; }
+                if mov.is_capture_en_passant() { ctx.ep += 1; }
+                if mov.is_king_castle() || mov.is_queen_castle() { ctx.castles += 1; }
+                if mov.is_promotion() { ctx.promotions += 1; }
+            }
+            if MoveGenerator::is_in_check(board, board.to_move()) { 
+                ctx.checks += 1;
+                if MoveGenerator::is_mate(board, board.to_move()) {
+                    ctx.checkmates += 1;
+                }
+            }
+            return;
         }
 
         let mut nodes = 0u64;
@@ -27,16 +78,29 @@ impl MoveGenerator {
         for mov in moves.iter() {
             board.make_move(*mov);
             if !MoveGenerator::is_in_check(board, 1 ^ board.to_move()) {
-                nodes += MoveGenerator::perft(board, depth - 1);
+                MoveGenerator::perft(board, ctx, depth - 1);
             }
             board.unmake_move();
         }
-
-        nodes
     }
 
     fn break_helper() {
         let a = 0;
+    }
+
+    #[inline]
+    pub fn is_mate(board: &mut Board, color: Color) -> bool {
+        let moves = MoveGenerator::from_board(board);
+        for mov in moves.iter() {
+            board.make_move(*mov);
+            if !MoveGenerator::is_in_check(board, 1 ^ board.to_move()) {
+                board.unmake_move();
+                return false;
+            } else {
+                board.unmake_move();
+            }
+        }
+        true
     }
 
     #[inline]

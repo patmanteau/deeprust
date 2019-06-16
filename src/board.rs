@@ -761,7 +761,7 @@ mod tests {
     use std::fs::File;
     use std::io::{BufReader, BufRead};
     use std::path::Path;
-    use move_generator::MoveGenerator;
+    use move_generator::{MoveGenerator, PerftContext};
     use bitboard as bb;
 
     #[test]
@@ -1046,14 +1046,16 @@ mod tests {
             let fen = String::from("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
             let board_orig = Board::from_fen(fen.clone()).unwrap();
             let mut board = Board::from_fen(fen.clone()).unwrap();
-            MoveGenerator::perft(&mut board, 4);
+            let mut ctx = PerftContext::new();
+            MoveGenerator::perft(&mut board, &mut ctx, 4);
             assert_eq!(fen, board.to_fen());
             assert!(board_orig.equals(&board));
         }
         {
             let mut board_orig = Board::startpos();
             let mut board = board_orig.clone();
-            MoveGenerator::perft(&mut board, 4);
+            let mut ctx = PerftContext::new();
+            MoveGenerator::perft(&mut board, &mut ctx, 4);
             assert!(board_orig.equals(&board));
         }
     }

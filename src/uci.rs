@@ -5,7 +5,7 @@ use board::*;
 use bitboard::{self, Bitboard, BitboardPrimitives};
 use piece;
 use color;
-use move_generator::MoveGenerator;
+use move_generator::{MoveGenerator, PerftContext};
 use square::{self, Square, SquarePrimitives};
 
 pub struct UCIInterface {
@@ -135,8 +135,9 @@ impl UCIInterface {
             depth = cmd[0].parse::<u32>().unwrap();
         }
 
-        let movecount = MoveGenerator::perft(&mut self.board, depth);
-        println!("perft result: {}", movecount);
+        let mut ctx = PerftContext::new();
+        MoveGenerator::perft(&mut self.board, &mut ctx, depth);
+        println!("perft result: {}", ctx);
     }
 
     pub fn parse(&mut self, cmd: String) {
