@@ -710,6 +710,7 @@ mod tests {
     use std::io::{BufReader, BufRead};
     use std::path::Path;
     use move_generator::MoveGenerator;
+    use bitboard as bb;
 
     #[test]
     fn it_has_correct_piece_enum_values() {
