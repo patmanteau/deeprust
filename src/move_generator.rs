@@ -197,7 +197,7 @@ impl MoveGenerator {
                 let to = double_push.scan() as u16;
                 moves.push(Move::new(from, to, Move::make_flags(false, false, true, false)));
             }            
-            pawns.clear_bit(from);
+            pawns.clear(from);
         }
         moves
     }
@@ -229,7 +229,7 @@ impl MoveGenerator {
                 let to = double_push.scan();
                 moves.push(Move::new(from, to, Move::make_flags(false, false, true, false)));
             }            
-            pawns.clear_bit(from);
+            pawns.clear(from);
         }
         moves
     }
@@ -267,9 +267,9 @@ impl MoveGenerator {
                 } else {
                     moves.push(Move::new(from, to, Move::make_flags(true, false, to == ep_square, false)));
                 }
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            pawns.clear_bit(from);
+            pawns.clear(from);
         }
 
         moves
@@ -309,9 +309,9 @@ impl MoveGenerator {
                 } else {
                     moves.push(Move::new(from, to, Move::make_flags(true, false, to == ep_square, false)));
                 }
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            pawns.clear_bit(from);
+            pawns.clear(from);
         }
 
         moves
@@ -329,9 +329,9 @@ impl MoveGenerator {
             while 0 != mov {
                 let to = mov.scan();
                 moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
-                mov.clear_bit(to);
+                mov.clear(to);
             }
-            knights.clear_bit(from);
+            knights.clear(from);
         }
         moves
     }
@@ -348,9 +348,9 @@ impl MoveGenerator {
             while 0 != atk {
                 let to = atk.scan();
                 moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            knights.clear_bit(from);
+            knights.clear(from);
         }
         moves
     }
@@ -365,12 +365,12 @@ impl MoveGenerator {
         }
 
         let qclear = 
-            !occ.test_bit(square::D1) && !occ.test_bit(square::C1) &&
-            !occ.test_bit(square::B1) && !MoveGenerator::is_attacked(board, color::WHITE, square::D1) &&
+            !occ.test(square::D1) && !occ.test(square::C1) &&
+            !occ.test(square::B1) && !MoveGenerator::is_attacked(board, color::WHITE, square::D1) &&
             board.castling()[color::WHITE as usize].test_bit(1);
 
         let kclear = 
-            !occ.test_bit(square::F1) && !occ.test_bit(square::G1) &&
+            !occ.test(square::F1) && !occ.test(square::G1) &&
             !MoveGenerator::is_attacked(board, color::WHITE, square::F1) &&
             board.castling()[color::WHITE as usize].test_bit(0);
 
@@ -393,12 +393,12 @@ impl MoveGenerator {
         }
 
         let qclear = 
-            !occ.test_bit(square::D8) && !occ.test_bit(square::C8) &&
-            !occ.test_bit(square::B8) && !MoveGenerator::is_attacked(board, color::BLACK, square::D8) &&
+            !occ.test(square::D8) && !occ.test(square::C8) &&
+            !occ.test(square::B8) && !MoveGenerator::is_attacked(board, color::BLACK, square::D8) &&
             board.castling()[color::BLACK as usize].test_bit(1);
 
         let kclear = 
-            !occ.test_bit(square::F8) && !occ.test_bit(square::G8) &&
+            !occ.test(square::F8) && !occ.test(square::G8) &&
             !MoveGenerator::is_attacked(board, color::BLACK, square::F8) &&
             board.castling()[color::BLACK as usize].test_bit(0);
 
@@ -423,9 +423,9 @@ impl MoveGenerator {
             while 0 != mov {
                 let to = mov.scan();
                 moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
-                mov.clear_bit(to);
+                mov.clear(to);
             }
-            king.clear_bit(from);
+            king.clear(from);
         }
         moves
     }
@@ -442,9 +442,9 @@ impl MoveGenerator {
             while 0 != atk {
                 let to = atk.scan();
                 moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            king.clear_bit(from);
+            king.clear(from);
         }
         moves
     }
@@ -462,9 +462,9 @@ impl MoveGenerator {
             while 0 != mov {
                 let to = mov.scan();
                 moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
-                mov.clear_bit(to);
+                mov.clear(to);
             }
-            bishops.clear_bit(from);
+            bishops.clear(from);
         }
         moves
     }
@@ -482,9 +482,9 @@ impl MoveGenerator {
             while 0 != atk {
                 let to = atk.scan();
                 moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            bishops.clear_bit(from);
+            bishops.clear(from);
         }
         moves
     }
@@ -503,9 +503,9 @@ impl MoveGenerator {
             while 0 != mov {
                 let to = mov.scan();
                 moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
-                mov.clear_bit(to);
+                mov.clear(to);
             }
-            rooks.clear_bit(from);
+            rooks.clear(from);
         }
         moves
     }
@@ -524,9 +524,9 @@ impl MoveGenerator {
             while 0 != atk {
                 let to = atk.scan();
                 moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            rooks.clear_bit(from);
+            rooks.clear(from);
         }
         moves
     }
@@ -548,9 +548,9 @@ impl MoveGenerator {
             while 0 != mov {
                 let to = mov.scan();
                 moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
-                mov.clear_bit(to);
+                mov.clear(to);
             }
-            queens.clear_bit(from);
+            queens.clear(from);
         }
         moves
     }
@@ -573,9 +573,9 @@ impl MoveGenerator {
             while 0 != atk {
                 let to = atk.scan();
                 moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
-                atk.clear_bit(to);
+                atk.clear(to);
             }
-            queens.clear_bit(from);
+            queens.clear(from);
         }
         moves
     }
