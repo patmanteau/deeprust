@@ -6,7 +6,7 @@ pub type Bitboard = u64;
 pub trait BitboardPrimitives<T> {
     fn count(self) -> u32;
     fn scan(self) -> Square;
-    
+
     fn test(self, pos: Square) -> bool;
     fn set(&mut self, pos: Square);
     fn clear(&mut self, pos: Square);

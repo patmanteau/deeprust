@@ -117,6 +117,24 @@ impl Board {
         true
     }
 
+    fn panic_helper(&self) {
+        eprintln!("{}", self);
+        panic!();
+    }
+
+    #[cfg(feature = "sanity_checks")]
+    fn sanity_check(&self) -> bool {
+        if 0 < self.bb_own(color::WHITE) & self.bb_opponent(color::WHITE) { self.panic_helper() }
+
+        for i in 2..8 {
+            if 0 < !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE)) & self.bb[0][i] { self.panic_helper() }
+            for j in i+1..8 {
+                if 0 < self.bb[0][i] & self.bb[0][j] { self.panic_helper() }
+            }
+        }
+        true
+    }
+
     pub fn startpos() -> Board {
         let mut board = Board::new();
         // pawns
@@ -575,6 +593,9 @@ impl Board {
 
         // flip to move
         self.to_move ^= 1;
+
+        #[cfg(feature = "sanity_checks")]
+        self.sanity_check();
     }
 
     pub fn unmake_move(&mut self) {
@@ -657,6 +678,9 @@ impl Board {
 
         // flip to move
         self.to_move ^= 1;
+
+        #[cfg(feature = "sanity_checks")]
+        self.sanity_check();
     }
 
     pub fn input_move(&mut self, orig: Square, dest: Square, promote_to: Option<Piece>) -> Result<bool, &'static str> {
