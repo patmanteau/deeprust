@@ -3,15 +3,19 @@ use square::{Square, SquarePrimitives};
 
 pub type Bitboard = u64;
 
-pub trait BitboardPrimitives {
+pub trait BitboardPrimitives<T> {
     fn count(self) -> u32;
     fn scan(self) -> Square;
     
+    fn test(self, pos: Square) -> bool;
+    fn set(&mut self, pos: Square);
+    fn clear(&mut self, pos: Square);
+
     fn to_debug_string_rank(self, rank: u32) -> String;
     fn to_debug_string(self) -> String;
 }
 
-impl BitboardPrimitives for Bitboard {
+impl BitboardPrimitives<u64> for Bitboard {
     #[inline]
     fn count(self) -> u32 {
         self.count_ones()
@@ -20,6 +24,26 @@ impl BitboardPrimitives for Bitboard {
     #[inline]
     fn scan(self) -> Square {
         self.trailing_zeros() as Square
+    }
+
+    #[inline]
+    fn test(self, pos: Square) -> bool {
+        self.test_bit(pos as u32)
+    }
+
+    #[inline]
+    fn set(&mut self, pos: Square) {
+        self.set_bit(pos as u32)
+    }
+
+    #[inline]
+    fn clear(&mut self, pos: Square) {
+        self.clear_bit(pos as u32)
+    }
+
+    fn to_debug_string_rank(self, rank: u32) -> String {
+        assert!(rank < 8);
+        format!("{:08b}", (self.extract_bits(rank * 8, 8) as u8).reverse_bits())
     }
 
     fn to_debug_string(self) -> String {

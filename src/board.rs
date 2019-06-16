@@ -298,10 +298,10 @@ impl Board {
         if self.castling == [0, 0] {
             fen_string.push('-');
         } else {
-            if 0 != self.castling[color::WHITE as usize] & 0x1 { fen_string.push('K'); }
-            if 0 != self.castling[color::WHITE as usize] & 0x2 { fen_string.push('Q'); }
-            if 0 != self.castling[color::BLACK as usize] & 0x1 { fen_string.push('k'); }
-            if 0 != self.castling[color::BLACK as usize] & 0x2 { fen_string.push('q'); }
+            if 0 != self.castling[color::WHITE as usize].extract_bits(0, 1) { fen_string.push('K'); }
+            if 0 != self.castling[color::WHITE as usize].extract_bits(1, 1) { fen_string.push('Q'); }
+            if 0 != self.castling[color::BLACK as usize].extract_bits(0, 1) { fen_string.push('k'); }
+            if 0 != self.castling[color::BLACK as usize].extract_bits(1, 1) { fen_string.push('q'); }
         }
 
         // en passant
@@ -409,41 +409,44 @@ impl Board {
 
     #[inline]
     fn get_piece_and_color(&self, square: Square) -> (Piece, Color) {
-        let raw = self.occupied[square as usize];
-        ((raw & 0x7), (raw >> 3) & 0x1)
+        (
+            self.occupied[square as usize].code(), 
+            self.occupied[square as usize].color()
+        )
     }
 
     // fn get_pieces(&self, piece: u32, color: u32) -> u64 {
     //     self.bb[piece as usize] & self.bb[color as usize]
     // }
 
+    #[inline]
     fn check_piece(&self, piece: Piece, color: Color, square: Square) -> bool {
-        self.occupied[square as usize] == piece | color
+        (piece, color) == self.get_piece_and_color(square)
     }
 
     #[inline]
     fn set_piece(&mut self, piece: Piece, color: Color, to: Square) {
         // update unflipped bb
-        self.bb[0][color as usize].set_bit(to);
-        self.bb[0][piece as usize].set_bit(to);
+        self.bb[0][color as usize].set(to);
+        self.bb[0][piece as usize].set(to);
         
         // update flipped bb
-        self.bb[1][color as usize].set_bit(to ^ 56);
-        self.bb[1][piece as usize].set_bit(to ^ 56);
+        self.bb[1][color as usize].set(to ^ 56);
+        self.bb[1][piece as usize].set(to ^ 56);
         
         // update occupancy array
-        self.occupied[to as usize] = ((color & 0x1) << 3) | (piece & 0x7);
+        self.occupied[to as usize] = Piece::new(piece, color);
     }
 
     #[inline]
     fn remove_piece(&mut self, piece: Piece, color: Color, from: Square) {
         // update unflipped bb
-        self.bb[0][color as usize].clear_bit(from);
-        self.bb[0][piece as usize].clear_bit(from);
+        self.bb[0][color as usize].clear(from);
+        self.bb[0][piece as usize].clear(from);
         
         // update flipped bb
-        self.bb[1][color as usize].clear_bit(from ^ 56);
-        self.bb[1][piece as usize].clear_bit(from ^ 56);
+        self.bb[1][color as usize].clear(from ^ 56);
+        self.bb[1][piece as usize].clear(from ^ 56);
         
         // update occupancy array
         self.occupied[from as usize] = 0;
@@ -452,12 +455,12 @@ impl Board {
     #[inline]
     fn replace_piece(&mut self, old_piece: Piece, old_color: Color, new_piece: Piece, new_color: Color, square: Square) {
         // remove from unflipped bb
-        self.bb[0][old_color as usize].clear_bit(square);
-        self.bb[0][old_piece as usize].clear_bit(square);
+        self.bb[0][old_color as usize].clear(square);
+        self.bb[0][old_piece as usize].clear(square);
         
         // remove from flipped bb
-        self.bb[1][old_color as usize].clear_bit(square ^ 56);
-        self.bb[1][old_piece as usize].clear_bit(square ^ 56);
+        self.bb[1][old_color as usize].clear(square ^ 56);
+        self.bb[1][old_piece as usize].clear(square ^ 56);
 
         self.set_piece(new_piece, new_color, square);
     }
@@ -471,11 +474,7 @@ impl Board {
         // debug_assert!(self.check_piece(mov.piece(), mov.color(), mov.from()));
         
         let orig_square = mov.orig();
-        // let orig_piece = self.occupied[orig_square as usize] & 0x7;
-        // let orig_color = (self.occupied[orig_square as usize] >> 3) & 0x1;
         let dest_square = mov.dest();
-        // let mut dest_piece = self.occupied[dest_square as usize] & 0x7;
-        // let mut dest_color = (self.occupied[dest_square as usize] >> 3) & 0x1;
         let (orig_piece, orig_color) = self.get_piece_and_color(orig_square);
         let (mut dest_piece, mut dest_color) = self.get_piece_and_color(dest_square);
         // let is_capture = 0 != dest_piece;
@@ -607,8 +606,9 @@ impl Board {
         };
 
         // Castling rights come from the unmake struct
-        self.castling[0] = unmake_info.castling()[0];
-        self.castling[1] = unmake_info.castling()[1];
+        // self.castling[0] = unmake_info.castling()[0];
+        // self.castling[1] = unmake_info.castling()[1];
+        self.castling = unmake_info.castling();
 
         let captured_piece = unmake_info.captured_piece();
         let captured_color = unmake_info.captured_color();
@@ -734,8 +734,6 @@ mod tests {
 
     #[test]
     fn it_has_correct_piece_enum_values() {
-        assert_eq!(0, color::WHITE as usize);
-        assert_eq!(1, color::BLACK as usize);
         assert_eq!(2, piece::PAWN as usize);
         assert_eq!(3, piece::KNIGHT as usize);
         assert_eq!(4, piece::BISHOP as usize);
@@ -763,8 +761,8 @@ mod tests {
                     assert!(0 != board.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(0 != board.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
                     assert!(0 != board.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
-                    assert_eq!(piece, board.occupied[square as usize] & 0x7);
-                    assert_eq!(color, board.occupied[square as usize] >> 3);
+                    assert_eq!(piece, board.occupied[square as usize].code());
+                    assert_eq!(color, board.occupied[square as usize].color());
 
                     //assert_eq!(board.bb[1][color as usize], bits::swap_bytes(board.bb[0][color as usize]));
                     //assert_eq!(board.bb[1][piece as usize], bits::swap_bytes(board.bb[0][piece as usize]));
@@ -786,8 +784,8 @@ mod tests {
                     assert!(0 != board.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(0 != board.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
                     assert!(0 != board.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
-                    assert_eq!(piece, board.occupied[square as usize] & 0x7);
-                    assert_eq!(color, board.occupied[square as usize] >> 3);
+                    assert_eq!(piece, board.occupied[square as usize].code());
+                    assert_eq!(color, board.occupied[square as usize].color());
 
                     assert_eq!(board.bb[1][color as usize], board.bb[0][color as usize].swap_bytes());
                     assert_eq!(board.bb[1][piece as usize], board.bb[0][piece as usize].swap_bytes());
