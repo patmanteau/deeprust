@@ -126,7 +126,6 @@ impl UCIInterface {
                 "u" | "undo" => self.cmd_undo(),
                 "fen" => println!("{}", self.board.to_fen()),
                 "b" => self.cmd_b(),
-                "bb" => self.cmd_bb(),
                 "p" | "perft" => self.cmd_perft(tokens[1..].to_vec()),
                 "g" | "generate" => self.cmd_moves(),
                 "uci" => {
