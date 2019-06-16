@@ -294,8 +294,8 @@ impl MoveGenerator {
         while 0 != pawns {
             let from = pawns.scan();
             let mut atk = 
-                (bitboard::north_west_one(bitboard::BB_SQUARES[from as usize]) |
-                 bitboard::north_east_one(bitboard::BB_SQUARES[from as usize])) &
+                (bitboard::south_west_one(bitboard::BB_SQUARES[from as usize]) |
+                 bitboard::south_east_one(bitboard::BB_SQUARES[from as usize])) &
                 (board.bb_opponent(color::BLACK) | ep_bb);
 
             while 0 != atk {
