@@ -27,13 +27,10 @@ impl BitboardPrimitives for Bitboard {
         out.push_str(&format!("DEBUG(bitboard): 0x{:016X}\n", self));
 
         out.push_str("+--------+\n");
-        for i in 0..8 {
+        for i in (0..8).rev() {
             out.push_str("|");
-            for j in 0..8 {
-                let s = 8 * (7-i) + j;
-                out.push_str(&format!("{:b}", self.test_bit(s) as usize));
-            }
-            out.push_str(&format!("|{}\n", (7-i) + 1));
+            out.push_str(&self.to_debug_string_rank(i));
+            out.push_str(&format!("|{}\n", i + 1));
         }
         out.push_str("+--------+\n abcdefgh\n");
         out

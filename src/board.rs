@@ -34,6 +34,43 @@ impl fmt::Debug for Board {
     }
 }
 
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "occupied: ").unwrap();
+        for rank in (0..8).rev() {
+            writeln!(f, "+---+---+---+---+---+---+---+---+").unwrap();
+            for file in 0..8 {
+                write!(f, "| {} ", self.occupied[(rank << 3) + file].to_san_string()).unwrap();
+            }
+            writeln!(f, "| {} ", rank + 1).unwrap();
+        }
+        writeln!(f, "+---+---+---+---+---+---+---+---+").unwrap();
+        writeln!(f, "  A   B   C   D   E   F   G   H  ").unwrap();
+        writeln!(f).unwrap();
+        writeln!(f, "fen: {}", self.to_fen()).unwrap();
+        writeln!(f, "move_stack: {}", self.move_stack).unwrap();
+        writeln!(f, "to_move: {}", self.to_move).unwrap();
+        writeln!(f).unwrap();
+ 
+        let bb_titles: [&'static str; 2] = [
+            "bb_own      bb_opponent bb_pawns    bb_knights", 
+            "bb_bishops  bb_rooks    bb_queens   bb_king"
+        ];
+
+        for block in 0..2 {
+            writeln!(f, "{}", bb_titles[block]).unwrap();
+            for rank in (0..8).rev() {
+                for cur_bb in 0..4 {
+                    write!(f, "{}    ", self.bb[0][(block * 4) + cur_bb].to_debug_string_rank(rank)).unwrap();
+                }
+                writeln!(f).unwrap();
+            }
+            writeln!(f).unwrap();
+        }
+        write!(f, "")
+    }
+}
+
 impl Board {
     pub fn new() -> Board {
         let mut board = Board { 
@@ -453,7 +490,7 @@ impl Board {
         // debug_assert_eq!(orig_color, self.to_move);
         if orig_color != self.to_move {
             self.break_helper();
-            eprintln!("{:?}", self);
+            eprintln!("{}", self);
             eprintln!("offending move: {:?}", mov);
             panic!("orig_color != self.to_move");
         }
