@@ -10,6 +10,7 @@ extern crate lazy_static;
 pub mod bitboard;
 pub mod board;
 pub mod cli;
+pub mod color;
 pub mod common;
 pub mod move_generator;
 pub mod move_stack;

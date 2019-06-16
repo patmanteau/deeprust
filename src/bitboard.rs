@@ -7,7 +7,7 @@ pub trait BitboardPrimitives {
     fn count(self) -> u32;
     fn scan(self) -> Square;
     
-    fn to_debug_string(&self) -> String;
+    fn to_debug_string(self) -> String;
 }
 
 impl BitboardPrimitives for Bitboard {
@@ -21,10 +21,10 @@ impl BitboardPrimitives for Bitboard {
         self.trailing_zeros() as Square
     }
 
-    fn to_debug_string(&self) -> String {
+    fn to_debug_string(self) -> String {
         let mut out = String::new();
 
-        out.push_str(&format!("DEBUG(bitboard): 0x{:016X}\n", *self));
+        out.push_str(&format!("DEBUG(bitboard): 0x{:016X}\n", self));
 
         out.push_str("+--------+\n");
         for i in 0..8 {

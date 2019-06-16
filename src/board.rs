@@ -4,7 +4,8 @@ use common::*;
 use bitboard::*;
 
 use square::{self, Square, SquarePrimitives};
-use piece;
+use piece::{self, Piece, PiecePrimitives};
+use color::{self, Color};
 use moves::{Move, UnmakeInfo};
 use move_stack::{MoveStack, MoveStackEntry};
 
@@ -17,8 +18,8 @@ use std::str::FromStr;
 #[derive(Clone)]
 pub struct Board {
     bb: [[Bitboard; 8]; 2],
-    occupied: [u32; 64],
-    to_move: u32,
+    occupied: [Piece; 64],
+    to_move: Color,
     castling: [u32; 2],
     en_passant: Option<[Square; 2]>,
     halfmoves: u32,
@@ -38,7 +39,7 @@ impl Board {
         let mut board = Board { 
             bb: [[0; 8]; 2],
             occupied: [0; 64],
-            to_move: piece::WHITE,
+            to_move: color::WHITE,
             castling: [0, 0],
             en_passant: None,
             halfmoves: 0,
@@ -46,24 +47,6 @@ impl Board {
             move_stack: MoveStack::new(),
         };
         board
-    }
-
-    pub fn occ_piece_code_to_str(code: u32) -> &'static str {
-        match code {
-            2 => "P",
-            3 => "N",
-            4 => "B",
-            5 => "R", 
-            6 => "Q",
-            7 => "K",
-            10 => "p",
-            11 => "n",
-            12 => "b",
-            13 => "r",
-            14 => "q",
-            15 => "k",
-            _ => " ",
-        }
     }
 
     pub fn equals(&self, board: &Board) -> bool {
@@ -101,35 +84,35 @@ impl Board {
         let mut board = Board::new();
         // pawns
         for x in 0..8 {
-            board.set_piece(piece::PAWN, piece::WHITE, Square::from_coords(x, 1));
-            board.set_piece(piece::PAWN, piece::BLACK, Square::from_coords(x, 6));
+            board.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, 1));
+            board.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, 6));
         }
 
         // knights
-        board.set_piece(piece::KNIGHT, piece::WHITE, square::B1);
-        board.set_piece(piece::KNIGHT, piece::WHITE, square::G1);
-        board.set_piece(piece::KNIGHT, piece::BLACK, square::B8);
-        board.set_piece(piece::KNIGHT, piece::BLACK, square::G8);
+        board.set_piece(piece::KNIGHT, color::WHITE, square::B1);
+        board.set_piece(piece::KNIGHT, color::WHITE, square::G1);
+        board.set_piece(piece::KNIGHT, color::BLACK, square::B8);
+        board.set_piece(piece::KNIGHT, color::BLACK, square::G8);
 
         // bishops
-        board.set_piece(piece::BISHOP, piece::WHITE, square::C1);
-        board.set_piece(piece::BISHOP, piece::WHITE, square::F1);
-        board.set_piece(piece::BISHOP, piece::BLACK, square::C8);
-        board.set_piece(piece::BISHOP, piece::BLACK, square::F8);
+        board.set_piece(piece::BISHOP, color::WHITE, square::C1);
+        board.set_piece(piece::BISHOP, color::WHITE, square::F1);
+        board.set_piece(piece::BISHOP, color::BLACK, square::C8);
+        board.set_piece(piece::BISHOP, color::BLACK, square::F8);
 
         // rooks
-        board.set_piece(piece::ROOK, piece::WHITE, square::A1);
-        board.set_piece(piece::ROOK, piece::WHITE, square::H1);
-        board.set_piece(piece::ROOK, piece::BLACK, square::A8);
-        board.set_piece(piece::ROOK, piece::BLACK, square::H8);
+        board.set_piece(piece::ROOK, color::WHITE, square::A1);
+        board.set_piece(piece::ROOK, color::WHITE, square::H1);
+        board.set_piece(piece::ROOK, color::BLACK, square::A8);
+        board.set_piece(piece::ROOK, color::BLACK, square::H8);
 
         // queens
-        board.set_piece(piece::QUEEN, piece::WHITE, square::D1);
-        board.set_piece(piece::QUEEN, piece::BLACK, square::D8);
+        board.set_piece(piece::QUEEN, color::WHITE, square::D1);
+        board.set_piece(piece::QUEEN, color::BLACK, square::D8);
 
         // kings
-        board.set_piece(piece::KING, piece::WHITE, square::E1);
-        board.set_piece(piece::KING, piece::BLACK, square::E8);
+        board.set_piece(piece::KING, color::WHITE, square::E1);
+        board.set_piece(piece::KING, color::BLACK, square::E8);
 
         board.castling = [3, 3];
         board
@@ -153,18 +136,18 @@ impl Board {
                         y -= 1;
                     } else {
                         match chr {
-                            'P' => board.set_piece(piece::PAWN, piece::WHITE, Square::from_coords(x, y)),
-                            'N' => board.set_piece(piece::KNIGHT, piece::WHITE, Square::from_coords(x, y)),
-                            'B' => board.set_piece(piece::BISHOP, piece::WHITE, Square::from_coords(x, y)),
-                            'R' => board.set_piece(piece::ROOK, piece::WHITE, Square::from_coords(x, y)),
-                            'Q' => board.set_piece(piece::QUEEN, piece::WHITE, Square::from_coords(x, y)),
-                            'K' => board.set_piece(piece::KING, piece::WHITE, Square::from_coords(x, y)),
-                            'p' => board.set_piece(piece::PAWN, piece::BLACK, Square::from_coords(x, y)),
-                            'n' => board.set_piece(piece::KNIGHT, piece::BLACK, Square::from_coords(x, y)),
-                            'b' => board.set_piece(piece::BISHOP, piece::BLACK, Square::from_coords(x, y)),
-                            'r' => board.set_piece(piece::ROOK, piece::BLACK, Square::from_coords(x, y)),
-                            'q' => board.set_piece(piece::QUEEN, piece::BLACK, Square::from_coords(x, y)),
-                            'k' => board.set_piece(piece::KING, piece::BLACK, Square::from_coords(x, y)),
+                            'P' => board.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, y)),
+                            'N' => board.set_piece(piece::KNIGHT, color::WHITE, Square::from_coords(x, y)),
+                            'B' => board.set_piece(piece::BISHOP, color::WHITE, Square::from_coords(x, y)),
+                            'R' => board.set_piece(piece::ROOK, color::WHITE, Square::from_coords(x, y)),
+                            'Q' => board.set_piece(piece::QUEEN, color::WHITE, Square::from_coords(x, y)),
+                            'K' => board.set_piece(piece::KING, color::WHITE, Square::from_coords(x, y)),
+                            'p' => board.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, y)),
+                            'n' => board.set_piece(piece::KNIGHT, color::BLACK, Square::from_coords(x, y)),
+                            'b' => board.set_piece(piece::BISHOP, color::BLACK, Square::from_coords(x, y)),
+                            'r' => board.set_piece(piece::ROOK, color::BLACK, Square::from_coords(x, y)),
+                            'q' => board.set_piece(piece::QUEEN, color::BLACK, Square::from_coords(x, y)),
+                            'k' => board.set_piece(piece::KING, color::BLACK, Square::from_coords(x, y)),
                             _ => { return Err("Invalid FEN string") },
                         }
                         x += 1;
@@ -178,8 +161,8 @@ impl Board {
         // to move
         if let Some(to_move) = fen_iter.next() {
             match to_move {
-                "w" => board.to_move = piece::WHITE,
-                "b" => board.to_move = piece::BLACK,
+                "w" => board.to_move = color::WHITE,
+                "b" => board.to_move = color::BLACK,
                 _ => return Err("Invalid ToMove char")
             }
         } else {
@@ -191,10 +174,10 @@ impl Board {
             for chr in castling.chars() {
                 match chr {
                     '-' => board.castling = [0, 0],
-                    'K' => board.castling[piece::WHITE as usize] |= 0x1,
-                    'Q' => board.castling[piece::WHITE as usize] |= 0x2,
-                    'k' => board.castling[piece::BLACK as usize] |= 0x1,
-                    'q' => board.castling[piece::BLACK as usize] |= 0x2,
+                    'K' => board.castling[color::WHITE as usize] |= 0x1,
+                    'Q' => board.castling[color::WHITE as usize] |= 0x2,
+                    'k' => board.castling[color::BLACK as usize] |= 0x1,
+                    'q' => board.castling[color::BLACK as usize] |= 0x2,
                     _ => return Err("Invalid castling char")
                 }
             }
@@ -245,7 +228,7 @@ impl Board {
 
         // Position
         for y in (0..8).rev() {
-            let mut emptycount = 0;
+            let mut emptycount: u8 = 0;
             for x in 0..8 {
                 if 0 == self.occupied[Square::from_coords(x, y) as usize] {
                     emptycount += 1;
@@ -254,7 +237,7 @@ impl Board {
                         fen_string.push_str(&emptycount.to_string());
                         emptycount = 0;
                     };
-                    fen_string.push_str(Self::occ_piece_code_to_str(self.occupied[Square::from_coords(x, y) as usize]));
+                    fen_string.push_str(self.occupied[Square::from_coords(x, y) as usize].to_san_string());
                 }
             }
             if emptycount > 0 {
@@ -267,8 +250,8 @@ impl Board {
         // To move
         fen_string.push(' ');
         let to_move = match self.to_move {
-            piece::WHITE => 'w',
-            piece::BLACK => 'b',
+            color::WHITE => 'w',
+            color::BLACK => 'b',
             _ => 'w',
         };
         fen_string.push(to_move);
@@ -278,10 +261,10 @@ impl Board {
         if self.castling == [0, 0] {
             fen_string.push('-');
         } else {
-            if 0 != self.castling[piece::WHITE as usize] & 0x1 { fen_string.push('K'); }
-            if 0 != self.castling[piece::WHITE as usize] & 0x2 { fen_string.push('Q'); }
-            if 0 != self.castling[piece::BLACK as usize] & 0x1 { fen_string.push('k'); }
-            if 0 != self.castling[piece::BLACK as usize] & 0x2 { fen_string.push('q'); }
+            if 0 != self.castling[color::WHITE as usize] & 0x1 { fen_string.push('K'); }
+            if 0 != self.castling[color::WHITE as usize] & 0x2 { fen_string.push('Q'); }
+            if 0 != self.castling[color::BLACK as usize] & 0x1 { fen_string.push('k'); }
+            if 0 != self.castling[color::BLACK as usize] & 0x2 { fen_string.push('q'); }
         }
 
         // en passant
@@ -311,60 +294,60 @@ impl Board {
 
     // don't actually return flipped boards for now
     #[inline]
-    pub fn bb_own(&self, color: u32) -> Bitboard {
+    pub fn bb_own(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][self.to_move as usize]
         self.bb[0][color as usize]
     }
 
     #[inline]
-    pub fn bb_opponent(&self, color: u32) -> Bitboard {
+    pub fn bb_opponent(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][1 ^ self.to_move as usize]
         self.bb[0][(1 ^ color) as usize]
     }
 
     #[inline]
-    pub fn bb_pawns(&self, color: u32) -> Bitboard {
+    pub fn bb_pawns(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::PAWN as usize] & self.bb_own(color)
     }
 
     #[inline]
-    pub fn bb_knights(&self, color: u32) -> Bitboard {
+    pub fn bb_knights(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
     }
 
     #[inline]
-    pub fn bb_bishops(&self, color: u32) -> Bitboard {
+    pub fn bb_bishops(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
     }
 
     #[inline]
-    pub fn bb_rooks(&self, color: u32) -> Bitboard {
+    pub fn bb_rooks(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::ROOK as usize] & self.bb_own(color)
     }
 
     #[inline]
-    pub fn bb_queens(&self, color: u32) -> Bitboard {
+    pub fn bb_queens(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
     }
 
     #[inline]
-    pub fn bb_king(&self, color: u32) -> Bitboard {
+    pub fn bb_king(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::KING as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_empty(&self) -> Bitboard {
-        !(self.bb_own(piece::WHITE) | self.bb_opponent(piece::WHITE))
+        !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE))
     }
 
     #[inline]
-    pub fn to_move(&self) -> u32 {
+    pub fn to_move(&self) -> Color {
         self.to_move
     }
 
@@ -383,12 +366,12 @@ impl Board {
     }
 
     #[inline]
-    pub fn occupied(&self) -> &[u32; 64] {
+    pub fn occupied(&self) -> &[Piece; 64] {
         &self.occupied
     }
 
     #[inline]
-    fn get_piece_and_color(&self, square: Square) -> (u32, u32) {
+    fn get_piece_and_color(&self, square: Square) -> (Piece, Color) {
         let raw = self.occupied[square as usize];
         ((raw & 0x7), (raw >> 3) & 0x1)
     }
@@ -397,12 +380,12 @@ impl Board {
     //     self.bb[piece as usize] & self.bb[color as usize]
     // }
 
-    fn check_piece(&self, piece: u32, color: u32, square: Square) -> bool {
-        0 < self.occupied[square as usize]
+    fn check_piece(&self, piece: Piece, color: Color, square: Square) -> bool {
+        self.occupied[square as usize] == piece | color
     }
 
     #[inline]
-    fn set_piece(&mut self, piece: u32, color: u32, to: Square) {
+    fn set_piece(&mut self, piece: Piece, color: Color, to: Square) {
         // update unflipped bb
         self.bb[0][color as usize].set_bit(to);
         self.bb[0][piece as usize].set_bit(to);
@@ -416,7 +399,7 @@ impl Board {
     }
 
     #[inline]
-    fn remove_piece(&mut self, piece: u32, color: u32, from: Square) {
+    fn remove_piece(&mut self, piece: Piece, color: Color, from: Square) {
         // update unflipped bb
         self.bb[0][color as usize].clear_bit(from);
         self.bb[0][piece as usize].clear_bit(from);
@@ -430,7 +413,7 @@ impl Board {
     }
 
     #[inline]
-    fn replace_piece(&mut self, old_piece: u32, old_color: u32, new_piece: u32, new_color: u32, square: Square) {
+    fn replace_piece(&mut self, old_piece: Piece, old_color: Color, new_piece: Piece, new_color: Color, square: Square) {
         // remove from unflipped bb
         self.bb[0][old_color as usize].clear_bit(square);
         self.bb[0][old_piece as usize].clear_bit(square);
@@ -480,7 +463,7 @@ impl Board {
 
         // promotions change pieces
         if mov.is_promotion() { 
-            let prom_piece = mov.special() as u32 + 3;
+            let prom_piece = mov.special() as Piece + 3;
             self.remove_piece(orig_piece, orig_color, orig_square);
             if is_capture {
                 self.replace_piece(dest_piece, dest_color, prom_piece, orig_color, dest_square);
@@ -533,19 +516,19 @@ impl Board {
 
         if piece::ROOK == orig_piece {
             if orig_square == 0 {
-                self.castling[piece::WHITE as usize].clear_bit(1);
+                self.castling[color::WHITE as usize].clear_bit(1);
             } else if orig_square == 7 {
-                self.castling[piece::WHITE as usize].clear_bit(0);
+                self.castling[color::WHITE as usize].clear_bit(0);
             } else if orig_square == 56 {
-                self.castling[piece::BLACK as usize].clear_bit(1);
+                self.castling[color::BLACK as usize].clear_bit(1);
             } else if orig_square == 63 {
-                self.castling[piece::BLACK as usize].clear_bit(0);
+                self.castling[color::BLACK as usize].clear_bit(0);
             }
         }
 
         // Full move clock needs to be incremented after black moves
         // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
-        self.fullmoves += self.to_move;
+        self.fullmoves += self.to_move as u32;
         
         // set half move clock
         if orig_piece == piece::PAWN || is_capture {
@@ -573,7 +556,7 @@ impl Board {
         
         // Full move clock needs to be decremented after black unmakes
         // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
-        self.fullmoves -= 1 ^ self.to_move;
+        self.fullmoves -= 1 ^ (self.to_move as u32);
         
         // Half moves come from the unmake struct
         self.halfmoves = unmake_info.halfmoves();
@@ -639,7 +622,7 @@ impl Board {
         self.to_move ^= 1;
     }
 
-    pub fn input_move(&mut self, orig: Square, dest: Square, promote_to: Option<u32>) -> Result<bool, &'static str> {
+    pub fn input_move(&mut self, orig: Square, dest: Square, promote_to: Option<Piece>) -> Result<bool, &'static str> {
         let (mut is_capture, mut is_promotion, mut is_special_0, mut is_special_1) = (false, false, false, false);
         let (piece, color) = self.get_piece_and_color(orig);
         let (dest_piece, dest_color) = self.get_piece_and_color(dest);
@@ -714,8 +697,8 @@ mod tests {
 
     #[test]
     fn it_has_correct_piece_enum_values() {
-        assert_eq!(0, piece::WHITE as usize);
-        assert_eq!(1, piece::BLACK as usize);
+        assert_eq!(0, color::WHITE as usize);
+        assert_eq!(1, color::BLACK as usize);
         assert_eq!(2, piece::PAWN as usize);
         assert_eq!(3, piece::KNIGHT as usize);
         assert_eq!(4, piece::BISHOP as usize);
@@ -726,8 +709,8 @@ mod tests {
 
     #[test]
     fn it_has_correct_color_enum_values() {
-        assert_eq!(0, piece::WHITE as usize);
-        assert_eq!(1, piece::BLACK as usize);
+        assert_eq!(0, color::WHITE as usize);
+        assert_eq!(1, color::BLACK as usize);
     }
 
     #[test]

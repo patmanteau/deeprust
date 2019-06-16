@@ -1,6 +1,8 @@
 use common::*;
 use std::fmt;
 use square::{Square, SquarePrimitives};
+use piece::Piece;
+use color::Color;
 
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.
@@ -27,7 +29,7 @@ impl UnmakeInfo {
 
     /// Constructs a new UnmakeInfo
     #[inline]
-    pub fn new(cap_piece: u32, cap_color: u32, castling: [u32; 2],
+    pub fn new(cap_piece: Piece, cap_color: Color, castling: [u32; 2],
                ep_square: Square, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
         UnmakeInfo (
             ((halfmoves & 0x1ffff) << 15) |
@@ -35,19 +37,19 @@ impl UnmakeInfo {
             ((ep_square as u32 & 0x3f) << 8) |
             ((castling[1] & 0x3) << 6) |
             ((castling[0] & 0x3) << 4) |
-            ((cap_color & 0x1) << 3) |
-            ((cap_piece) & 0x7)
+            ((cap_color as u32 & 0x1) << 3) |
+            (cap_piece as u32 & 0x7)
         )
     }
 
     #[inline]
-    pub fn captured_piece(&self) -> u32 {
-        self.0.extract_bits(0, 3)
+    pub fn captured_piece(&self) -> Piece {
+        self.0.extract_bits(0, 3) as Piece
     }
 
     #[inline]
-    pub fn captured_color(&self) -> u32 {
-        self.0.extract_bits(3, 1)
+    pub fn captured_color(&self) -> Color {
+        self.0.extract_bits(3, 1) as Color
     }
 
     #[inline]

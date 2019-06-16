@@ -1,7 +1,7 @@
 use std::arch::x86_64::*;
 use square::{Square, SquarePrimitives};
 
-pub trait BitTwiddling {
+pub trait BitTwiddling<T> {
     fn bit_at(pos: Square) -> Self;
     fn test_bit(&self, at: Square) -> bool;
     fn set_bit(&mut self, at: Square) -> &mut Self;
@@ -13,7 +13,7 @@ pub trait BitTwiddling {
 }
 macro_rules!  twiddle_impl {
     ($T:ty) => {
-        impl BitTwiddling for $T {
+        impl BitTwiddling<$T> for $T {
             #[inline]
             fn bit_at(pos: Square) -> $T {
                 1 << pos

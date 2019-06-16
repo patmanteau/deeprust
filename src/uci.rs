@@ -4,6 +4,7 @@ use std::io::Write;
 use board::*;
 use bitboard::{self, Bitboard, BitboardPrimitives};
 use piece;
+use color;
 use move_generator::MoveGenerator;
 use square::{self, Square, SquarePrimitives};
 
@@ -95,7 +96,7 @@ impl UCIInterface {
         for y in (0..8).rev() {
             println!("+---+---+---+---+---+---+---+---+");
             for x in 0..8 {
-                print!("| {} ", Board::occ_piece_code_to_str(occ[Square::from_coords(x, y) as usize]));
+                print!("| {} ", occ[Square::from_coords(x, y) as usize].to_string());
                 if x == 7 {
                     println!("| {}", y+1);
                 }
@@ -107,7 +108,7 @@ impl UCIInterface {
         }
         println!();
         println!("fen: {}", self.board.to_fen());
-        println!("w in check: {}, b in check: {}", MoveGenerator::is_in_check(&self.board, piece::WHITE), MoveGenerator::is_in_check(&self.board, piece::BLACK));
+        println!("w in check: {}, b in check: {}", MoveGenerator::is_in_check(&self.board, color::WHITE), MoveGenerator::is_in_check(&self.board, color::BLACK));
         if self.board.move_stack().len() > 0 {
             println!("last_move: {:#?}", self.board.move_stack().peek());
         }

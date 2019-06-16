@@ -3,6 +3,7 @@ use common::*;
 use bitboard::{self, Bitboard, BitboardPrimitives};
 use moves::Move;
 use piece;
+use color::{self, Color};
 use square::{self, Square, SquarePrimitives};
 
 pub struct MoveGenerator {
@@ -39,13 +40,13 @@ impl MoveGenerator {
     }
 
     #[inline]
-    pub fn is_in_check(board: &Board, color: u32) -> bool {
+    pub fn is_in_check(board: &Board, color: Color) -> bool {
         let kingpos = board.bb_king(color).scan();
         MoveGenerator::is_attacked(board, color, kingpos)
     }
 
     #[inline]
-    pub fn is_attacked(board: &Board, color: u32, target: Square) -> bool {
+    pub fn is_attacked(board: &Board, color: Color, target: Square) -> bool {
         let occupied = board.bb_own(color) | board.bb_opponent(color);
 
         if 63 < target {
@@ -53,18 +54,18 @@ impl MoveGenerator {
         }
 
         // by black pawns
-        if color == piece::WHITE {
+        if color == color::WHITE {
             if 0 < 
                 ((bitboard::north_west_one(bitboard::BB_SQUARES[target as usize]) |
                 bitboard::north_east_one(bitboard::BB_SQUARES[target as usize])) &
-               (board.bb_pawns(piece::BLACK))) {
+               (board.bb_pawns(color::BLACK))) {
                    return true
             }
         } else { // by white pawns
             if 0 < 
                ((bitboard::south_west_one(bitboard::BB_SQUARES[target as usize]) |
                 bitboard::south_east_one(bitboard::BB_SQUARES[target as usize])) &
-               (board.bb_pawns(piece::WHITE))) {
+               (board.bb_pawns(color::WHITE))) {
                    return true
             }
         }
@@ -112,7 +113,7 @@ impl MoveGenerator {
         let mut moves = Vec::with_capacity(512);
         let to_move = board.to_move();
 
-        if to_move == piece::WHITE {
+        if to_move == color::WHITE {
             let w_pawn_pushes = MoveGenerator::gen_white_pawn_pushes(board);
             moves.extend(w_pawn_pushes);
 
@@ -171,7 +172,7 @@ impl MoveGenerator {
 
     #[inline]
     fn gen_white_pawn_pushes(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(piece::WHITE);
+        let mut pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
         
         while 0 != pawns {
@@ -203,7 +204,7 @@ impl MoveGenerator {
 
     #[inline]
     fn gen_black_pawn_pushes(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(piece::BLACK);
+        let mut pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
         
         while 0 != pawns {
@@ -235,7 +236,7 @@ impl MoveGenerator {
 
     #[inline]
     fn gen_white_pawn_captures(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(piece::WHITE);
+        let mut pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
@@ -253,7 +254,7 @@ impl MoveGenerator {
             let mut atk = 
                 (bitboard::north_west_one(bitboard::BB_SQUARES[from as usize]) |
                  bitboard::north_east_one(bitboard::BB_SQUARES[from as usize])) &
-                (board.bb_opponent(piece::WHITE) | ep_bb);
+                (board.bb_opponent(color::WHITE) | ep_bb);
 
             while 0 != atk {
                 let to = atk.scan();
@@ -276,7 +277,7 @@ impl MoveGenerator {
 
     #[inline]
     fn gen_black_pawn_captures(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(piece::BLACK);
+        let mut pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
@@ -295,7 +296,7 @@ impl MoveGenerator {
             let mut atk = 
                 (bitboard::north_west_one(bitboard::BB_SQUARES[from as usize]) |
                  bitboard::north_east_one(bitboard::BB_SQUARES[from as usize])) &
-                (board.bb_opponent(piece::BLACK) | ep_bb);
+                (board.bb_opponent(color::BLACK) | ep_bb);
 
             while 0 != atk {
                 let to = atk.scan();
@@ -317,7 +318,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_knight_moves(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_knight_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut knights = board.bb_knights(color);
 
@@ -336,7 +337,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_knight_captures(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_knight_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut knights = board.bb_knights(color);
 
@@ -356,22 +357,22 @@ impl MoveGenerator {
 
     #[inline]
     fn gen_wking_castle(board: &Board) -> Vec<Move> {
-        let occ = board.bb_own(piece::WHITE) | board.bb_opponent(piece::WHITE);
+        let occ = board.bb_own(color::WHITE) | board.bb_opponent(color::WHITE);
         let mut moves = Vec::with_capacity(16);
         
-        if MoveGenerator::is_attacked(board, piece::WHITE, square::E1) {
+        if MoveGenerator::is_attacked(board, color::WHITE, square::E1) {
             return moves
         }
 
         let qclear = 
             !occ.test_bit(square::D1) && !occ.test_bit(square::C1) &&
-            !occ.test_bit(square::B1) && !MoveGenerator::is_attacked(board, piece::WHITE, square::D1) &&
-            board.castling()[piece::WHITE as usize].test_bit(1);
+            !occ.test_bit(square::B1) && !MoveGenerator::is_attacked(board, color::WHITE, square::D1) &&
+            board.castling()[color::WHITE as usize].test_bit(1);
 
         let kclear = 
             !occ.test_bit(square::F1) && !occ.test_bit(square::G1) &&
-            !MoveGenerator::is_attacked(board, piece::WHITE, square::F1) &&
-            board.castling()[piece::WHITE as usize].test_bit(0);
+            !MoveGenerator::is_attacked(board, color::WHITE, square::F1) &&
+            board.castling()[color::WHITE as usize].test_bit(0);
 
         if qclear {
             moves.push(Move::new(square::E1, square::C1, Move::make_flags(false, false, true, true)));
@@ -384,22 +385,22 @@ impl MoveGenerator {
 
     #[inline]
     fn gen_bking_castle(board: &Board) -> Vec<Move> {
-        let occ = board.bb_own(piece::BLACK) | board.bb_opponent(piece::BLACK);
+        let occ = board.bb_own(color::BLACK) | board.bb_opponent(color::BLACK);
         let mut moves = Vec::with_capacity(16);
 
-        if MoveGenerator::is_attacked(board, piece::BLACK, square::E8) {
+        if MoveGenerator::is_attacked(board, color::BLACK, square::E8) {
             return moves
         }
 
         let qclear = 
             !occ.test_bit(square::D8) && !occ.test_bit(square::C8) &&
-            !occ.test_bit(square::B8) && !MoveGenerator::is_attacked(board, piece::BLACK, square::D8) &&
-            board.castling()[piece::BLACK as usize].test_bit(1);
+            !occ.test_bit(square::B8) && !MoveGenerator::is_attacked(board, color::BLACK, square::D8) &&
+            board.castling()[color::BLACK as usize].test_bit(1);
 
         let kclear = 
             !occ.test_bit(square::F8) && !occ.test_bit(square::G8) &&
-            !MoveGenerator::is_attacked(board, piece::BLACK, square::F8) &&
-            board.castling()[piece::BLACK as usize].test_bit(0);
+            !MoveGenerator::is_attacked(board, color::BLACK, square::F8) &&
+            board.castling()[color::BLACK as usize].test_bit(0);
 
         if qclear {
             moves.push(Move::new(square::E8, square::C8, Move::make_flags(false, false, true, true)));
@@ -411,7 +412,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_king_moves(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_king_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut king = board.bb_king(color);
 
@@ -430,7 +431,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_king_captures(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_king_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut king = board.bb_king(color);
 
@@ -449,7 +450,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_bishop_moves(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_bishop_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut bishops = board.bb_bishops(color);
         let occupied = board.bb_own(color) | board.bb_opponent(color);
@@ -469,7 +470,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_bishop_captures(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_bishop_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut bishops = board.bb_bishops(color);
         let occupied = board.bb_own(color) | board.bb_opponent(color);
@@ -489,7 +490,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_rook_moves(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_rook_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut rooks = board.bb_rooks(color);
         let occupied = board.bb_own(color) | board.bb_opponent(color);
@@ -510,7 +511,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_rook_captures(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_rook_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut rooks = board.bb_rooks(color);
         let occupied = board.bb_own(color) | board.bb_opponent(color);
@@ -531,7 +532,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_queen_moves(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_queen_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut queens = board.bb_queens(color);
         let occupied = board.bb_own(color) | board.bb_opponent(color);
@@ -555,7 +556,7 @@ impl MoveGenerator {
     }
 
     #[inline]
-    fn gen_queen_captures(board: &Board, color: u32) -> Vec<Move> {
+    fn gen_queen_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut queens = board.bb_queens(color);
         let occupied = board.bb_own(color) | board.bb_opponent(color);
@@ -585,7 +586,7 @@ mod tests {
     use uci::UCIInterface;
     use move_generator::MoveGenerator;
     use board::Board;
-    use piece;
+    use color;
     use square;
 
     #[test]
@@ -630,7 +631,7 @@ mod tests {
         board.input_move(square::G8, square::F6, None);
         board.input_move(square::F1, square::D3, None);
         board.input_move(square::F8, square::D6, None);
-        assert_eq!(2, MoveGenerator::gen_king_moves(&board, piece::WHITE).len());
+        assert_eq!(2, MoveGenerator::gen_king_moves(&board, color::WHITE).len());
         assert_eq!(1, MoveGenerator::gen_wking_castle(&board).len());
     }
 
