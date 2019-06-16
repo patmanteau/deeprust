@@ -4,7 +4,6 @@ use std::io::Write;
 use board::*;
 use bitboard::*;
 use util::*;
-use san::*;
 use move_generator::MoveGenerator;
 use square::{Square, SquarePrimitives};
 
@@ -50,7 +49,7 @@ impl UCIInterface {
                     eprintln!("error: incomplete move");
                     return;
                 }
-                if let (Ok(from), Ok(to)) = (SAN::square_str_to_index(&mov[0..2]), SAN::square_str_to_index(&mov[2..4])) {
+                if let (Ok(from), Ok(to)) = (Square::from_san_string(&mov[0..2]), Square::from_san_string(&mov[2..4])) {
                     match self.board.input_move(from, to, None) {
                         Ok(_) => (),
                         Err(e) => eprintln!("error: could not make move: {}", e),
@@ -73,7 +72,7 @@ impl UCIInterface {
                 eprintln!("error: incomplete move");
                 return;
             }
-            if let (Ok(from), Ok(to)) = (SAN::square_str_to_index(&mov[0..2]), SAN::square_str_to_index(&mov[2..4])) {
+            if let (Ok(from), Ok(to)) = (Square::from_san_string(&mov[0..2]), Square::from_san_string(&mov[2..4])) {
                 match self.board.input_move(from, to, None) {
                     Ok(_) => (),
                     Err(e) => eprintln!("error: could not make move: {}", e),

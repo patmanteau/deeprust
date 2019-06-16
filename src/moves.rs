@@ -1,6 +1,5 @@
 use common::*;
 use std::fmt;
-use san::SAN;
 use square::{Square, SquarePrimitives};
 
 /// Stores information required for unmaking moves - captured piece,
@@ -28,7 +27,7 @@ impl fmt::Debug for UnmakeInfo {
 impl UnmakeInfo {
 
     /// Constructs a new UnmakeInfo
-    #[inline]
+    //#[inline]
     pub fn new(cap_piece: u32, cap_color: u32, castling: [u32; 2],
                ep_square: Square, ep_available: bool, halfmoves: u32) -> UnmakeInfo {
         UnmakeInfo {
@@ -42,17 +41,17 @@ impl UnmakeInfo {
         }
     }
 
-    #[inline]
+    //#[inline]
     pub fn captured_piece(&self) -> u32 {
         self.m.extract_bits(0, 3)
     }
 
-    #[inline]
+    //#[inline]
     pub fn captured_color(&self) -> u32 {
         self.m.extract_bits(3, 1)
     }
 
-    #[inline]
+    //#[inline]
     pub fn castling(&self) -> [u32; 2] {
         [self.m.extract_bits(4, 2), self.m.extract_bits(6, 2)]
     }
@@ -114,8 +113,8 @@ pub struct Move {
 impl fmt::Debug for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Move {{ orig: {}, dest: {}, capture: {}, promotion: {}, spc0: {}, spc1: {} }}",
-            SAN::from_square(self.orig()).s,
-            SAN::from_square(self.dest()).s,
+            self.orig().to_san_string(),
+            self.dest().to_san_string(),
             self.is_capture(),
             self.is_promotion(),
             self.has_special_0(),
@@ -140,12 +139,12 @@ pub const MOV_PROM_KNIGHT: u32 = 0b1000;
 impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}{}{}",
-            SAN::from_square(self.orig()).s,
+            self.orig().to_san_string(),
             match self.is_capture() {
                 true => "x",
                 false => "-",
             },
-            SAN::from_square(self.dest()).s)
+            self.dest().to_san_string())
     }
 }
 

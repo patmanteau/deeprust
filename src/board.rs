@@ -5,7 +5,6 @@ use bitboard::*;
 
 use square::{Square, SquarePrimitives};
 use util::{piece, squares, bb, ep_capture_square};
-use san::SAN;
 use moves::{Move, UnmakeInfo};
 use move_stack::{MoveStack, MoveStackEntry};
 

@@ -59,3 +59,36 @@ impl SquarePrimitives for Square {
         self ^ 56
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_turns_strings_to_squares() {
+        let mut strs = Vec::new();
+        for y in ['1', '2', '3', '4', '5', '6', '7', '8'].iter() {
+            for x in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].iter() {
+                strs.push(format!("{}{}", x, y));
+            }
+        }
+
+        for (index, st) in strs.into_iter().enumerate() {
+            assert_eq!(index, Square::from_san_string(&st).unwrap() as usize);
+        }
+    }
+
+    #[test]
+    fn it_turns_squares_to_strings() {
+        let mut strs = Vec::new();
+        for y in ['1', '2', '3', '4', '5', '6', '7', '8'].iter() {
+            for x in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].iter() {
+                strs.push(format!("{}{}", x, y));
+            }
+        }
+
+        for (index, st) in strs.into_iter().enumerate() {
+            assert_eq!(st, (index as Square).to_san_string());
+        }
+    }
+}
