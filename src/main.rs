@@ -17,8 +17,6 @@ pub mod moves;
 pub mod piece;
 pub mod square;
 pub mod uci;
-pub mod util;
-
 
 use clap::{Arg, App};
 use log::LevelFilter;
