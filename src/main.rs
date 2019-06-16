@@ -6,6 +6,7 @@ extern crate log;
 extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
+extern crate quanta;
 
 pub mod bitboard;
 pub mod board;

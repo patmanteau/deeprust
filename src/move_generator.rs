@@ -7,6 +7,8 @@ use piece;
 use color::{self, Color};
 use square::{self, Square, SquarePrimitives};
 
+use quanta::Clock;
+
 pub struct PerftContext {
     nodes: u128,
     captures: u128,
@@ -17,6 +19,7 @@ pub struct PerftContext {
     disco_checks: u128,
     double_checks: u128,
     checkmates: u128,
+    elapsed: u64,
 }
 
 impl PerftContext {
@@ -31,14 +34,15 @@ impl PerftContext {
             disco_checks: 0,
             double_checks: 0,
             checkmates: 0,
+            elapsed: 0,
         }
     }
 }
 
 impl fmt::Display for PerftContext {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Nodes: {}, Captures: {}, EP: {}, Castles: {}, Promos: {}, Checks: {}, Discochecks: {}, Double checks: {}, Checkmates: {}", 
-                self.nodes, self.captures, self.ep, self.castles, self.promotions,
+        write!(f, "Elapsed: {}s, Nodes: {}, Captures: {}, EP: {}, Castles: {}, Promos: {}, Checks: {}, Discochecks: {}, Double checks: {}, Checkmates: {}", 
+                (self.elapsed as f64) / 1_000_000_000f64, self.nodes, self.captures, self.ep, self.castles, self.promotions,
                 self.checks, self.disco_checks, self.double_checks, self.checkmates)
     }
 }
@@ -54,7 +58,17 @@ impl MoveGenerator {
         }
     }
 
-    pub fn perft(board: &mut Board, ctx: &mut PerftContext, depth: u32) {
+    pub fn perft(board: &mut Board, depth: u32) -> PerftContext {
+        let mut ctx = PerftContext::new();
+        let clock = Clock::new();
+        let start = clock.now();
+        Self::do_perft(board, &mut ctx, depth);
+        let finish = clock.now();
+        ctx.elapsed = finish - start;
+        ctx
+    }
+
+    fn do_perft(board: &mut Board, ctx: &mut PerftContext, depth: u32) {
         if depth == 0 {
             ctx.nodes += 1;
             if board.move_stack().len() > 0 {
@@ -78,7 +92,7 @@ impl MoveGenerator {
         for mov in moves.iter() {
             board.make_move(*mov);
             if !MoveGenerator::is_in_check(board, 1 ^ board.to_move()) {
-                MoveGenerator::perft(board, ctx, depth - 1);
+                MoveGenerator::do_perft(board, ctx, depth - 1);
             }
             board.unmake_move();
         }

@@ -90,34 +90,11 @@ impl UCIInterface {
     }
 
     fn cmd_b(&self) {
-        let occ = self.board.occupied();
-        
         println!("{}", self.board);
         println!("w in check: {}, b in check: {}", MoveGenerator::is_in_check(&self.board, color::WHITE), MoveGenerator::is_in_check(&self.board, color::BLACK));
         if self.board.move_stack().len() > 0 {
             println!("last_move: {:#?}", self.board.move_stack().peek());
         }
-    }
-
-    fn cmd_bb(&self) {
-        let to_move = self.board.to_move();
-        println!("{}", bitboard::north_one(self.board.bb_pawns(to_move)).to_debug_string());
-        println!("{}", self.board.bb_empty().to_debug_string());
-        println!("{}", bitboard::BB_RANKS[0].to_debug_string());
-        println!("{}", self.board.bb_knights(to_move).to_debug_string());
-        println!("{}", bitboard::BB_DIAG[square::E4 as usize].to_debug_string());
-        println!("{}", bitboard::BB_ANTI_DIAG[square::E4 as usize].to_debug_string());
-        println!("{}", bitboard::BB_BISHOP_ATTACKS[square::E4 as usize].to_debug_string());
-        println!("{}", bitboard::BB_ROOK_ATTACKS[square::E4 as usize].to_debug_string());
-        println!("{}", bitboard::BB_QUEEN_ATTACKS[square::E4 as usize].to_debug_string());
-        println!("{}", bitboard::BB_RAYS_WEST[square::E1 as usize].to_debug_string());
-        println!("{}", bitboard::BB_RAYS_EAST[square::E1 as usize].to_debug_string());
-        println!("{}", bitboard::BB_KG_FILL_UP_ATTACKS[square::H1 as usize][0b111111].to_debug_string());
-        println!("{}", bitboard::diagonal_attacks(square::D4, 0b11111111_00000000_11111111).to_debug_string());
-        println!("{}", bitboard::anti_diagonal_attacks(square::D4, 0b11111111_00000000_11111111).to_debug_string());
-        println!("{}", bitboard::file_attacks(square::D4, 0b11000011_11111111_00000000_00000000_11000011_11111111_00000000_11111111).to_debug_string());
-        println!("{}", 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111.to_debug_string());
-        println!("file_attacks: \n{}", bitboard::file_attacks(square::H8, 0b11111111_01111111_00000000_10000000_00000001_00000000_11111110_11111111).to_debug_string());
     }
 
     fn cmd_moves(&mut self) {
@@ -135,8 +112,7 @@ impl UCIInterface {
             depth = cmd[0].parse::<u32>().unwrap();
         }
 
-        let mut ctx = PerftContext::new();
-        MoveGenerator::perft(&mut self.board, &mut ctx, depth);
+        let ctx = MoveGenerator::perft(&mut self.board, depth);
         println!("perft result: {}", ctx);
     }
 
