@@ -7,6 +7,7 @@ pub trait BitboardPrimitives {
     fn count(self) -> u32;
     fn scan(self) -> Square;
     
+    fn to_debug_string_rank(self, rank: u32) -> String;
     fn to_debug_string(self) -> String;
 }
 
