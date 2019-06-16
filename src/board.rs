@@ -536,6 +536,14 @@ impl Board {
         } else if is_capture {
             self.remove_piece(orig_piece, orig_color, orig_square);
             self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
+
+            // Clear castling rights on rook capture at home square
+            if dest_piece == piece::ROOK {
+                if self.to_move == color::WHITE && dest_square == square::A8 { self.castling[color::BLACK as usize].clear_bit(1); }
+                else if self.to_move == color::WHITE && dest_square == square::H8 { self.castling[color::BLACK as usize].clear_bit(0); }
+                else if self.to_move == color::BLACK && dest_square == square::A1 { self.castling[color::WHITE as usize].clear_bit(1); }
+                else if self.to_move == color::BLACK && dest_square == square::H1 { self.castling[color::WHITE as usize].clear_bit(0); }
+            }
         } else if mov.is_double_pawn_push() {
             self.remove_piece(orig_piece, orig_color, orig_square);
             let new_ep_square = (dest_square as i32 - [8i32, -8i32][orig_color as usize]) as Square;
