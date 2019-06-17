@@ -78,16 +78,17 @@ impl MoveGenerator {
                 if mov.is_king_castle() || mov.is_queen_castle() { ctx.castles += 1; }
                 if mov.is_promotion() { ctx.promotions += 1; }
             }
-            if MoveGenerator::is_in_check(board, board.to_move()) { 
+            let to_move = board.to_move();
+            if MoveGenerator::is_in_check(board, to_move) { 
                 ctx.checks += 1;
-                if MoveGenerator::is_mate(board, board.to_move()) {
+                if MoveGenerator::is_mate(board, to_move) {
                     ctx.checkmates += 1;
                 }
             }
             return;
         }
 
-        let mut nodes = 0u64;
+        //let mut nodes = 0u64;
         let moves = MoveGenerator::from_board(board);
         for mov in moves.iter() {
             board.make_move(*mov);
