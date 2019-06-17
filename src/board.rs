@@ -517,14 +517,6 @@ impl Board {
         } else if is_capture {
             self.remove_piece(orig_piece, orig_color, orig_square);
             self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
-
-            // Clear castling rights on rook capture at home square
-            if dest_piece == piece::ROOK {
-                if self.to_move == color::WHITE && dest_square == square::A8 { self.castling[color::BLACK as usize].clear_bit(1); }
-                else if self.to_move == color::WHITE && dest_square == square::H8 { self.castling[color::BLACK as usize].clear_bit(0); }
-                else if self.to_move == color::BLACK && dest_square == square::A1 { self.castling[color::WHITE as usize].clear_bit(1); }
-                else if self.to_move == color::BLACK && dest_square == square::H1 { self.castling[color::WHITE as usize].clear_bit(0); }
-            }
         } else if mov.is_double_pawn_push() {
             self.remove_piece(orig_piece, orig_color, orig_square);
             let new_ep_square = (dest_square as i32 - [8i32, -8i32][orig_color as usize]) as Square;
@@ -557,15 +549,21 @@ impl Board {
             self.castling[self.to_move as usize].clear_bit(1);
         }
 
+        // clear castling rights on rook move
         if piece::ROOK == orig_piece {
-            if orig_square == 0 {
-                self.castling[color::WHITE as usize].clear_bit(1);
-            } else if orig_square == 7 {
-                self.castling[color::WHITE as usize].clear_bit(0);
-            } else if orig_square == 56 {
-                self.castling[color::BLACK as usize].clear_bit(1);
-            } else if orig_square == 63 {
-                self.castling[color::BLACK as usize].clear_bit(0);
+            if 0 < Bitboard::bit_at(orig_square as u32) & BB_CORNERS & BB_FILE_A {
+                self.castling[self.to_move as usize].clear_bit(1);
+            } else if 0 < Bitboard::bit_at(orig_square as u32) & BB_CORNERS & BB_FILE_H {
+                self.castling[self.to_move as usize].clear_bit(0);
+            }
+        }
+
+        // clear castling rights on rook capture at home square
+        if dest_piece == piece::ROOK {
+            if 0 < Bitboard::bit_at(dest_square as u32) & BB_CORNERS & BB_FILE_A {
+                self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
+            } else if 0 < Bitboard::bit_at(dest_square as u32) & BB_CORNERS & BB_FILE_H {
+                self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
             }
         }
 
@@ -948,6 +946,8 @@ mod tests {
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
 
         // castling, king moves
@@ -957,27 +957,38 @@ mod tests {
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
+
         if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
             let before_unmake = board.to_fen();
             board.input_move(square::E1, square::C1, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
+
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
             board.input_move(square::E8, square::G8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
+
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
             board.input_move(square::E8, square::C8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
 
         // castling, rook moves
@@ -987,27 +998,38 @@ mod tests {
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
+
         if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
             let before_unmake = board.to_fen();
             board.input_move(square::H1, square::G1, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
+
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
             board.input_move(square::A8, square::B8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
+
         if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
             let before_unmake = board.to_fen();
             board.input_move(square::H8, square::G8, None);
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
 
         if let Ok(mut board) = Board::from_fen(String::from("8/3p4/8/4P/8/8/8/8 b - - 0 1")) {
@@ -1018,6 +1040,8 @@ mod tests {
             board.undo_move();
             let after_unmake = board.to_fen();
             assert_eq!(before_unmake, after_unmake);
+        } else {
+            assert!(false);
         }
     }
 
