@@ -16,27 +16,22 @@ pub trait BitboardPrimitives<T> {
 }
 
 impl BitboardPrimitives<u64> for Bitboard {
-    #[inline]
     fn count(self) -> u32 {
         self.count_ones()
     }
 
-    #[inline]
     fn scan(self) -> Square {
         self.trailing_zeros() as Square
     }
 
-    #[inline]
     fn test(self, pos: Square) -> bool {
         self.test_bit(pos as u32)
     }
 
-    #[inline]
     fn set(&mut self, pos: Square) {
         self.set_bit(pos as u32)
     }
 
-    #[inline]
     fn clear(&mut self, pos: Square) {
         self.clear_bit(pos as u32)
     }

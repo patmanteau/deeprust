@@ -54,7 +54,6 @@ impl SquarePrimitives for Square {
         san
     }
 
-    #[inline]
     fn flipped(self) -> Square {
         self ^ 56
     }
@@ -105,7 +104,6 @@ pub const EP_CAPTURE_SQUARES: [Square; 64] = [
         0,  0,  0,  0,  0,  0,  0,  0, 
 ];
 
-#[inline]
 pub fn ep_capture_square(ep_square: Square) -> Square {
     let table = [
          0,  0,  0,  0,  0,  0,  0,  0, 
@@ -122,8 +120,7 @@ pub fn ep_capture_square(ep_square: Square) -> Square {
 
 
 
-    // #[inline]
-    // pub fn flip_square(square: Square) -> Square {
+    // // pub fn flip_square(square: Square) -> Square {
     //     square ^ 56
 // }
 

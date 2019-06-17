@@ -342,76 +342,63 @@ impl Board {
         fen_string
     }
 
-    #[inline]
     pub fn bb(&self) -> &[[Bitboard; 8]; 2] {
         &self.bb
     }
 
     // don't actually return flipped boards for now
-    #[inline]
     pub fn bb_own(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][self.to_move as usize]
         self.bb[0][color as usize]
     }
 
-    #[inline]
     pub fn bb_opponent(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][1 ^ self.to_move as usize]
         self.bb[0][(1 ^ color) as usize]
     }
 
-    #[inline]
     pub fn bb_pawns(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::PAWN as usize] & self.bb_own(color)
     }
 
-    #[inline]
     pub fn bb_knights(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
     }
 
-    #[inline]
     pub fn bb_bishops(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
     }
 
-    #[inline]
     pub fn bb_rooks(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::ROOK as usize] & self.bb_own(color)
     }
 
-    #[inline]
     pub fn bb_queens(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
     }
 
-    #[inline]
     pub fn bb_king(&self, color: Color) -> Bitboard {
         // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::KING as usize] & self.bb_own(color)
     }
 
-    #[inline]
     pub fn bb_empty(&self) -> Bitboard {
         !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE))
     }
 
-    #[inline]
     pub fn to_move(&self) -> Color {
         self.to_move
     }
 
-    #[inline]
     pub fn castling(&self) -> [u32; 2] {
         self.castling
     }
 
-    #[inline]
     pub fn en_passant(&self) -> Option<[Square; 2]> {
         self.en_passant
     }
@@ -420,12 +407,10 @@ impl Board {
         &self.move_stack
     }
 
-    #[inline]
     pub fn occupied(&self) -> &[Piece; 64] {
         &self.occupied
     }
 
-    #[inline]
     fn get_piece_and_color(&self, square: Square) -> (Piece, Color) {
         (
             self.occupied[square as usize].code(), 
@@ -437,12 +422,10 @@ impl Board {
     //     self.bb[piece as usize] & self.bb[color as usize]
     // }
 
-    #[inline]
     fn check_piece(&self, piece: Piece, color: Color, square: Square) -> bool {
         (piece, color) == self.get_piece_and_color(square)
     }
 
-    #[inline]
     fn set_piece(&mut self, piece: Piece, color: Color, to: Square) {
         // update unflipped bb
         self.bb[0][color as usize].set(to);
@@ -456,7 +439,6 @@ impl Board {
         self.occupied[to as usize] = Piece::new(piece, color);
     }
 
-    #[inline]
     fn remove_piece(&mut self, piece: Piece, color: Color, from: Square) {
         // update unflipped bb
         self.bb[0][color as usize].clear(from);
@@ -470,7 +452,6 @@ impl Board {
         self.occupied[from as usize] = 0;
     }
 
-    #[inline]
     fn replace_piece(&mut self, old_piece: Piece, old_color: Color, new_piece: Piece, new_color: Color, square: Square) {
         // remove from unflipped bb
         self.bb[0][old_color as usize].clear(square);

@@ -39,7 +39,6 @@ pub struct MoveStack {
 impl MoveStack {
 
     /// Constructs a new, empty MoveStack
-    #[inline]
     pub fn new() -> MoveStack {
         MoveStack {
             entries: Vec::with_capacity(1024),
@@ -47,14 +46,12 @@ impl MoveStack {
         }
     }
 
-    #[inline]
     pub fn push(&mut self, entry: MoveStackEntry) {
         // self.entries[self.current] = entry;
         // self.current += 1;
         self.entries.push(entry)
     }
 
-    #[inline]
     pub fn pop(&mut self) -> MoveStackEntry {
         // debug_assert!(0 < self.current);
         // let retval = self.entries[self.current - 1];
@@ -63,7 +60,6 @@ impl MoveStack {
         self.entries.pop().unwrap()
     }
 
-    #[inline]
     pub fn peek(&self) -> &MoveStackEntry {
         // debug_assert!(0 < self.current);
         // let retval = self.entries[self.current - 1];
@@ -72,7 +68,6 @@ impl MoveStack {
         self.entries.last().unwrap()
     }
 
-    #[inline]
     pub fn len(&self) -> usize {
         // self.current
         self.entries.len()

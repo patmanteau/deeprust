@@ -103,7 +103,6 @@ impl MoveGenerator {
         let a = 0;
     }
 
-    #[inline]
     pub fn is_mate(board: &mut Board, color: Color) -> bool {
         let moves = MoveGenerator::from_board(board);
         for mov in moves.iter() {
@@ -118,13 +117,11 @@ impl MoveGenerator {
         true
     }
 
-    #[inline]
     pub fn is_in_check(board: &Board, color: Color) -> bool {
         let kingpos = board.bb_king(color).scan();
         MoveGenerator::is_attacked(board, color, kingpos)
     }
 
-    #[inline]
     pub fn is_attacked(board: &Board, color: Color, target: Square) -> bool {
         let occupied = board.bb_own(color) | board.bb_opponent(color);
 
@@ -186,7 +183,6 @@ impl MoveGenerator {
         false
     }
     
-    #[inline]
     pub fn from_board(board: &Board) -> Vec<Move> {
         // self.moves = Vec::with_capacity(512);
         let mut moves = Vec::with_capacity(512);
@@ -249,7 +245,6 @@ impl MoveGenerator {
     //     self.moves.len()
     // }
 
-    #[inline]
     fn gen_white_pawn_pushes(board: &Board) -> Vec<Move> {
         let mut pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
@@ -281,7 +276,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_black_pawn_pushes(board: &Board) -> Vec<Move> {
         let mut pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
@@ -313,7 +307,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_white_pawn_captures(board: &Board) -> Vec<Move> {
         let mut pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
@@ -354,7 +347,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_black_pawn_captures(board: &Board) -> Vec<Move> {
         let mut pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
@@ -396,7 +388,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_knight_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut knights = board.bb_knights(color);
@@ -415,7 +406,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_knight_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut knights = board.bb_knights(color);
@@ -434,7 +424,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_wking_castle(board: &Board) -> Vec<Move> {
         let occ = board.bb_own(color::WHITE) | board.bb_opponent(color::WHITE);
         let mut moves = Vec::with_capacity(16);
@@ -462,7 +451,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_bking_castle(board: &Board) -> Vec<Move> {
         let occ = board.bb_own(color::BLACK) | board.bb_opponent(color::BLACK);
         let mut moves = Vec::with_capacity(16);
@@ -490,7 +478,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_king_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut king = board.bb_king(color);
@@ -509,7 +496,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_king_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
         let mut king = board.bb_king(color);
@@ -528,7 +514,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_bishop_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut bishops = board.bb_bishops(color);
@@ -548,7 +533,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_bishop_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut bishops = board.bb_bishops(color);
@@ -568,7 +552,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_rook_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut rooks = board.bb_rooks(color);
@@ -589,7 +572,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_rook_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut rooks = board.bb_rooks(color);
@@ -610,7 +592,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_queen_moves(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut queens = board.bb_queens(color);
@@ -634,7 +615,6 @@ impl MoveGenerator {
         moves
     }
 
-    #[inline]
     fn gen_queen_captures(board: &Board, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
         let mut queens = board.bb_queens(color);
