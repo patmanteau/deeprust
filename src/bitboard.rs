@@ -11,7 +11,7 @@ pub trait BitboardPrimitives<T> {
     fn set(&mut self, pos: Square);
     fn clear(&mut self, pos: Square);
 
-    fn to_debug_string_rank(self, rank: u32) -> String;
+    fn rank_to_debug_string(self, rank: u32) -> String;
     fn to_debug_string(self) -> String;
 }
 
@@ -36,7 +36,7 @@ impl BitboardPrimitives<u64> for Bitboard {
         self.clear_bit(pos as u32)
     }
 
-    fn to_debug_string_rank(self, rank: u32) -> String {
+    fn rank_to_debug_string(self, rank: u32) -> String {
         assert!(rank < 8);
         //format!("{:08b}", (self.extract_bits(rank * 8, 8) as u8).reverse_bits())
 
@@ -55,7 +55,7 @@ impl BitboardPrimitives<u64> for Bitboard {
         out.push_str("+--------+\n");
         for i in (0..8).rev() {
             out.push_str("|");
-            out.push_str(&self.to_debug_string_rank(i));
+            out.push_str(&self.rank_to_debug_string(i));
             out.push_str(&format!("|{}\n", i + 1));
         }
         out.push_str("+--------+\n abcdefgh\n");
@@ -94,19 +94,19 @@ macro_rules! mbb_files {
 }
 
 mbb_squares!(BB_A1, 0, BB_B1, 1, BB_C1, 2, BB_D1, 3, BB_E1, 4, BB_F1, 5, BB_G1, 6, BB_H1, 7,
-                BB_A2, 8, BB_B2, 9, BB_C2,10, BB_D2,11, BB_E2,12, BB_F2,13, BB_G2,14, BB_H2,15,
-                BB_A3,16, BB_B3,17, BB_C3,18, BB_D3,19, BB_E3,20, BB_F3,21, BB_G3,22, BB_H3,23,
-                BB_A4,24, BB_B4,25, BB_C4,26, BB_D4,27, BB_E4,28, BB_F4,29, BB_G4,30, BB_H4,31,
-                BB_A5,32, BB_B5,33, BB_C5,34, BB_D5,35, BB_E5,36, BB_F5,37, BB_G5,38, BB_H5,39,
-                BB_A6,40, BB_B6,41, BB_C6,42, BB_D6,43, BB_E6,44, BB_F6,45, BB_G6,46, BB_H6,47,
-                BB_A7,48, BB_B7,49, BB_C7,50, BB_D7,51, BB_E7,52, BB_F7,53, BB_G7,54, BB_H7,55,
-                BB_A8,56, BB_B8,57, BB_C8,58, BB_D8,59, BB_E8,60, BB_F8,61, BB_G8,62, BB_H8,63);
+             BB_A2, 8, BB_B2, 9, BB_C2,10, BB_D2,11, BB_E2,12, BB_F2,13, BB_G2,14, BB_H2,15,
+             BB_A3,16, BB_B3,17, BB_C3,18, BB_D3,19, BB_E3,20, BB_F3,21, BB_G3,22, BB_H3,23,
+             BB_A4,24, BB_B4,25, BB_C4,26, BB_D4,27, BB_E4,28, BB_F4,29, BB_G4,30, BB_H4,31,
+             BB_A5,32, BB_B5,33, BB_C5,34, BB_D5,35, BB_E5,36, BB_F5,37, BB_G5,38, BB_H5,39,
+             BB_A6,40, BB_B6,41, BB_C6,42, BB_D6,43, BB_E6,44, BB_F6,45, BB_G6,46, BB_H6,47,
+             BB_A7,48, BB_B7,49, BB_C7,50, BB_D7,51, BB_E7,52, BB_F7,53, BB_G7,54, BB_H7,55,
+             BB_A8,56, BB_B8,57, BB_C8,58, BB_D8,59, BB_E8,60, BB_F8,61, BB_G8,62, BB_H8,63);
 
 mbb_ranks!  (BB_RANK_1, 0, BB_RANK_2, 1, BB_RANK_3, 2, BB_RANK_4, 3, 
-                BB_RANK_5, 4, BB_RANK_6, 5, BB_RANK_7, 6, BB_RANK_8, 7);
+             BB_RANK_5, 4, BB_RANK_6, 5, BB_RANK_7, 6, BB_RANK_8, 7);
 
 mbb_files!  (BB_FILE_A, 0, BB_FILE_B, 1, BB_FILE_C, 2, BB_FILE_D, 3, 
-                BB_FILE_E, 4, BB_FILE_F, 5, BB_FILE_G, 6, BB_FILE_H, 7);
+             BB_FILE_E, 4, BB_FILE_F, 5, BB_FILE_G, 6, BB_FILE_H, 7);
 
 pub const BB_DARK_SQUARES: Bitboard = 0xaa55aa55aa55aa55u64;
 pub const BB_LIGHT_SQUARES: Bitboard = 0x55aa55aa55aa55aau64;

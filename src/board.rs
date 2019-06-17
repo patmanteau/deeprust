@@ -61,7 +61,7 @@ impl fmt::Display for Board {
             writeln!(f, "{}", bb_titles[block]).unwrap();
             for rank in (0..8).rev() {
                 for cur_bb in 0..4 {
-                    write!(f, "{}    ", self.bb[0][(block * 4) + cur_bb].to_debug_string_rank(rank)).unwrap();
+                    write!(f, "{}    ", self.bb[0][(block * 4) + cur_bb].rank_to_debug_string(rank)).unwrap();
                 }
                 writeln!(f).unwrap();
             }
