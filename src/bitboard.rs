@@ -43,7 +43,13 @@ impl BitboardPrimitives<u64> for Bitboard {
 
     fn to_debug_string_rank(self, rank: u32) -> String {
         assert!(rank < 8);
-        format!("{:08b}", (self.extract_bits(rank * 8, 8) as u8).reverse_bits())
+        //format!("{:08b}", (self.extract_bits(rank * 8, 8) as u8).reverse_bits())
+
+        let mut b = self.extract_bits(rank * 8, 8) as u8;
+        b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+        b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+        b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+        format!("{:08b}", b)
     }
 
     fn to_debug_string(self) -> String {
