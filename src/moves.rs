@@ -1,6 +1,6 @@
-use crate::color::Color;
+
 use crate::common::*;
-use crate::piece::Piece;
+
 use crate::square::{Square, SquarePrimitives};
 use std::fmt;
 

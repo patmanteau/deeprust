@@ -453,7 +453,7 @@ impl Board {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bitboard as bb;
+    
     use crate::color::*;
     use crate::move_generator::MoveGenerator;
     use std::error::Error;
@@ -498,11 +498,11 @@ mod tests {
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         ];
         
-        let mut board = Board::startpos();
+        let board = Board::startpos();
         assert!(!board.has_moves());
         
         for fen_str in fen_strs {
-            if let Ok(mut board) = Board::from_fen(String::from(fen_str)) {
+            if let Ok(board) = Board::from_fen(String::from(fen_str)) {
                 assert_eq!(fen_str, board.to_fen());
             } else {
                 assert!(false);

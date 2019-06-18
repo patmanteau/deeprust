@@ -5,7 +5,7 @@ use crate::moves::Move;
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{self, Square, SquarePrimitives};
 use std::fmt;
-use std::str::FromStr;
+
 
 pub type PositionStack = Vec<Position>;
 
@@ -536,11 +536,11 @@ impl Position {
         // let is_capture = 0 != dest_piece;
         let is_capture = mov.is_capture();
 
-        let ep_allowed = self.en_passant != None;
-        let ep_square = match self.en_passant {
-            Some(sq) => sq[0],
-            None => 64,
-        };
+        // let _ep_allowed = self.en_passant != None;
+        // let _ep_square = match self.en_passant {
+        //     Some(sq) => sq[0],
+        //     None => 64,
+        // };
 
         // debug_assert_eq!(orig_color, self.to_move);
         if orig_color != self.to_move {
@@ -598,17 +598,6 @@ impl Position {
         } else {
             panic!("shouldn't come here")
         }
-
-        // let unmake_info = UnmakeInfo::new(
-        //     dest_piece,
-        //     dest_color,
-        //     self.castling,
-        //     ep_square,
-        //     ep_allowed,
-        //     self.halfmoves,
-        // );
-
-        // self.move_stack.push(MoveStackEntry::new(mov, unmake_info));
 
         // clear castling rights on king move
         if piece::KING == orig_piece {
@@ -727,10 +716,10 @@ impl Position {
 mod tests {
     use super::*;
     use crate::bitboard as bb;
-    use std::error::Error;
-    use std::fs::File;
-    use std::io::{BufRead, BufReader};
-    use std::path::Path;
+    
+    
+    
+    
 
     #[test]
     fn it_sets_pieces() {

@@ -352,7 +352,7 @@ impl MoveGenerator {
     }
 
     fn gen_white_pawn_captures(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(color::WHITE);
+        let pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
@@ -415,7 +415,7 @@ impl MoveGenerator {
     }
 
     fn gen_black_pawn_captures(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(color::BLACK);
+        let pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
@@ -547,29 +547,20 @@ impl MoveGenerator {
 
         
 
-        let qclear = !occ.test(square::D1)
-            && !occ.test(square::C1)
-            && !occ.test(square::B1)
-            && !MoveGenerator::is_attacked(board, color::WHITE, square::D1)
-            && board.castling()[color::WHITE as usize].test_bit(1);
-
-        let kclear = !occ.test(square::F1)
-            && !occ.test(square::G1)
-            && !MoveGenerator::is_attacked(board, color::WHITE, square::F1)
-            && board.castling()[color::WHITE as usize].test_bit(0);
-
-        if qclear {
+        if qlear {
             moves.push(Move::new(
                 square::E1,
                 square::C1,
-                Move::make_flags(false, false, true, true),
+                //Move::make_flags(false, false, true, true),
+                flags::MOV_Q_CASTLE,
             ));
         }
-        if kclear {
+        if klear {
             moves.push(Move::new(
                 square::E1,
                 square::G1,
-                Move::make_flags(false, false, false, true),
+                // Move::make_flags(false, false, false, true),
+                flags::MOV_K_CASTLE,
             ));
         }
         moves
@@ -603,14 +594,16 @@ impl MoveGenerator {
             moves.push(Move::new(
                 square::E8,
                 square::C8,
-                Move::make_flags(false, false, true, true),
+                //Move::make_flags(false, false, true, true),
+                flags::MOV_Q_CASTLE,
             ));
         }
         if klear {
             moves.push(Move::new(
                 square::E8,
                 square::G8,
-                Move::make_flags(false, false, false, true),
+                // Move::make_flags(false, false, false, true),
+                flags::MOV_K_CASTLE,
             ));
         }
         moves
