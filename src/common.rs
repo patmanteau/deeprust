@@ -10,11 +10,14 @@ pub trait BitTwiddling<T> {
 
     fn clear_lsb(&mut self);
 }
+
+
 macro_rules! twiddle_impl {
-    ($T:ty) => {
+    ($T:ty, $ARRIDENT:ident) => {
         impl BitTwiddling<$T> for $T {
             fn bit_at(pos: u32) -> $T {
-                1 << pos
+                //1 << pos
+                $ARRIDENT[pos as usize]
             }
 
             fn test_bit(&self, pos: u32) -> bool {
@@ -47,10 +50,44 @@ macro_rules! twiddle_impl {
     };
 }
 
-twiddle_impl!(u8);
-twiddle_impl!(u16);
-twiddle_impl!(u32);
-twiddle_impl!(u64);
+lazy_static! {
+    pub static ref BT_U8: [u8; std::mem::size_of::<u8>()] = {
+            const arrsize: usize = std::mem::size_of::<u8>();
+            let mut arr: [u8; arrsize] = [0; arrsize];
+            for i in 0..arrsize {
+                arr[i] = 1 << i
+            }
+            arr
+        };
+    pub static ref BT_U16: [u16; std::mem::size_of::<u16>()] = {
+            const arrsize: usize = std::mem::size_of::<u16>();
+            let mut arr: [u16; arrsize] = [0; arrsize];
+            for i in 0..arrsize {
+                arr[i] = 1 << i
+            }
+            arr
+        };
+    pub static ref BT_U32: [u32; std::mem::size_of::<u32>()] = {
+            const arrsize: usize = std::mem::size_of::<u32>();
+            let mut arr: [u32; arrsize] = [0; arrsize];
+            for i in 0..arrsize {
+                arr[i] = 1 << i
+            }
+            arr
+        };
+    pub static ref BT_U64: [u64; std::mem::size_of::<u64>()] = {
+            const arrsize: usize = std::mem::size_of::<u64>();
+            let mut arr: [u64; arrsize] = [0; arrsize];
+            for i in 0..arrsize {
+                arr[i] = 1 << i
+            }
+            arr
+        };
+}
+twiddle_impl!(u8, BT_U8);
+twiddle_impl!(u16, BT_U16);
+twiddle_impl!(u32, BT_U32);
+twiddle_impl!(u64, BT_U64);
 
 #[cfg(test)]
 mod tests {
