@@ -1,3 +1,6 @@
+ #![feature(test)]
+ #![feature(simd_x86_bittest)]
+
 extern crate indoc;
 extern crate clap;
 extern crate unicode_segmentation;
@@ -7,6 +10,7 @@ extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
 extern crate quanta;
+extern crate test;
 
 pub mod bitboard;
 pub mod board;
