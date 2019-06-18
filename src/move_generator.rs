@@ -238,11 +238,45 @@ impl MoveGenerator {
     // }
 
     fn gen_white_pawn_pushes(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(color::WHITE);
+        let pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
 
-        while 0 < pawns {
-            let from = pawns.scan();
+        let mut norm_pawns = pawns & bitboard::BB_NOT_RANK_78;
+        let mut prom_pawns = pawns & bitboard::BB_RANK_7;
+
+        while 0 < prom_pawns {
+            let from = prom_pawns.scan();
+            let push = bitboard::BB_WPAWN_PUSHES[from as usize] & board.bb_empty();
+            if 0 < push {
+                let to = push.scan();
+                // promotion
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_QUEEN,
+                )); // queen
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_ROOK,
+                )); // rook
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_BISHOP,
+                )); // bishop
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_KNIGHT,
+                )); // knight
+
+            }
+            prom_pawns.clear(from);
+        }
+
+        while 0 < norm_pawns {
+            let from = norm_pawns.scan();
             let single_push =
                 bitboard::north_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
             let double_push =
@@ -250,56 +284,120 @@ impl MoveGenerator {
 
             if 0 < single_push {
                 let to = single_push.scan();
-                if to >= 56 {
-                    // promotion
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, true, true),
-                    )); // queen
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, false, true),
-                    )); // rook
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, true, false),
-                    )); // bishop
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, false, false),
-                    )); // knight
-                } else {
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, false, false, false),
-                    ));
-                }
-            }
-
-            if 0 < double_push {
-                let to = double_push.scan() as u16;
                 moves.push(Move::new(
                     from,
                     to,
-                    Move::make_flags(false, false, true, false),
+                    flags::MOV_QUIET,
                 ));
             }
-            pawns.clear(from);
+            
+            if 0 < double_push {
+                let to = double_push.scan();
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_DPP,
+                ));
+            }
+            norm_pawns.clear(from);
         }
         moves
     }
 
     fn gen_black_pawn_pushes(board: &Board) -> Vec<Move> {
-        let mut pawns = board.bb_pawns(color::BLACK);
+        // let mut pawns = board.bb_pawns(color::BLACK);
+        // let mut moves = Vec::with_capacity(16);
+
+        // while 0 < pawns {
+        //     let from = pawns.scan();
+        //     let single_push =
+        //         bitboard::south_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
+        //     let double_push =
+        //         bitboard::south_one(single_push) & board.bb_empty() & bitboard::BB_RANK_5;
+
+        //     if 0 < single_push {
+        //         let to = single_push.scan();
+        //         if to < 8 {
+        //             // promotion
+        //             moves.push(Move::new(
+        //                 from,
+        //                 to,
+        //                 Move::make_flags(false, true, true, true),
+        //             )); // queen
+        //             moves.push(Move::new(
+        //                 from,
+        //                 to,
+        //                 Move::make_flags(false, true, false, true),
+        //             )); // rook
+        //             moves.push(Move::new(
+        //                 from,
+        //                 to,
+        //                 Move::make_flags(false, true, true, false),
+        //             )); // bishop
+        //             moves.push(Move::new(
+        //                 from,
+        //                 to,
+        //                 Move::make_flags(false, true, false, false),
+        //             )); // knight
+        //         } else {
+        //             moves.push(Move::new(
+        //                 from,
+        //                 to,
+        //                 Move::make_flags(false, false, false, false),
+        //             ));
+        //         }
+        //     }
+
+        //     if 0 < double_push {
+        //         let to = double_push.scan();
+        //         moves.push(Move::new(
+        //             from,
+        //             to,
+        //             Move::make_flags(false, false, true, false),
+        //         ));
+        //     }
+        //     pawns.clear(from);
+        // }
+        // moves
+        let pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
 
-        while 0 < pawns {
-            let from = pawns.scan();
+        let mut norm_pawns = pawns & bitboard::BB_NOT_RANK_12;
+        let mut prom_pawns = pawns & bitboard::BB_RANK_2;
+
+        while 0 < prom_pawns {
+            let from = prom_pawns.scan();
+            let push = bitboard::BB_BPAWN_PUSHES[from as usize] & board.bb_empty();
+            if 0 < push {
+                let to = push.scan();
+                // promotion
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_QUEEN,
+                )); // queen
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_ROOK,
+                )); // rook
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_BISHOP,
+                )); // bishop
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_PROM_KNIGHT,
+                )); // knight
+
+            }
+            prom_pawns.clear(from);
+        }
+
+        while 0 < norm_pawns {
+            let from = norm_pawns.scan();
             let single_push =
                 bitboard::south_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
             let double_push =
@@ -307,46 +405,22 @@ impl MoveGenerator {
 
             if 0 < single_push {
                 let to = single_push.scan();
-                if to < 8 {
-                    // promotion
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, true, true),
-                    )); // queen
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, false, true),
-                    )); // rook
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, true, false),
-                    )); // bishop
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, true, false, false),
-                    )); // knight
-                } else {
-                    moves.push(Move::new(
-                        from,
-                        to,
-                        Move::make_flags(false, false, false, false),
-                    ));
-                }
+                moves.push(Move::new(
+                    from,
+                    to,
+                    flags::MOV_QUIET,
+                ));
             }
-
+            
             if 0 < double_push {
                 let to = double_push.scan();
                 moves.push(Move::new(
                     from,
                     to,
-                    Move::make_flags(false, false, true, false),
+                    flags::MOV_DPP,
                 ));
             }
-            pawns.clear(from);
+            norm_pawns.clear(from);
         }
         moves
     }
