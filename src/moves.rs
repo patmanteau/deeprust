@@ -1,4 +1,3 @@
-
 use crate::common::*;
 
 use crate::square::{Square, SquarePrimitives};

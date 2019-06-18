@@ -6,7 +6,6 @@ use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{self, Square, SquarePrimitives};
 use std::fmt;
 
-
 pub type PositionStack = Vec<Position>;
 
 /// Represents a chess position
@@ -546,7 +545,7 @@ impl Position {
         if orig_color != self.to_move {
             eprintln!("orig_color != self.to_move");
             eprintln!("offending move: {:?}", mov);
-            self.panic_helper();            
+            self.panic_helper();
         }
 
         // reset en passant
@@ -716,10 +715,6 @@ impl Position {
 mod tests {
     use super::*;
     use crate::bitboard as bb;
-    
-    
-    
-    
 
     #[test]
     fn it_sets_pieces() {
@@ -733,10 +728,12 @@ mod tests {
                     assert!(0 != position.bb[0][color as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(0 != position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(
-                        0 != position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                        0 != position.bb[1][color as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize]
                     );
                     assert!(
-                        0 != position.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                        0 != position.bb[1][piece as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize]
                     );
                     assert_eq!(piece, position.occupied[square as usize].code());
                     assert_eq!(color, position.occupied[square as usize].color());
@@ -766,10 +763,12 @@ mod tests {
                     assert!(0 != position.bb[0][color as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(0 != position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(
-                        0 != position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                        0 != position.bb[1][color as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize]
                     );
                     assert!(
-                        0 != position.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                        0 != position.bb[1][piece as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize]
                     );
                     assert_eq!(piece, position.occupied[square as usize].code());
                     assert_eq!(color, position.occupied[square as usize].color());

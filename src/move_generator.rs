@@ -1,8 +1,8 @@
 use crate::bitboard::{self, BitboardPrimitives};
 use crate::board::Board;
 use crate::common::*;
-use crate::moves::Move;
 use crate::moves::flags;
+use crate::moves::Move;
 use std::fmt;
 
 use crate::color::{self, Color};
@@ -367,7 +367,8 @@ impl MoveGenerator {
 
         while 0 < prom_pawns {
             let from = prom_pawns.scan();
-            let mut atk = bitboard::BB_WPAWN_ATTACKS[from as usize] & board.bb_opponent(color::WHITE);
+            let mut atk =
+                bitboard::BB_WPAWN_ATTACKS[from as usize] & board.bb_opponent(color::WHITE);
             while 0 < atk {
                 let to = atk.scan();
                 // promotion
@@ -398,7 +399,8 @@ impl MoveGenerator {
 
         while 0 < norm_pawns {
             let from = norm_pawns.scan();
-            let mut atk = bitboard::BB_WPAWN_ATTACKS[from as usize] & (board.bb_opponent(color::WHITE) | ep_bb);
+            let mut atk = bitboard::BB_WPAWN_ATTACKS[from as usize]
+                & (board.bb_opponent(color::WHITE) | ep_bb);
             while 0 < atk {
                 let to = atk.scan();
                 // promotion
@@ -430,7 +432,8 @@ impl MoveGenerator {
 
         while 0 < prom_pawns {
             let from = prom_pawns.scan();
-            let mut atk = bitboard::BB_BPAWN_ATTACKS[from as usize] & board.bb_opponent(color::BLACK);
+            let mut atk =
+                bitboard::BB_BPAWN_ATTACKS[from as usize] & board.bb_opponent(color::BLACK);
             while 0 < atk {
                 let to = atk.scan();
                 // promotion
@@ -461,7 +464,8 @@ impl MoveGenerator {
 
         while 0 < norm_pawns {
             let from = norm_pawns.scan();
-            let mut atk = bitboard::BB_BPAWN_ATTACKS[from as usize] & (board.bb_opponent(color::BLACK) | ep_bb);
+            let mut atk = bitboard::BB_BPAWN_ATTACKS[from as usize]
+                & (board.bb_opponent(color::BLACK) | ep_bb);
             while 0 < atk {
                 let to = atk.scan();
                 // promotion
@@ -529,39 +533,20 @@ impl MoveGenerator {
             return moves;
         }
 
-        let qlear = 
-            // !occ.test(square::D8)
-            // && !occ.test(square::C8)
-            // && !occ.test(square::B8)
-            0 == occ.extract_bits(u32::from(square::B1), 3)
+        let qlear = 0 == occ.extract_bits(u32::from(square::B1), 3)
             && !MoveGenerator::is_attacked(board, color::WHITE, square::C1)
             && !MoveGenerator::is_attacked(board, color::WHITE, square::D1)
             && board.castling()[color::WHITE as usize].test_bit(1);
 
-        let klear = 
-            // !occ.test(square::F8)
-            // && !occ.test(square::G8)
-            0 == occ.extract_bits(u32::from(square::F1), 2)
+        let klear = 0 == occ.extract_bits(u32::from(square::F1), 2)
             && !MoveGenerator::is_attacked(board, color::WHITE, square::F1)
             && board.castling()[color::WHITE as usize].test_bit(0);
 
-        
-
         if qlear {
-            moves.push(Move::new(
-                square::E1,
-                square::C1,
-                //Move::make_flags(false, false, true, true),
-                flags::MOV_Q_CASTLE,
-            ));
+            moves.push(Move::new(square::E1, square::C1, flags::MOV_Q_CASTLE));
         }
         if klear {
-            moves.push(Move::new(
-                square::E1,
-                square::G1,
-                // Move::make_flags(false, false, false, true),
-                flags::MOV_K_CASTLE,
-            ));
+            moves.push(Move::new(square::E1, square::G1, flags::MOV_K_CASTLE));
         }
         moves
     }
@@ -574,37 +559,20 @@ impl MoveGenerator {
             return moves;
         }
 
-        let qlear = 
-            // !occ.test(square::D8)
-            // && !occ.test(square::C8)
-            // && !occ.test(square::B8)
-            0 == occ.extract_bits(u32::from(square::B8), 3)
+        let qlear = 0 == occ.extract_bits(u32::from(square::B8), 3)
             && !MoveGenerator::is_attacked(board, color::BLACK, square::C8)
             && !MoveGenerator::is_attacked(board, color::BLACK, square::D8)
             && board.castling()[color::BLACK as usize].test_bit(1);
 
-        let klear = 
-            // !occ.test(square::F8)
-            // && !occ.test(square::G8)
-            0 == occ.extract_bits(u32::from(square::F8), 2)
+        let klear = 0 == occ.extract_bits(u32::from(square::F8), 2)
             && !MoveGenerator::is_attacked(board, color::BLACK, square::F8)
             && board.castling()[color::BLACK as usize].test_bit(0);
 
         if qlear {
-            moves.push(Move::new(
-                square::E8,
-                square::C8,
-                //Move::make_flags(false, false, true, true),
-                flags::MOV_Q_CASTLE,
-            ));
+            moves.push(Move::new(square::E8, square::C8, flags::MOV_Q_CASTLE));
         }
         if klear {
-            moves.push(Move::new(
-                square::E8,
-                square::G8,
-                // Move::make_flags(false, false, false, true),
-                flags::MOV_K_CASTLE,
-            ));
+            moves.push(Move::new(square::E8, square::G8, flags::MOV_K_CASTLE));
         }
         moves
     }

@@ -54,7 +54,7 @@ impl Board {
         Board {
             pstack: vec![Position::new(); PSTACK_SIZE],
             pcursor: 0,
-            move_stack: MoveStack::with_capacity(1024)
+            move_stack: MoveStack::with_capacity(1024),
         }
     }
 
@@ -123,36 +123,48 @@ impl Board {
                         'P' => {
                             position.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, y))
                         }
-                        'N' => {
-                            position.set_piece(piece::KNIGHT, color::WHITE, Square::from_coords(x, y))
-                        }
-                        'B' => {
-                            position.set_piece(piece::BISHOP, color::WHITE, Square::from_coords(x, y))
-                        }
+                        'N' => position.set_piece(
+                            piece::KNIGHT,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'B' => position.set_piece(
+                            piece::BISHOP,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
                         'R' => {
                             position.set_piece(piece::ROOK, color::WHITE, Square::from_coords(x, y))
                         }
-                        'Q' => {
-                            position.set_piece(piece::QUEEN, color::WHITE, Square::from_coords(x, y))
-                        }
+                        'Q' => position.set_piece(
+                            piece::QUEEN,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
                         'K' => {
                             position.set_piece(piece::KING, color::WHITE, Square::from_coords(x, y))
                         }
                         'p' => {
                             position.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, y))
                         }
-                        'n' => {
-                            position.set_piece(piece::KNIGHT, color::BLACK, Square::from_coords(x, y))
-                        }
-                        'b' => {
-                            position.set_piece(piece::BISHOP, color::BLACK, Square::from_coords(x, y))
-                        }
+                        'n' => position.set_piece(
+                            piece::KNIGHT,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        'b' => position.set_piece(
+                            piece::BISHOP,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
                         'r' => {
                             position.set_piece(piece::ROOK, color::BLACK, Square::from_coords(x, y))
                         }
-                        'q' => {
-                            position.set_piece(piece::QUEEN, color::BLACK, Square::from_coords(x, y))
-                        }
+                        'q' => position.set_piece(
+                            piece::QUEEN,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
                         'k' => {
                             position.set_piece(piece::KING, color::BLACK, Square::from_coords(x, y))
                         }
@@ -234,7 +246,7 @@ impl Board {
                 for mov in fen_iter {
                     match board.input_san_move(mov) {
                         Ok(_) => continue,
-                        Err(err) => return Err(err)
+                        Err(err) => return Err(err),
                     }
                 }
             }
@@ -389,7 +401,6 @@ impl Board {
         self.current().fullmoves()
     }
 
-
     pub fn make_move(&mut self, mov: Move) {
         assert!(self.pcursor + 1 < PSTACK_SIZE);
         //self.pstack[self.pcursor + 1] = self.current().clone();
@@ -405,7 +416,8 @@ impl Board {
         self.pcursor -= 1;
     }
 
-    pub fn input_move(&mut self,
+    pub fn input_move(
+        &mut self,
         orig: Square,
         dest: Square,
         promote_to: Option<Piece>,
@@ -419,21 +431,21 @@ impl Board {
                 self.pcursor += 1;
                 Ok(true)
             }
-            Err(err) => Err(err)
-        }
+            Err(err) => Err(err),
+        };
     }
 
     pub fn input_san_move(&mut self, san_move: &str) -> Result<bool, &'static str> {
         if san_move.len() < 4 {
-            return Err("error: incomplete move")
+            return Err("error: incomplete move");
         }
         if let (Ok(from), Ok(to)) = (
             Square::from_san_string(&san_move[0..2]),
             Square::from_san_string(&san_move[2..4]),
         ) {
-            return self.input_move(from, to, None)
+            return self.input_move(from, to, None);
         } else {
-            return Err("error: invalid move")
+            return Err("error: invalid move");
         }
     }
 
@@ -453,7 +465,7 @@ impl Board {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     use crate::color::*;
     use crate::move_generator::MoveGenerator;
     use std::error::Error;
@@ -464,50 +476,47 @@ mod tests {
     #[test]
     fn it_sets_correct_startpos() {
         let b = Board::startpos();
-        
+
         // color boards
         assert_eq!(0xffff, b.bb_own(WHITE));
-        assert_eq!(0xffff << 6*8, b.bb_opponent(WHITE));
+        assert_eq!(0xffff << 6 * 8, b.bb_opponent(WHITE));
 
         // pawn boards
         assert_eq!(0xff << 8, b.bb_pawns(WHITE));
-        assert_eq!(0xff << 6*8, b.bb_pawns(BLACK));
-        
+        assert_eq!(0xff << 6 * 8, b.bb_pawns(BLACK));
+
         // rook boards
         assert_eq!(0x81, b.bb_rooks(WHITE));
-        assert_eq!(0x81 << 7*8, b.bb_rooks(BLACK));
-        
+        assert_eq!(0x81 << 7 * 8, b.bb_rooks(BLACK));
+
         // bishop boards
         assert_eq!(0x24, b.bb_bishops(WHITE));
-        assert_eq!(0x24 << 7*8, b.bb_bishops(BLACK));
+        assert_eq!(0x24 << 7 * 8, b.bb_bishops(BLACK));
 
         // queen boards
         assert_eq!(0x8, b.bb_queens(WHITE));
-        assert_eq!(0x8 << 7*8, b.bb_queens(BLACK));
+        assert_eq!(0x8 << 7 * 8, b.bb_queens(BLACK));
 
         // king boards
         assert_eq!(0x10, b.bb_king(WHITE));
-        assert_eq!(0x10 << 7*8, b.bb_king(BLACK));
+        assert_eq!(0x10 << 7 * 8, b.bb_king(BLACK));
 
         assert!(!b.has_moves());
     }
 
     #[test]
     fn it_makes_correct_fen_strings() {
-        let fen_strs = vec![
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        ];
-        
+        let fen_strs = vec!["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"];
+
         let board = Board::startpos();
         assert!(!board.has_moves());
-        
+
         for fen_str in fen_strs {
             if let Ok(board) = Board::from_fen(String::from(fen_str)) {
                 assert_eq!(fen_str, board.to_fen());
             } else {
                 assert!(false);
             }
-            
         }
     }
 
@@ -540,7 +549,7 @@ mod tests {
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR y KQkq e3 0 1",
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HFhf e3 0 1",
         ];
-        
+
         for fen_str in fen_strs {
             let b = Board::from_fen(String::from(fen_str));
             match b {
@@ -573,7 +582,10 @@ mod tests {
     #[test]
     fn it_unmakes_moves() {
         let one_move_strs = vec![
-            ("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1", " moves d7d5"),
+            (
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
+                " moves d7d5",
+            ),
             // castling, king moves
             ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1g1"),
             ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1c1"),
@@ -584,7 +596,6 @@ mod tests {
             ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves h1g1"),
             ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves a8b8"),
             ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves h8g8"),
-            
         ];
 
         let two_move_strs = vec![
@@ -593,28 +604,26 @@ mod tests {
         ];
 
         for (one_mover_fen, one_mover_moves) in one_move_strs {
-            if let Ok(mut board) = Board::from_fen(
-                String::from(one_mover_fen) + &String::from(one_mover_moves)
-            ) {
+            if let Ok(mut board) =
+                Board::from_fen(String::from(one_mover_fen) + &String::from(one_mover_moves))
+            {
                 board.unmake_move();
                 assert_eq!(one_mover_fen, board.to_fen());
             } else {
                 assert!(false);
             }
-            
         }
 
         for (two_mover_fen, two_mover_moves) in two_move_strs {
-            if let Ok(mut board) = Board::from_fen(
-                String::from(two_mover_fen) + &String::from(two_mover_moves)
-            ) {
+            if let Ok(mut board) =
+                Board::from_fen(String::from(two_mover_fen) + &String::from(two_mover_moves))
+            {
                 board.unmake_move();
                 board.unmake_move();
                 assert_eq!(two_mover_fen, board.to_fen());
             } else {
                 assert!(false);
             }
-            
         }
     }
 

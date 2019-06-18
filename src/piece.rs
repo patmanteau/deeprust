@@ -52,7 +52,7 @@ impl PiecePrimitives for Piece {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn it_has_correct_piece_enum_values() {
         assert_eq!(2, PAWN);

@@ -6,7 +6,7 @@ pub const BLACK: Color = 1;
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn it_has_correct_color_enum_values() {
         assert_eq!(0, WHITE as usize);

@@ -212,7 +212,10 @@ mod tests {
     fn it_handles_moves() {
         let mut c = UCIInterface::new();
         let one_move_strs = vec![
-            ("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1", " moves d7d5"),
+            (
+                "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
+                " moves d7d5",
+            ),
             // castling, king moves
             ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1g1"),
             ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1c1"),
@@ -223,7 +226,6 @@ mod tests {
             ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves h1g1"),
             ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves a8b8"),
             ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves h8g8"),
-            
         ];
 
         let two_move_strs = vec![
@@ -232,28 +234,26 @@ mod tests {
         ];
 
         for (one_mover_fen, one_mover_moves) in one_move_strs {
-            if let Ok(mut board) = Board::from_fen(
-                String::from(one_mover_fen) + &String::from(one_mover_moves)
-            ) {
+            if let Ok(mut board) =
+                Board::from_fen(String::from(one_mover_fen) + &String::from(one_mover_moves))
+            {
                 board.unmake_move();
                 assert_eq!(one_mover_fen, board.to_fen());
             } else {
                 assert!(false);
             }
-            
         }
 
         for (two_mover_fen, two_mover_moves) in two_move_strs {
-            if let Ok(mut board) = Board::from_fen(
-                String::from(two_mover_fen) + &String::from(two_mover_moves)
-            ) {
+            if let Ok(mut board) =
+                Board::from_fen(String::from(two_mover_fen) + &String::from(two_mover_moves))
+            {
                 board.unmake_move();
                 board.unmake_move();
                 assert_eq!(two_mover_fen, board.to_fen());
             } else {
                 assert!(false);
             }
-            
         }
         let uci_strs = vec![
             ("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves d2d4 d7d5 e2e4 e7e5", "rnbqkbnr/ppp2ppp/8/3pp3/3PP3/8/PPP2PPP/RNBQKBNR w KQkq e6 0 3"),
@@ -275,7 +275,5 @@ mod tests {
             c.parse(String::from(uci_in));
             assert_eq!(fen_out, c.board.to_fen())
         }
-
-        
     }
 }
