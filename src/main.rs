@@ -28,7 +28,7 @@ use clap::{Arg, App};
 use log::LevelFilter;
 
 fn main() {
-    simple_logging::log_to_file("test.log", LevelFilter::Info);
+    simple_logging::log_to_file("test.log", LevelFilter::Info).unwrap();
 
     let matches = App::new("deeprust")
         .version(env!("CARGO_PKG_VERSION"))

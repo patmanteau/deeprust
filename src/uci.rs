@@ -10,7 +10,7 @@ use crate::square::{Square, SquarePrimitives};
 
 pub struct UCIInterface {
     pub board: Board,
-    gen: MoveGenerator,
+    // gen: MoveGenerator,
     run: bool,
 }
 
@@ -18,7 +18,7 @@ impl UCIInterface {
     pub fn new() -> UCIInterface {
         UCIInterface { 
             board: Board::new(),
-            gen: MoveGenerator::new(),
+            //gen: MoveGenerator::new(),
             run: true }
     }
 

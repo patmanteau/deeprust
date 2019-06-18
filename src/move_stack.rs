@@ -15,12 +15,12 @@ impl MoveStackEntry {
         }
     }
 
-    fn empty() -> MoveStackEntry {
-        MoveStackEntry {
-            mov: Move::new(0, 0, 0),
-            store: UnmakeInfo::new(0, 0, [0, 0], 0, false, 0),
-        }
-    }
+    // fn empty() -> MoveStackEntry {
+    //     MoveStackEntry {
+    //         mov: Move::new(0, 0, 0),
+    //         store: UnmakeInfo::new(0, 0, [0, 0], 0, false, 0),
+    //     }
+    // }
 }
 
 impl fmt::Display for MoveStackEntry {

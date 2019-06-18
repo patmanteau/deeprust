@@ -99,10 +99,6 @@ impl MoveGenerator {
         }
     }
 
-    fn break_helper() {
-        let _a = 0;
-    }
-
     pub fn is_mate(board: &mut Board, _color: Color) -> bool {
         let moves = MoveGenerator::from_board(board);
         for mov in moves.iter() {
@@ -662,7 +658,7 @@ mod tests {
         let mut board = Board::startpos();
         
         assert_eq!(16, MoveGenerator::gen_white_pawn_pushes(&board).len());
-        board.input_move(square::E2, square::E4, None);
+        board.input_move(square::E2, square::E4, None).unwrap();
         assert_eq!(16, MoveGenerator::gen_black_pawn_pushes(&board).len());
 
         board = Board::from_fen(String::from("8/PPPPPPPP/8/8/8/8/8/8 w - - 0 1")).unwrap();
@@ -683,7 +679,7 @@ mod tests {
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
 
         board = Board::from_fen(String::from("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1")).unwrap();
-        board.input_move(square::D7, square::D5, None);
+        board.input_move(square::D7, square::D5, None).unwrap();
         assert_eq!(1, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(1, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(2, MoveGenerator::from_board(&board).len());
@@ -693,12 +689,12 @@ mod tests {
     fn it_generates_king_moves() {
         // position startpos moves e2e4 e7e5 g1f3 g8f6 f1d3 f8d6
         let mut board = Board::startpos();
-        board.input_move(square::E2, square::E4, None);
-        board.input_move(square::E7, square::E5, None);
-        board.input_move(square::G1, square::F3, None);
-        board.input_move(square::G8, square::F6, None);
-        board.input_move(square::F1, square::D3, None);
-        board.input_move(square::F8, square::D6, None);
+        board.input_move(square::E2, square::E4, None).unwrap();
+        board.input_move(square::E7, square::E5, None).unwrap();
+        board.input_move(square::G1, square::F3, None).unwrap();
+        board.input_move(square::G8, square::F6, None).unwrap();
+        board.input_move(square::F1, square::D3, None).unwrap();
+        board.input_move(square::F8, square::D6, None).unwrap();
         assert_eq!(2, MoveGenerator::gen_king_moves(&board, color::WHITE).len());
         assert_eq!(1, MoveGenerator::gen_wking_castle(&board).len());
     }
