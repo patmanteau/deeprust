@@ -69,7 +69,7 @@ impl MoveGenerator {
     fn do_perft(board: &mut Board, ctx: &mut PerftContext, depth: u32) {
         if depth == 0 {
             ctx.nodes += 1;
-            if board.move_stack().len() > 0 {
+            if !board.move_stack().is_empty() {
                 let mov = board.move_stack().peek().mov;
                 if mov.is_capture() {
                     ctx.captures += 1;
@@ -434,13 +434,9 @@ impl MoveGenerator {
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
 
-        match board.en_passant() {
-            Some(ep_squares) => {
-                ep_square = ep_squares[0];
-                // ep_bb = bitboard::BB_SQUARES[squares::EP_CAPTURE_SQUARES[ep_square as usize]];
-                ep_bb = bitboard::BB_SQUARES[ep_square as usize];
-            }
-            None => (),
+        if let Some(ep_squares) = board.en_passant() {
+            ep_square = ep_squares[0];
+            ep_bb = bitboard::BB_SQUARES[ep_square as usize];
         }
 
         while 0 != pawns {

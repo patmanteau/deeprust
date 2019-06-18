@@ -189,7 +189,6 @@ lazy_static! {
     pub static ref BB_DIAG: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0i64..64i64 {
-            //let main_diag = 0x8040_2010_0804_0201u64;
             let diag = 8 * (i & 7) - (i & 56);
             let north = -diag & (diag >> 31);
             let south = diag & (-diag >> 31);
@@ -210,7 +209,6 @@ lazy_static! {
     pub static ref BB_ANTI_DIAG: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0i64..64i64 {
-            //let main_diag = 0x0102_0408_1020_4080u64;
             let diag = 56 - 8 * (i & 7) - (i & 56);
             let north = -diag & (diag >> 31);
             let south = diag & (-diag >> 31);
@@ -293,7 +291,6 @@ lazy_static! {
     };
 
     pub static ref BB_A_FILE_ATTACKS: [[Bitboard; 64]; 8] = {
-        //let _diag_a1h8: Bitboard = 0x8040_2010_0804_0201;
         let mut arr: [[Bitboard; 64]; 8] = [[0; 64]; 8];
         for sq in 0..8 {
             for occ in 0..64 {
@@ -325,7 +322,6 @@ lazy_static! {
 
 /// See https://www.chessprogramming.org/Kindergarten_Bitboards
 pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    //let diag_mask_ex = BB_DIAG[square as usize] ^ BB_SQUARES[square as usize];
     let diag_mask_ex = BB_DIAG_MASK_EX[square as usize];
     let north_fill = (diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
     occupied = north_fill.0 >> 58;
@@ -333,7 +329,6 @@ pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 }
 
 pub fn anti_diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    //let anti_diag_mask_ex = BB_ANTI_DIAG[square as usize] ^ BB_SQUARES[square as usize];
     let anti_diag_mask_ex = BB_ANTI_DIAG_MASK_EX[square as usize];
     let north_fill = (anti_diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
     occupied = north_fill.0 >> 58;
@@ -348,11 +343,8 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 }
 
 pub fn file_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    //let diag_c2h7: Bitboard = 0x0080402010080400;
-    //let diag_c7h2: Bitboard = diag_c2h7.swap_bytes();
     let diag_c7h2: Bitboard = 0x0004_0810_2040_8000;
     occupied = BB_FILE_A & (occupied >> (square & 0x7));
     occupied = (diag_c7h2.overflowing_mul(occupied).0) >> 58;
     BB_A_FILE_ATTACKS[(square >> 0x3) as usize][occupied as usize] << (square & 0x7)
-    //BB_A_FILE_ATTACKS[square.extract_bits(3, 3) as usize][occupied as usize] << square.extract_bits(0, 3)
 }

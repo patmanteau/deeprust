@@ -112,7 +112,7 @@ impl UCIInterface {
             MoveGenerator::is_in_check(&self.board, color::WHITE),
             MoveGenerator::is_in_check(&self.board, color::BLACK)
         );
-        if self.board.move_stack().len() > 0 {
+        if !self.board.move_stack().is_empty() {
             println!("last_move: {:#?}", self.board.move_stack().peek());
         }
     }
