@@ -47,7 +47,7 @@ impl SquarePrimitives for Square {
             Err(_) => return Err("Invalid square string"),
         };
 
-        Ok((y << 3) + *x) 
+        Ok((y << 3) + *x)
     }
 
     fn to_san_string(self) -> String {
@@ -121,8 +121,8 @@ pub fn ep_capture_square(ep_square: Square) -> Square {
     table[ep_square as usize]
 }
 
-    // // pub fn flip_square(square: Square) -> Square {
-    //     square ^ 56
+// // pub fn flip_square(square: Square) -> Square {
+//     square ^ 56
 // }
 
 #[cfg(test)]

@@ -104,9 +104,11 @@ mbb_squares!(BB_A1, 0, BB_B1, 1, BB_C1, 2, BB_D1, 3, BB_E1, 4, BB_F1, 5, BB_G1, 
              BB_A7,48, BB_B7,49, BB_C7,50, BB_D7,51, BB_E7,52, BB_F7,53, BB_G7,54, BB_H7,55,
              BB_A8,56, BB_B8,57, BB_C8,58, BB_D8,59, BB_E8,60, BB_F8,61, BB_G8,62, BB_H8,63);
 
+#[rustfmt::skip]
 mbb_ranks!  (BB_RANK_1, 0, BB_RANK_2, 1, BB_RANK_3, 2, BB_RANK_4, 3, 
              BB_RANK_5, 4, BB_RANK_6, 5, BB_RANK_7, 6, BB_RANK_8, 7);
 
+#[rustfmt::skip]
 mbb_files!  (BB_FILE_A, 0, BB_FILE_B, 1, BB_FILE_C, 2, BB_FILE_D, 3, 
              BB_FILE_E, 4, BB_FILE_F, 5, BB_FILE_G, 6, BB_FILE_H, 7);
 
@@ -126,12 +128,19 @@ pub const BB_NOT_FILE_GH: Bitboard = !(BB_FILE_G | BB_FILE_H);
 
 #[rustfmt::skip]
 pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
+#[rustfmt::skip]
 pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
+#[rustfmt::skip]
 pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
+#[rustfmt::skip]
 pub fn south_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) >> 7 }
+#[rustfmt::skip]
 pub fn south_one(bb: Bitboard) -> Bitboard        { bb >> 8 }
+#[rustfmt::skip]
 pub fn south_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) >> 9 }
+#[rustfmt::skip]
 pub fn west_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_A) >> 1 }
+#[rustfmt::skip]
 pub fn north_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) << 7 }
 
 /// see https://chessprogramming.wikispaces.com/Flipping+Mirroring+and+Rotating
