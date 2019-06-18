@@ -1,5 +1,5 @@
 use crate::common::*;
-use crate::square::{Square};
+use crate::square::Square;
 
 pub type Bitboard = u64;
 
@@ -94,6 +94,7 @@ macro_rules! mbb_files {
     };
 }
 
+#[rustfmt::skip]
 mbb_squares!(BB_A1, 0, BB_B1, 1, BB_C1, 2, BB_D1, 3, BB_E1, 4, BB_F1, 5, BB_G1, 6, BB_H1, 7,
              BB_A2, 8, BB_B2, 9, BB_C2,10, BB_D2,11, BB_E2,12, BB_F2,13, BB_G2,14, BB_H2,15,
              BB_A3,16, BB_B3,17, BB_C3,18, BB_D3,19, BB_E3,20, BB_F3,21, BB_G3,22, BB_H3,23,
@@ -123,6 +124,7 @@ pub const BB_NOT_FILE_H: Bitboard = !BB_FILE_H;
 pub const BB_NOT_FILE_AB: Bitboard = !(BB_FILE_A | BB_FILE_B);
 pub const BB_NOT_FILE_GH: Bitboard = !(BB_FILE_G | BB_FILE_H);
 
+#[rustfmt::skip]
 pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
 pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
 pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
@@ -142,8 +144,8 @@ pub fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
     bb = bb ^ (t ^ (t >> 28));
     t = k2 & (bb ^ (bb << 14));
     bb = bb ^ (t ^ (t >> 14));
-    t = k1 & (bb ^ (bb <<  7));
-    bb = bb ^ (t ^ (t >>  7));
+    t = k1 & (bb ^ (bb << 7));
+    bb = bb ^ (t ^ (t >> 7));
     bb
 }
 

@@ -1,3 +1,4 @@
+#[rustfmt::skip::macros(indoc)]
 extern crate indoc;
 
 use std::io;
@@ -11,12 +12,14 @@ fn print_version() {
 }
 
 fn print_help() {
-    let help = indoc::indoc!("
+    let help = indoc::indoc!(
+        "
         Known commands:
             exit, quit  Exit CLI mode
             help        This page
             uci         Switch the engine to UCI mode
-            version     Print version information");
+            version     Print version information"
+    );
     println!("{}", help);
 }
 
@@ -24,9 +27,7 @@ pub fn run() {
     println!("deeprust v{} CLI", env!("CARGO_PKG_VERSION"));
     loop {
         print!("> ");
-        io::stdout()
-            .flush()
-            .unwrap();
+        io::stdout().flush().unwrap();
 
         let mut command = String::new();
         io::stdin()
@@ -38,7 +39,7 @@ pub fn run() {
             "exit" | "quit" => {
                 println!("Byebye");
                 break;
-            },
+            }
             "help" => print_help(),
             "version" => print_version(),
             "uci" => {

@@ -1,5 +1,5 @@
-use std::fmt;
 use crate::moves::{Move, UnmakeInfo};
+use std::fmt;
 
 #[derive(Copy, Clone, Debug)]
 pub struct MoveStackEntry {
@@ -37,7 +37,6 @@ pub struct MoveStack {
 }
 
 impl MoveStack {
-
     /// Constructs a new, empty MoveStack
     pub fn new() -> MoveStack {
         MoveStack {
@@ -83,4 +82,3 @@ impl fmt::Display for MoveStack {
         write!(f, "{}", str)
     }
 }
-

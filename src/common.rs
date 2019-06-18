@@ -1,6 +1,5 @@
 use std::arch::x86_64::*;
 
-
 pub trait BitTwiddling<T> {
     fn bit_at(pos: u32) -> Self;
     fn test_bit(&self, at: u32) -> bool;
@@ -11,7 +10,7 @@ pub trait BitTwiddling<T> {
 
     fn clear_lsb(&mut self);
 }
-macro_rules!  twiddle_impl {
+macro_rules! twiddle_impl {
     ($T:ty) => {
         impl BitTwiddling<$T> for $T {
             fn bit_at(pos: u32) -> $T {
@@ -20,9 +19,7 @@ macro_rules!  twiddle_impl {
 
             fn test_bit(&self, pos: u32) -> bool {
                 //self & Self::bit_at(pos) > 0
-                unsafe {
-                    return 0 < _bittest64(&(*self as i64), pos as i64)
-                }
+                unsafe { return 0 < _bittest64(&(*self as i64), pos as i64) }
             }
 
             fn set_bit(&mut self, pos: u32) {
@@ -38,9 +35,7 @@ macro_rules!  twiddle_impl {
             }
 
             fn extract_bits(&self, pos: u32, len: u32) -> Self {
-                unsafe {
-                    _bextr_u64(*self as u64, pos, len) as Self
-                }
+                unsafe { _bextr_u64(*self as u64, pos, len) as Self }
             }
 
             fn clear_lsb(&mut self) {
@@ -59,7 +54,7 @@ twiddle_impl!(u64);
 
 #[cfg(test)]
 mod tests {
-    
+
     use test::Bencher;
 
     #[bench]

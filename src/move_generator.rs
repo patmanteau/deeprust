@@ -1,8 +1,8 @@
-use std::fmt;
+use crate::bitboard::{self, BitboardPrimitives};
 use crate::board::Board;
 use crate::common::*;
-use crate::bitboard::{self, BitboardPrimitives};
 use crate::moves::Move;
+use std::fmt;
 
 use crate::color::{self, Color};
 use crate::square::{self, Square};
@@ -47,15 +47,11 @@ impl fmt::Display for PerftContext {
     }
 }
 
-pub struct MoveGenerator {
-    
-}
+pub struct MoveGenerator {}
 
 impl MoveGenerator {
     pub fn new() -> MoveGenerator {
-        MoveGenerator{
-            
-        }
+        MoveGenerator {}
     }
 
     pub fn perft(board: &mut Board, depth: u32) -> PerftContext {
@@ -73,13 +69,21 @@ impl MoveGenerator {
             ctx.nodes += 1;
             if board.move_stack().len() > 0 {
                 let mov = board.move_stack().peek().mov;
-                if mov.is_capture() { ctx.captures += 1; }
-                if mov.is_capture_en_passant() { ctx.ep += 1; }
-                if mov.is_king_castle() || mov.is_queen_castle() { ctx.castles += 1; }
-                if mov.is_promotion() { ctx.promotions += 1; }
+                if mov.is_capture() {
+                    ctx.captures += 1;
+                }
+                if mov.is_capture_en_passant() {
+                    ctx.ep += 1;
+                }
+                if mov.is_king_castle() || mov.is_queen_castle() {
+                    ctx.castles += 1;
+                }
+                if mov.is_promotion() {
+                    ctx.promotions += 1;
+                }
             }
             let to_move = board.to_move();
-            if MoveGenerator::is_in_check(board, to_move) { 
+            if MoveGenerator::is_in_check(board, to_move) {
                 ctx.checks += 1;
                 if MoveGenerator::is_mate(board, to_move) {
                     ctx.checkmates += 1;
@@ -122,21 +126,22 @@ impl MoveGenerator {
         let occupied = board.bb_own(color) | board.bb_opponent(color);
 
         assert!(target < 64);
-        
+
         // by black pawns
         if color == color::WHITE {
-            if 0 < 
-                ((bitboard::north_west_one(bitboard::BB_SQUARES[target as usize]) |
-                bitboard::north_east_one(bitboard::BB_SQUARES[target as usize])) &
-               (board.bb_pawns(color::BLACK))) {
-                   return true
+            if 0 < ((bitboard::north_west_one(bitboard::BB_SQUARES[target as usize])
+                | bitboard::north_east_one(bitboard::BB_SQUARES[target as usize]))
+                & (board.bb_pawns(color::BLACK)))
+            {
+                return true;
             }
-        } else { // by white pawns
-            if 0 < 
-               ((bitboard::south_west_one(bitboard::BB_SQUARES[target as usize]) |
-                bitboard::south_east_one(bitboard::BB_SQUARES[target as usize])) &
-               (board.bb_pawns(color::WHITE))) {
-                   return true
+        } else {
+            // by white pawns
+            if 0 < ((bitboard::south_west_one(bitboard::BB_SQUARES[target as usize])
+                | bitboard::south_east_one(bitboard::BB_SQUARES[target as usize]))
+                & (board.bb_pawns(color::WHITE)))
+            {
+                return true;
             }
         }
 
@@ -147,29 +152,31 @@ impl MoveGenerator {
 
         // by king?!?
         if 0 < (bitboard::BB_KING_ATTACKS[target as usize] & board.bb_king(1 ^ color)) {
-            return true
+            return true;
         }
 
-        let all_diag_attacks = bitboard::diagonal_attacks(target, occupied) | bitboard::anti_diagonal_attacks(target, occupied);
-        let rank_file_attacks =  bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied);
+        let all_diag_attacks = bitboard::diagonal_attacks(target, occupied)
+            | bitboard::anti_diagonal_attacks(target, occupied);
+        let rank_file_attacks =
+            bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied);
 
         // by bishops or queens
         if 0 < all_diag_attacks & (board.bb_bishops(1 ^ color) | board.bb_queens(1 ^ color)) {
-            return true
+            return true;
         }
 
-        // if 0 < ((bitboard::diagonal_attacks(target, occupied) | bitboard::anti_diagonal_attacks(target, occupied)) 
+        // if 0 < ((bitboard::diagonal_attacks(target, occupied) | bitboard::anti_diagonal_attacks(target, occupied))
         //         & board.bb_bishops(1 ^ color)) {
         //     return true
         // }
 
         // by rooks or queens
         if 0 < rank_file_attacks & (board.bb_rooks(1 ^ color) | board.bb_queens(1 ^ color)) {
-            return true
+            return true;
         }
-        
+
         // if 0 < ((
-        //         bitboard::rank_attacks(target, occupied) | 
+        //         bitboard::rank_attacks(target, occupied) |
         //         bitboard::file_attacks(target, occupied)
         // ) & board.bb_rooks(1 ^ color)) {
         //     return true
@@ -177,9 +184,9 @@ impl MoveGenerator {
 
         // by queens
         // if 0 < ((
-        //         bitboard::diagonal_attacks(target, occupied) | 
+        //         bitboard::diagonal_attacks(target, occupied) |
         //         bitboard::anti_diagonal_attacks(target, occupied) |
-        //         bitboard::rank_attacks(target, occupied) | 
+        //         bitboard::rank_attacks(target, occupied) |
         //         bitboard::file_attacks(target, occupied)
         // ) & board.bb_queens(1 ^ color)) {
         //     return true
@@ -187,7 +194,7 @@ impl MoveGenerator {
 
         false
     }
-    
+
     pub fn from_board(board: &Board) -> Vec<Move> {
         // self.moves = Vec::with_capacity(512);
         let mut moves = Vec::with_capacity(512);
@@ -202,7 +209,6 @@ impl MoveGenerator {
 
             let w_king_castles = MoveGenerator::gen_wking_castle(board);
             moves.extend(w_king_castles);
-
         } else {
             let b_pawn_pushes = MoveGenerator::gen_black_pawn_pushes(board);
             moves.extend(b_pawn_pushes);
@@ -253,29 +259,55 @@ impl MoveGenerator {
     fn gen_white_pawn_pushes(board: &Board) -> Vec<Move> {
         let mut pawns = board.bb_pawns(color::WHITE);
         let mut moves = Vec::with_capacity(16);
-        
+
         while 0 != pawns {
             let from = pawns.scan();
-            let single_push = bitboard::north_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
-            let double_push = bitboard::north_one(single_push) & board.bb_empty() & bitboard::BB_RANK_4;
+            let single_push =
+                bitboard::north_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
+            let double_push =
+                bitboard::north_one(single_push) & board.bb_empty() & bitboard::BB_RANK_4;
 
             if 0 != single_push {
                 let to = single_push.scan();
                 if to >= 56 {
                     // promotion
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, true, true))); // queen
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, false, true))); // rook
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, true, false))); // bishop
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, false, false))); // knight
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, true, true),
+                    )); // queen
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, false, true),
+                    )); // rook
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, true, false),
+                    )); // bishop
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, false, false),
+                    )); // knight
                 } else {
-                    moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, false, false, false),
+                    ));
                 }
             }
 
             if 0 != double_push {
                 let to = double_push.scan() as u16;
-                moves.push(Move::new(from, to, Move::make_flags(false, false, true, false)));
-            }            
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, true, false),
+                ));
+            }
             pawns.clear(from);
         }
         moves
@@ -284,29 +316,55 @@ impl MoveGenerator {
     fn gen_black_pawn_pushes(board: &Board) -> Vec<Move> {
         let mut pawns = board.bb_pawns(color::BLACK);
         let mut moves = Vec::with_capacity(16);
-        
+
         while 0 != pawns {
             let from = pawns.scan();
-            let single_push = bitboard::south_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
-            let double_push = bitboard::south_one(single_push) & board.bb_empty() & bitboard::BB_RANK_5;
+            let single_push =
+                bitboard::south_one(bitboard::BB_SQUARES[from as usize]) & board.bb_empty();
+            let double_push =
+                bitboard::south_one(single_push) & board.bb_empty() & bitboard::BB_RANK_5;
 
             if 0 != single_push {
                 let to = single_push.scan();
                 if to < 8 {
                     // promotion
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, true, true))); // queen
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, false, true))); // rook
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, true, false))); // bishop
-                    moves.push(Move::new(from, to, Move::make_flags(false, true, false, false))); // knight
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, true, true),
+                    )); // queen
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, false, true),
+                    )); // rook
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, true, false),
+                    )); // bishop
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, true, false, false),
+                    )); // knight
                 } else {
-                    moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(false, false, false, false),
+                    ));
                 }
             }
 
             if 0 != double_push {
                 let to = double_push.scan();
-                moves.push(Move::new(from, to, Move::make_flags(false, false, true, false)));
-            }            
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, true, false),
+                ));
+            }
             pawns.clear(from);
         }
         moves
@@ -317,32 +375,51 @@ impl MoveGenerator {
         let mut moves = Vec::with_capacity(16);
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
-        
+
         match board.en_passant() {
             Some(ep_squares) => {
                 ep_square = ep_squares[0];
                 ep_bb = bitboard::BB_SQUARES[ep_square as usize];
-            },
-            None => ()
+            }
+            None => (),
         }
 
         while 0 != pawns {
             let from = pawns.scan();
-            let mut atk = 
-                (bitboard::north_west_one(bitboard::BB_SQUARES[from as usize]) |
-                 bitboard::north_east_one(bitboard::BB_SQUARES[from as usize])) &
-                (board.bb_opponent(color::WHITE) | ep_bb);
+            let mut atk = (bitboard::north_west_one(bitboard::BB_SQUARES[from as usize])
+                | bitboard::north_east_one(bitboard::BB_SQUARES[from as usize]))
+                & (board.bb_opponent(color::WHITE) | ep_bb);
 
             while 0 != atk {
                 let to = atk.scan();
                 if to >= 56 {
                     // promotion
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, true, true))); // queen
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, false, true))); // rook
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, true, false))); // bishop
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, false, false))); // knight
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, true, true),
+                    )); // queen
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, false, true),
+                    )); // rook
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, true, false),
+                    )); // bishop
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, false, false),
+                    )); // knight
                 } else {
-                    moves.push(Move::new(from, to, Move::make_flags(true, false, to == ep_square, false)));
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, false, to == ep_square, false),
+                    ));
                 }
                 atk.clear(to);
             }
@@ -357,33 +434,52 @@ impl MoveGenerator {
         let mut moves = Vec::with_capacity(16);
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
-        
+
         match board.en_passant() {
             Some(ep_squares) => {
                 ep_square = ep_squares[0];
                 // ep_bb = bitboard::BB_SQUARES[squares::EP_CAPTURE_SQUARES[ep_square as usize]];
                 ep_bb = bitboard::BB_SQUARES[ep_square as usize];
-            },
-            None => ()
+            }
+            None => (),
         }
 
         while 0 != pawns {
             let from = pawns.scan();
-            let mut atk = 
-                (bitboard::south_west_one(bitboard::BB_SQUARES[from as usize]) |
-                 bitboard::south_east_one(bitboard::BB_SQUARES[from as usize])) &
-                (board.bb_opponent(color::BLACK) | ep_bb);
+            let mut atk = (bitboard::south_west_one(bitboard::BB_SQUARES[from as usize])
+                | bitboard::south_east_one(bitboard::BB_SQUARES[from as usize]))
+                & (board.bb_opponent(color::BLACK) | ep_bb);
 
             while 0 != atk {
                 let to = atk.scan();
                 if to < 8 {
                     // promotion
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, true, true))); // queen
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, false, true))); // rook
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, true, false))); // bishop
-                    moves.push(Move::new(from, to, Move::make_flags(true, true, false, false))); // knight
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, true, true),
+                    )); // queen
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, false, true),
+                    )); // rook
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, true, false),
+                    )); // bishop
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, true, false, false),
+                    )); // knight
                 } else {
-                    moves.push(Move::new(from, to, Move::make_flags(true, false, to == ep_square, false)));
+                    moves.push(Move::new(
+                        from,
+                        to,
+                        Move::make_flags(true, false, to == ep_square, false),
+                    ));
                 }
                 atk.clear(to);
             }
@@ -403,7 +499,11 @@ impl MoveGenerator {
 
             while 0 != mov {
                 let to = mov.scan();
-                moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, false, false),
+                ));
                 mov.clear(to);
             }
             knights.clear(from);
@@ -421,7 +521,11 @@ impl MoveGenerator {
 
             while 0 != atk {
                 let to = atk.scan();
-                moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(true, false, false, false),
+                ));
                 atk.clear(to);
             }
             knights.clear(from);
@@ -432,26 +536,35 @@ impl MoveGenerator {
     fn gen_wking_castle(board: &Board) -> Vec<Move> {
         let occ = board.bb_own(color::WHITE) | board.bb_opponent(color::WHITE);
         let mut moves = Vec::with_capacity(16);
-        
+
         if MoveGenerator::is_attacked(board, color::WHITE, square::E1) {
-            return moves
+            return moves;
         }
 
-        let qclear = 
-            !occ.test(square::D1) && !occ.test(square::C1) &&
-            !occ.test(square::B1) && !MoveGenerator::is_attacked(board, color::WHITE, square::D1) &&
-            board.castling()[color::WHITE as usize].test_bit(1);
+        let qclear = !occ.test(square::D1)
+            && !occ.test(square::C1)
+            && !occ.test(square::B1)
+            && !MoveGenerator::is_attacked(board, color::WHITE, square::D1)
+            && board.castling()[color::WHITE as usize].test_bit(1);
 
-        let kclear = 
-            !occ.test(square::F1) && !occ.test(square::G1) &&
-            !MoveGenerator::is_attacked(board, color::WHITE, square::F1) &&
-            board.castling()[color::WHITE as usize].test_bit(0);
+        let kclear = !occ.test(square::F1)
+            && !occ.test(square::G1)
+            && !MoveGenerator::is_attacked(board, color::WHITE, square::F1)
+            && board.castling()[color::WHITE as usize].test_bit(0);
 
         if qclear {
-            moves.push(Move::new(square::E1, square::C1, Move::make_flags(false, false, true, true)));
+            moves.push(Move::new(
+                square::E1,
+                square::C1,
+                Move::make_flags(false, false, true, true),
+            ));
         }
         if kclear {
-            moves.push(Move::new(square::E1, square::G1, Move::make_flags(false, false, false, true)));
+            moves.push(Move::new(
+                square::E1,
+                square::G1,
+                Move::make_flags(false, false, false, true),
+            ));
         }
         moves
     }
@@ -461,24 +574,33 @@ impl MoveGenerator {
         let mut moves = Vec::with_capacity(16);
 
         if MoveGenerator::is_attacked(board, color::BLACK, square::E8) {
-            return moves
+            return moves;
         }
 
-        let qclear = 
-            !occ.test(square::D8) && !occ.test(square::C8) &&
-            !occ.test(square::B8) && !MoveGenerator::is_attacked(board, color::BLACK, square::D8) &&
-            board.castling()[color::BLACK as usize].test_bit(1);
+        let qclear = !occ.test(square::D8)
+            && !occ.test(square::C8)
+            && !occ.test(square::B8)
+            && !MoveGenerator::is_attacked(board, color::BLACK, square::D8)
+            && board.castling()[color::BLACK as usize].test_bit(1);
 
-        let kclear = 
-            !occ.test(square::F8) && !occ.test(square::G8) &&
-            !MoveGenerator::is_attacked(board, color::BLACK, square::F8) &&
-            board.castling()[color::BLACK as usize].test_bit(0);
+        let kclear = !occ.test(square::F8)
+            && !occ.test(square::G8)
+            && !MoveGenerator::is_attacked(board, color::BLACK, square::F8)
+            && board.castling()[color::BLACK as usize].test_bit(0);
 
         if qclear {
-            moves.push(Move::new(square::E8, square::C8, Move::make_flags(false, false, true, true)));
+            moves.push(Move::new(
+                square::E8,
+                square::C8,
+                Move::make_flags(false, false, true, true),
+            ));
         }
         if kclear {
-            moves.push(Move::new(square::E8, square::G8, Move::make_flags(false, false, false, true)));
+            moves.push(Move::new(
+                square::E8,
+                square::G8,
+                Move::make_flags(false, false, false, true),
+            ));
         }
         moves
     }
@@ -493,7 +615,11 @@ impl MoveGenerator {
 
             while 0 != mov {
                 let to = mov.scan();
-                moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, false, false),
+                ));
                 mov.clear(to);
             }
             king.clear(from);
@@ -511,7 +637,11 @@ impl MoveGenerator {
 
             while 0 != atk {
                 let to = atk.scan();
-                moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(true, false, false, false),
+                ));
                 atk.clear(to);
             }
             king.clear(from);
@@ -526,11 +656,17 @@ impl MoveGenerator {
 
         while 0 != bishops {
             let from = bishops.scan();
-            let mut mov = (bitboard::diagonal_attacks(from, occupied) | bitboard::anti_diagonal_attacks(from, occupied)) & board.bb_empty();
+            let mut mov = (bitboard::diagonal_attacks(from, occupied)
+                | bitboard::anti_diagonal_attacks(from, occupied))
+                & board.bb_empty();
 
             while 0 != mov {
                 let to = mov.scan();
-                moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, false, false),
+                ));
                 mov.clear(to);
             }
             bishops.clear(from);
@@ -545,11 +681,17 @@ impl MoveGenerator {
 
         while 0 != bishops {
             let from = bishops.scan();
-            let mut atk = (bitboard::diagonal_attacks(from, occupied) | bitboard::anti_diagonal_attacks(from, occupied)) & board.bb_opponent(color);
+            let mut atk = (bitboard::diagonal_attacks(from, occupied)
+                | bitboard::anti_diagonal_attacks(from, occupied))
+                & board.bb_opponent(color);
 
             while 0 != atk {
                 let to = atk.scan();
-                moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(true, false, false, false),
+                ));
                 atk.clear(to);
             }
             bishops.clear(from);
@@ -563,13 +705,19 @@ impl MoveGenerator {
         let occupied = board.bb_own(color) | board.bb_opponent(color);
 
         while 0 != rooks {
-            let from = rooks.scan() ;
-            let mut mov = (bitboard::rank_attacks(from, occupied) | bitboard::file_attacks(from, occupied)) & board.bb_empty();
+            let from = rooks.scan();
+            let mut mov = (bitboard::rank_attacks(from, occupied)
+                | bitboard::file_attacks(from, occupied))
+                & board.bb_empty();
             // let mut mov = (bitboard::rank_attacks(from, occupied)) & board.bb_empty();
 
             while 0 != mov {
                 let to = mov.scan();
-                moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, false, false),
+                ));
                 mov.clear(to);
             }
             rooks.clear(from);
@@ -584,12 +732,18 @@ impl MoveGenerator {
 
         while 0 != rooks {
             let from = rooks.scan();
-            let mut atk = (bitboard::rank_attacks(from, occupied) | bitboard::file_attacks(from, occupied)) & board.bb_opponent(color);
+            let mut atk = (bitboard::rank_attacks(from, occupied)
+                | bitboard::file_attacks(from, occupied))
+                & board.bb_opponent(color);
             // let mut atk = (bitboard::rank_attacks(from, occupied)) & board.bb_opponent(color);
 
             while 0 != atk {
                 let to = atk.scan();
-                moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(true, false, false, false),
+                ));
                 atk.clear(to);
             }
             rooks.clear(from);
@@ -604,15 +758,18 @@ impl MoveGenerator {
 
         while 0 != queens {
             let from = queens.scan();
-            let mut mov = board.bb_empty() & (
-                bitboard::rank_attacks(from, occupied) |
-                bitboard::file_attacks(from, occupied) |
-                bitboard::diagonal_attacks(from, occupied) |
-                bitboard::anti_diagonal_attacks(from, occupied)
-            );
+            let mut mov = board.bb_empty()
+                & (bitboard::rank_attacks(from, occupied)
+                    | bitboard::file_attacks(from, occupied)
+                    | bitboard::diagonal_attacks(from, occupied)
+                    | bitboard::anti_diagonal_attacks(from, occupied));
             while 0 != mov {
                 let to = mov.scan();
-                moves.push(Move::new(from, to, Move::make_flags(false, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(false, false, false, false),
+                ));
                 mov.clear(to);
             }
             queens.clear(from);
@@ -627,16 +784,19 @@ impl MoveGenerator {
 
         while 0 != queens {
             let from = queens.scan();
-            let mut atk = board.bb_opponent(color) & (
-                bitboard::rank_attacks(from, occupied) |
-                bitboard::file_attacks(from, occupied) |
-                bitboard::diagonal_attacks(from, occupied) |
-                bitboard::anti_diagonal_attacks(from, occupied)
-            );
+            let mut atk = board.bb_opponent(color)
+                & (bitboard::rank_attacks(from, occupied)
+                    | bitboard::file_attacks(from, occupied)
+                    | bitboard::diagonal_attacks(from, occupied)
+                    | bitboard::anti_diagonal_attacks(from, occupied));
 
             while 0 != atk {
                 let to = atk.scan();
-                moves.push(Move::new(from, to, Move::make_flags(true, false, false, false)));
+                moves.push(Move::new(
+                    from,
+                    to,
+                    Move::make_flags(true, false, false, false),
+                ));
                 atk.clear(to);
             }
             queens.clear(from);
@@ -647,16 +807,16 @@ impl MoveGenerator {
 
 #[cfg(test)]
 mod tests {
-    use crate::uci::UCIInterface;
-    use crate::move_generator::MoveGenerator;
     use crate::board::Board;
     use crate::color;
+    use crate::move_generator::MoveGenerator;
     use crate::square;
+    use crate::uci::UCIInterface;
 
     #[test]
     fn it_generates_pawn_moves() {
         let mut board = Board::startpos();
-        
+
         assert_eq!(16, MoveGenerator::gen_white_pawn_pushes(&board).len());
         board.input_move(square::E2, square::E4, None).unwrap();
         assert_eq!(16, MoveGenerator::gen_black_pawn_pushes(&board).len());
@@ -670,10 +830,12 @@ mod tests {
     #[test]
     fn it_generates_pawn_captures() {
         let _gen = MoveGenerator::new();
-        let mut board = Board::from_fen(String::from("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1")).unwrap();
+        let mut board =
+            Board::from_fen(String::from("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1")).unwrap();
         assert_eq!(0, MoveGenerator::gen_white_pawn_captures(&board).len());
 
-        board = Board::from_fen(String::from("1k6/8/8/p1p1p1p1/1P1P1P1P/8/8/K7 w - - 0 1")).unwrap();
+        board =
+            Board::from_fen(String::from("1k6/8/8/p1p1p1p1/1P1P1P1P/8/8/K7 w - - 0 1")).unwrap();
         assert_eq!(7, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(4, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
@@ -702,7 +864,9 @@ mod tests {
     #[test]
     fn it_generates_castles() {
         let mut c = UCIInterface::new();
-        c.parse(String::from("position startpos moves e2e4 d7d5 g1f3 b8c6 f1e2 c8e6 e1g1 d8d6 d2d4"));
+        c.parse(String::from(
+            "position startpos moves e2e4 d7d5 g1f3 b8c6 f1e2 c8e6 e1g1 d8d6 d2d4",
+        ));
         assert_eq!(38, MoveGenerator::from_board(&c.board).len());
     }
 
@@ -714,7 +878,10 @@ mod tests {
         assert_eq!(20, MoveGenerator::from_board(&board).len());
 
         // Position 2(kiwipete) perft(1)
-        board = Board::from_fen(String::from("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")).unwrap();
+        board = Board::from_fen(String::from(
+            "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+        ))
+        .unwrap();
         assert_eq!(48, MoveGenerator::from_board(&board).len());
 
         // // Position 3 perft(1)
@@ -730,7 +897,10 @@ mod tests {
         // assert_eq!(44, MoveGenerator::from_board(&board).len());
 
         // Position 6 perft(1)
-        board = Board::from_fen(String::from("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10")).unwrap();
+        board = Board::from_fen(String::from(
+            "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
+        ))
+        .unwrap();
         MoveGenerator::from_board(&board);
         assert_eq!(46, MoveGenerator::from_board(&board).len());
     }

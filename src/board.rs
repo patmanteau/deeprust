@@ -1,20 +1,20 @@
 use std::fmt;
 
-use crate::common::*;
 use crate::bitboard::*;
+use crate::common::*;
 
-use crate::square::{self, Square, SquarePrimitives};
-use crate::piece::{self, Piece, PiecePrimitives};
 use crate::color::{self, Color};
-use crate::moves::{Move, UnmakeInfo};
 use crate::move_stack::{MoveStack, MoveStackEntry};
+use crate::moves::{Move, UnmakeInfo};
+use crate::piece::{self, Piece, PiecePrimitives};
+use crate::square::{self, Square, SquarePrimitives};
 
 use std::str::FromStr;
 
 /// Represents a chess position
-/// 
+///
 /// Uses 16 bitboards ((2 colors + 6 pieces) * (unflipped + flipped)) plus an occupancy array
-/// 
+///
 #[derive(Clone)]
 pub struct Board {
     bb: [[Bitboard; 8]; 2],
@@ -29,8 +29,13 @@ pub struct Board {
 
 impl fmt::Debug for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Board {{ fen: {}, movestack: {}, bb[0]: {:#?} }}",
-            self.to_fen(), self.move_stack, self.bb)
+        write!(
+            f,
+            "Board {{ fen: {}, movestack: {}, bb[0]: {:#?} }}",
+            self.to_fen(),
+            self.move_stack,
+            self.bb
+        )
     }
 }
 
@@ -40,7 +45,12 @@ impl fmt::Display for Board {
         for rank in (0..8).rev() {
             writeln!(f, "+---+---+---+---+---+---+---+---+").unwrap();
             for file in 0..8 {
-                write!(f, "| {} ", self.occupied[(rank << 3) + file].to_san_string()).unwrap();
+                write!(
+                    f,
+                    "| {} ",
+                    self.occupied[(rank << 3) + file].to_san_string()
+                )
+                .unwrap();
             }
             writeln!(f, "| {} ", rank + 1).unwrap();
         }
@@ -51,17 +61,22 @@ impl fmt::Display for Board {
         writeln!(f, "move_stack: {}", self.move_stack).unwrap();
         writeln!(f, "to_move: {}", self.to_move).unwrap();
         writeln!(f).unwrap();
- 
+
         let bb_titles: [&'static str; 2] = [
-            "bb_own      bb_opponent bb_pawns    bb_knights", 
-            "bb_bishops  bb_rooks    bb_queens   bb_king"
+            "bb_own      bb_opponent bb_pawns    bb_knights",
+            "bb_bishops  bb_rooks    bb_queens   bb_king",
         ];
 
         for block in 0..2 {
             writeln!(f, "{}", bb_titles[block]).unwrap();
             for rank in (0..8).rev() {
                 for cur_bb in 0..4 {
-                    write!(f, "{}    ", self.bb[0][(block * 4) + cur_bb].rank_to_debug_string(rank)).unwrap();
+                    write!(
+                        f,
+                        "{}    ",
+                        self.bb[0][(block * 4) + cur_bb].rank_to_debug_string(rank)
+                    )
+                    .unwrap();
                 }
                 writeln!(f).unwrap();
             }
@@ -73,7 +88,7 @@ impl fmt::Display for Board {
 
 impl Board {
     pub fn new() -> Board {
-        let board = Board { 
+        let board = Board {
             bb: [[0; 8]; 2],
             occupied: [0; 64],
             to_move: color::WHITE,
@@ -113,7 +128,7 @@ impl Board {
         }
         if self.fullmoves != board.fullmoves {
             return false;
-        }     
+        }
         true
     }
 
@@ -124,12 +139,18 @@ impl Board {
 
     #[cfg(feature = "sanity_checks")]
     fn sanity_check(&self) -> bool {
-        if 0 < self.bb_own(color::WHITE) & self.bb_opponent(color::WHITE) { self.panic_helper() }
+        if 0 < self.bb_own(color::WHITE) & self.bb_opponent(color::WHITE) {
+            self.panic_helper()
+        }
 
         for i in 2..8 {
-            if 0 < !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE)) & self.bb[0][i] { self.panic_helper() }
-            for j in i+1..8 {
-                if 0 < self.bb[0][i] & self.bb[0][j] { self.panic_helper() }
+            if 0 < !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE)) & self.bb[0][i] {
+                self.panic_helper()
+            }
+            for j in i + 1..8 {
+                if 0 < self.bb[0][i] & self.bb[0][j] {
+                    self.panic_helper()
+                }
             }
         }
         true
@@ -191,24 +212,72 @@ impl Board {
                         y -= 1;
                     } else {
                         match chr {
-                            'P' => board.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, y)),
-                            'N' => board.set_piece(piece::KNIGHT, color::WHITE, Square::from_coords(x, y)),
-                            'B' => board.set_piece(piece::BISHOP, color::WHITE, Square::from_coords(x, y)),
-                            'R' => board.set_piece(piece::ROOK, color::WHITE, Square::from_coords(x, y)),
-                            'Q' => board.set_piece(piece::QUEEN, color::WHITE, Square::from_coords(x, y)),
-                            'K' => board.set_piece(piece::KING, color::WHITE, Square::from_coords(x, y)),
-                            'p' => board.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, y)),
-                            'n' => board.set_piece(piece::KNIGHT, color::BLACK, Square::from_coords(x, y)),
-                            'b' => board.set_piece(piece::BISHOP, color::BLACK, Square::from_coords(x, y)),
-                            'r' => board.set_piece(piece::ROOK, color::BLACK, Square::from_coords(x, y)),
-                            'q' => board.set_piece(piece::QUEEN, color::BLACK, Square::from_coords(x, y)),
-                            'k' => board.set_piece(piece::KING, color::BLACK, Square::from_coords(x, y)),
-                            _ => { return Err("Invalid FEN string") },
+                            'P' => board.set_piece(
+                                piece::PAWN,
+                                color::WHITE,
+                                Square::from_coords(x, y),
+                            ),
+                            'N' => board.set_piece(
+                                piece::KNIGHT,
+                                color::WHITE,
+                                Square::from_coords(x, y),
+                            ),
+                            'B' => board.set_piece(
+                                piece::BISHOP,
+                                color::WHITE,
+                                Square::from_coords(x, y),
+                            ),
+                            'R' => board.set_piece(
+                                piece::ROOK,
+                                color::WHITE,
+                                Square::from_coords(x, y),
+                            ),
+                            'Q' => board.set_piece(
+                                piece::QUEEN,
+                                color::WHITE,
+                                Square::from_coords(x, y),
+                            ),
+                            'K' => board.set_piece(
+                                piece::KING,
+                                color::WHITE,
+                                Square::from_coords(x, y),
+                            ),
+                            'p' => board.set_piece(
+                                piece::PAWN,
+                                color::BLACK,
+                                Square::from_coords(x, y),
+                            ),
+                            'n' => board.set_piece(
+                                piece::KNIGHT,
+                                color::BLACK,
+                                Square::from_coords(x, y),
+                            ),
+                            'b' => board.set_piece(
+                                piece::BISHOP,
+                                color::BLACK,
+                                Square::from_coords(x, y),
+                            ),
+                            'r' => board.set_piece(
+                                piece::ROOK,
+                                color::BLACK,
+                                Square::from_coords(x, y),
+                            ),
+                            'q' => board.set_piece(
+                                piece::QUEEN,
+                                color::BLACK,
+                                Square::from_coords(x, y),
+                            ),
+                            'k' => board.set_piece(
+                                piece::KING,
+                                color::BLACK,
+                                Square::from_coords(x, y),
+                            ),
+                            _ => return Err("Invalid FEN string"),
                         }
                         x += 1;
                     }
                 }
-            }    
+            }
         } else {
             return Err("Invalid FEN string, no position found");
         }
@@ -218,10 +287,10 @@ impl Board {
             match to_move {
                 "w" => board.to_move = color::WHITE,
                 "b" => board.to_move = color::BLACK,
-                _ => return Err("Invalid ToMove char")
+                _ => return Err("Invalid ToMove char"),
             }
         } else {
-            return Err("Invalid FEN string, don't know who moves next")
+            return Err("Invalid FEN string, don't know who moves next");
         }
 
         // Castling rights
@@ -233,11 +302,11 @@ impl Board {
                     'Q' => board.castling[color::WHITE as usize] |= 0x2,
                     'k' => board.castling[color::BLACK as usize] |= 0x1,
                     'q' => board.castling[color::BLACK as usize] |= 0x2,
-                    _ => return Err("Invalid castling char")
+                    _ => return Err("Invalid castling char"),
                 }
             }
         } else {
-            return Err("Invalid FEN string, no castling rights found")
+            return Err("Invalid FEN string, no castling rights found");
         }
 
         // en passant
@@ -252,7 +321,7 @@ impl Board {
                 }
             }
         } else {
-            return Err("Invalid FEN string, no en passant information")
+            return Err("Invalid FEN string, no en passant information");
         }
 
         // Halfmoves
@@ -262,9 +331,9 @@ impl Board {
                 Err(_) => return Err("Error parsing halfmoves"),
             }
         } else {
-            return Err("Invalid FEN string, no halfmoves given")
+            return Err("Invalid FEN string, no halfmoves given");
         }
-        
+
         // Fullmoves
         if let Some(fullmoves) = fen_iter.next() {
             match u32::from_str(fullmoves) {
@@ -272,9 +341,9 @@ impl Board {
                 Err(_) => return Err("Error parsing fullmoves"),
             }
         } else {
-            return Err("Invalid FEN string, no fullmoves given")
+            return Err("Invalid FEN string, no fullmoves given");
         }
-        
+
         Ok(board)
     }
 
@@ -288,18 +357,22 @@ impl Board {
                 if 0 == self.occupied[Square::from_coords(x, y) as usize] {
                     emptycount += 1;
                 } else {
-                    if emptycount > 0 { 
+                    if emptycount > 0 {
                         fen_string.push_str(&emptycount.to_string());
                         emptycount = 0;
                     };
-                    fen_string.push_str(self.occupied[Square::from_coords(x, y) as usize].to_san_string());
+                    fen_string.push_str(
+                        self.occupied[Square::from_coords(x, y) as usize].to_san_string(),
+                    );
                 }
             }
             if emptycount > 0 {
                 fen_string.push_str(&emptycount.to_string());
                 // emptycount = 0;
             };
-            if y > 0 { fen_string.push('/'); }
+            if y > 0 {
+                fen_string.push('/');
+            }
         }
 
         // To move
@@ -316,10 +389,18 @@ impl Board {
         if self.castling == [0, 0] {
             fen_string.push('-');
         } else {
-            if 0 != self.castling[color::WHITE as usize].extract_bits(0, 1) { fen_string.push('K'); }
-            if 0 != self.castling[color::WHITE as usize].extract_bits(1, 1) { fen_string.push('Q'); }
-            if 0 != self.castling[color::BLACK as usize].extract_bits(0, 1) { fen_string.push('k'); }
-            if 0 != self.castling[color::BLACK as usize].extract_bits(1, 1) { fen_string.push('q'); }
+            if 0 != self.castling[color::WHITE as usize].extract_bits(0, 1) {
+                fen_string.push('K');
+            }
+            if 0 != self.castling[color::WHITE as usize].extract_bits(1, 1) {
+                fen_string.push('Q');
+            }
+            if 0 != self.castling[color::BLACK as usize].extract_bits(0, 1) {
+                fen_string.push('k');
+            }
+            if 0 != self.castling[color::BLACK as usize].extract_bits(1, 1) {
+                fen_string.push('q');
+            }
         }
 
         // en passant
@@ -334,11 +415,11 @@ impl Board {
         // Halfmoves
         fen_string.push(' ');
         fen_string.push_str(&self.halfmoves.to_string());
-        
+
         // Fullmoves
         fen_string.push(' ');
         fen_string.push_str(&self.fullmoves.to_string());
-        
+
         fen_string
     }
 
@@ -413,8 +494,8 @@ impl Board {
 
     fn get_piece_and_color(&self, square: Square) -> (Piece, Color) {
         (
-            self.occupied[square as usize].code(), 
-            self.occupied[square as usize].color()
+            self.occupied[square as usize].code(),
+            self.occupied[square as usize].color(),
         )
     }
 
@@ -430,11 +511,11 @@ impl Board {
         // update unflipped bb
         self.bb[0][color as usize].set(to);
         self.bb[0][piece as usize].set(to);
-        
+
         // update flipped bb
         self.bb[1][color as usize].set(to ^ 56);
         self.bb[1][piece as usize].set(to ^ 56);
-        
+
         // update occupancy array
         self.occupied[to as usize] = Piece::new(piece, color);
     }
@@ -443,20 +524,27 @@ impl Board {
         // update unflipped bb
         self.bb[0][color as usize].clear(from);
         self.bb[0][piece as usize].clear(from);
-        
+
         // update flipped bb
         self.bb[1][color as usize].clear(from ^ 56);
         self.bb[1][piece as usize].clear(from ^ 56);
-        
+
         // update occupancy array
         self.occupied[from as usize] = 0;
     }
 
-    fn replace_piece(&mut self, old_piece: Piece, old_color: Color, new_piece: Piece, new_color: Color, square: Square) {
+    fn replace_piece(
+        &mut self,
+        old_piece: Piece,
+        old_color: Color,
+        new_piece: Piece,
+        new_color: Color,
+        square: Square,
+    ) {
         // remove from unflipped bb
         self.bb[0][old_color as usize].clear(square);
         self.bb[0][old_piece as usize].clear(square);
-        
+
         // remove from flipped bb
         self.bb[1][old_color as usize].clear(square ^ 56);
         self.bb[1][old_piece as usize].clear(square ^ 56);
@@ -471,7 +559,7 @@ impl Board {
     pub fn make_move(&mut self, mov: Move) {
         // fail if no piece at origin square
         // debug_assert!(self.check_piece(mov.piece(), mov.color(), mov.from()));
-        
+
         let orig_square = mov.orig();
         let dest_square = mov.dest();
         let (orig_piece, orig_color) = self.get_piece_and_color(orig_square);
@@ -492,12 +580,12 @@ impl Board {
             eprintln!("offending move: {:?}", mov);
             panic!("orig_color != self.to_move");
         }
-        
+
         // reset en passant
         self.en_passant = None;
 
         // promotions change pieces
-        if mov.is_promotion() { 
+        if mov.is_promotion() {
             let prom_piece = mov.special() as Piece + 3;
             self.remove_piece(orig_piece, orig_color, orig_square);
             if is_capture {
@@ -512,7 +600,11 @@ impl Board {
             self.remove_piece(orig_piece, orig_color, orig_square);
             dest_piece = piece::PAWN;
             dest_color = 1 ^ orig_color;
-            self.remove_piece(dest_piece, dest_color, square::ep_capture_square(dest_square));
+            self.remove_piece(
+                dest_piece,
+                dest_color,
+                square::ep_capture_square(dest_square),
+            );
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if is_capture {
             self.remove_piece(orig_piece, orig_color, orig_square);
@@ -538,8 +630,14 @@ impl Board {
             panic!("shouldn't come here")
         }
 
-        let unmake_info = UnmakeInfo::new(dest_piece, dest_color, self.castling,
-            ep_square, ep_allowed, self.halfmoves);
+        let unmake_info = UnmakeInfo::new(
+            dest_piece,
+            dest_color,
+            self.castling,
+            ep_square,
+            ep_allowed,
+            self.halfmoves,
+        );
 
         self.move_stack.push(MoveStackEntry::new(mov, unmake_info));
 
@@ -570,7 +668,7 @@ impl Board {
         // Full move clock needs to be incremented after black moves
         // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
         self.fullmoves += self.to_move as u32;
-        
+
         // set half move clock
         if orig_piece == piece::PAWN || is_capture {
             self.halfmoves = 0; // reset half move clock on pawn moves and captures
@@ -592,16 +690,16 @@ impl Board {
 
         let orig_square = last_move.orig();
         let dest_square = last_move.dest();
-        
+
         // let orig_color = last_move.color();
 
         // let (orig_piece, orig_color) = self.get_piece_and_color(orig_square);
         let (mut piece, color) = self.get_piece_and_color(dest_square);
-        
+
         // Full move clock needs to be decremented after black unmakes
         // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
         self.fullmoves -= 1 ^ (self.to_move as u32);
-        
+
         // Half moves come from the unmake struct
         self.halfmoves = unmake_info.halfmoves();
 
@@ -622,9 +720,8 @@ impl Board {
         let captured_color = unmake_info.captured_color();
         let was_capture = 0 < captured_piece;
 
-        
         // promotions change pieces
-        if last_move.is_promotion() { 
+        if last_move.is_promotion() {
             piece = piece::PAWN;
             if was_capture {
                 // self.remove_piece(piece, color, dest_square);
@@ -640,7 +737,11 @@ impl Board {
             self.set_piece(piece, color, orig_square);
         } else if last_move.is_capture_en_passant() {
             self.remove_piece(piece, color, dest_square);
-            self.set_piece(piece::PAWN, 1 ^ color, square::ep_capture_square(dest_square));
+            self.set_piece(
+                piece::PAWN,
+                1 ^ color,
+                square::ep_capture_square(dest_square),
+            );
             self.set_piece(piece, color, orig_square);
         } else if was_capture {
             self.replace_piece(piece, color, captured_piece, captured_color, dest_square);
@@ -670,14 +771,20 @@ impl Board {
         self.sanity_check();
     }
 
-    pub fn input_move(&mut self, orig: Square, dest: Square, promote_to: Option<Piece>) -> Result<bool, &'static str> {
-        let (mut is_capture, mut is_promotion, mut is_special_0, mut is_special_1) = (false, false, false, false);
+    pub fn input_move(
+        &mut self,
+        orig: Square,
+        dest: Square,
+        promote_to: Option<Piece>,
+    ) -> Result<bool, &'static str> {
+        let (mut is_capture, mut is_promotion, mut is_special_0, mut is_special_1) =
+            (false, false, false, false);
         let (piece, _color) = self.get_piece_and_color(orig);
         let (dest_piece, _dest_color) = self.get_piece_and_color(dest);
         if 0 == piece {
-            return Err("No piece at given square")
+            return Err("No piece at given square");
         };
-        
+
         // let (cap_piece, _) = self.get_piece_and_color(dest);
         // is_capture = 0 != cap_piece;
 
@@ -714,16 +821,22 @@ impl Board {
 
         // set flags for castling
         if piece == piece::KING {
-            if  2 == dest.wrapping_sub(orig) { // King castle
+            if 2 == dest.wrapping_sub(orig) {
+                // King castle
                 is_special_0 = false;
                 is_special_1 = true;
-            } else if 2 == orig.wrapping_sub(dest) { // Queen castle
+            } else if 2 == orig.wrapping_sub(dest) {
+                // Queen castle
                 is_special_0 = true;
                 is_special_1 = true;
             }
         }
-        
-        let mov = Move::new(orig, dest, Move::make_flags(is_capture, is_promotion, is_special_0, is_special_1));
+
+        let mov = Move::new(
+            orig,
+            dest,
+            Move::make_flags(is_capture, is_promotion, is_special_0, is_special_1),
+        );
         self.make_move(mov);
         Ok(true)
     }
@@ -736,12 +849,12 @@ impl Board {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::bitboard as bb;
+    use crate::move_generator::MoveGenerator;
     use std::error::Error;
     use std::fs::File;
-    use std::io::{BufReader, BufRead};
+    use std::io::{BufRead, BufReader};
     use std::path::Path;
-    use crate::move_generator::{MoveGenerator};
-    use crate::bitboard as bb;
 
     #[test]
     fn it_has_correct_piece_enum_values() {
@@ -770,16 +883,26 @@ mod tests {
                     assert!(board.check_piece(piece, color, square));
                     assert!(0 != board.bb[0][color as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(0 != board.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
-                    assert!(0 != board.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
-                    assert!(0 != board.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
+                    assert!(
+                        0 != board.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    );
+                    assert!(
+                        0 != board.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    );
                     assert_eq!(piece, board.occupied[square as usize].code());
                     assert_eq!(color, board.occupied[square as usize].color());
 
                     //assert_eq!(board.bb[1][color as usize], bits::swap_bytes(board.bb[0][color as usize]));
                     //assert_eq!(board.bb[1][piece as usize], bits::swap_bytes(board.bb[0][piece as usize]));
 
-                    assert_eq!(board.bb[1][color as usize], board.bb[0][color as usize].swap_bytes());
-                    assert_eq!(board.bb[1][piece as usize], board.bb[0][piece as usize].swap_bytes());
+                    assert_eq!(
+                        board.bb[1][color as usize],
+                        board.bb[0][color as usize].swap_bytes()
+                    );
+                    assert_eq!(
+                        board.bb[1][piece as usize],
+                        board.bb[0][piece as usize].swap_bytes()
+                    );
                 }
             }
         }
@@ -793,22 +916,32 @@ mod tests {
                     assert!(board.check_piece(piece, color, square));
                     assert!(0 != board.bb[0][color as usize] & bb::BB_SQUARES[square as usize]);
                     assert!(0 != board.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
-                    assert!(0 != board.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
-                    assert!(0 != board.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]);
+                    assert!(
+                        0 != board.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    );
+                    assert!(
+                        0 != board.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    );
                     assert_eq!(piece, board.occupied[square as usize].code());
                     assert_eq!(color, board.occupied[square as usize].color());
 
-                    assert_eq!(board.bb[1][color as usize], board.bb[0][color as usize].swap_bytes());
-                    assert_eq!(board.bb[1][piece as usize], board.bb[0][piece as usize].swap_bytes());
+                    assert_eq!(
+                        board.bb[1][color as usize],
+                        board.bb[0][color as usize].swap_bytes()
+                    );
+                    assert_eq!(
+                        board.bb[1][piece as usize],
+                        board.bb[0][piece as usize].swap_bytes()
+                    );
                 }
             }
         }
     }
-    
+
     #[test]
     fn it_sets_correct_startpos() {
         // let b = Board::startpos(); // Board { bb: [0; 8] };
-        
+
         // // color boards
         // assert_eq!(0xffff, b.bb[piece::WHITE as usize]);
         // assert_eq!(0xffff << 6*8, b.bb[piece::BLACK as usize]);
@@ -824,7 +957,6 @@ mod tests {
         // assert_eq!(0x81, b.get_pieces(piece::ROOK, piece::WHITE));
         // assert_eq!(0x81 << 7*8, b.bb[piece::ROOK as usize] & b.bb[piece::BLACK as usize]);
         // assert_eq!(0x81 << 7*8, b.get_pieces(piece::ROOK, piece::BLACK));
-        
 
         // // bishop boards
         // assert_eq!(0x24, b.bb[piece::BISHOP as usize] & b.bb[piece::WHITE as usize]);
@@ -848,26 +980,43 @@ mod tests {
     #[test]
     fn it_makes_correct_fen_strings() {
         let board = Board::startpos();
-        assert_eq!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board.to_fen());
+        assert_eq!(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            board.to_fen()
+        );
     }
 
     #[test]
     fn it_parses_fen_strings_correctly() {
-        let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+        let b = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        ));
         match b {
             Err(e) => assert!(false, e),
-            Ok(board) => assert_eq!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board.to_fen()),
+            Ok(board) => assert_eq!(
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                board.to_fen()
+            ),
         }
 
-        let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - e3 0 1"));
+        let b = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - e3 0 1",
+        ));
         match b {
             Err(e) => assert!(false, e),
-            Ok(board) => assert_eq!("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - e3 0 1", board.to_fen()),
+            Ok(board) => assert_eq!(
+                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - e3 0 1",
+                board.to_fen()
+            ),
         }
 
         let pospath = Path::new("tests/hyatt-4000-openings.epd");
         let posfile = match File::open(&pospath) {
-            Err(why) => panic!("Could not open {}: {}", pospath.display(), why.description()),
+            Err(why) => panic!(
+                "Could not open {}: {}",
+                pospath.display(),
+                why.description()
+            ),
             Ok(file) => file,
         };
 
@@ -888,19 +1037,25 @@ mod tests {
             Ok(_board) => assert!(false),
         }
 
-        let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq abcdefg 0 1"));
+        let b = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq abcdefg 0 1",
+        ));
         match b {
             Err(_e) => assert!(true),
             Ok(_board) => assert!(false),
         }
 
-        let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR y KQkq e3 0 1"));
+        let b = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR y KQkq e3 0 1",
+        ));
         match b {
             Err(_e) => assert!(true),
             Ok(_board) => assert!(false),
         }
 
-        let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HFhf e3 0 1"));
+        let b = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HFhf e3 0 1",
+        ));
         match b {
             Err(_e) => assert!(true),
             Ok(_board) => assert!(false),
@@ -911,15 +1066,23 @@ mod tests {
     fn it_calculates_ep_squares_correctly() {
         for x in 0..8 {
             // white
-            assert_eq!(Square::from_coords(x, 3), square::ep_capture_square(Square::from_coords(x, 2)));
+            assert_eq!(
+                Square::from_coords(x, 3),
+                square::ep_capture_square(Square::from_coords(x, 2))
+            );
             // black
-            assert_eq!(Square::from_coords(x, 4), square::ep_capture_square(Square::from_coords(x, 5)));
+            assert_eq!(
+                Square::from_coords(x, 4),
+                square::ep_capture_square(Square::from_coords(x, 5))
+            );
         }
     }
 
     #[test]
     fn it_makes_moves() {
-        if let Ok(mut board) = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")) {
+        if let Ok(mut board) = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
+        )) {
             assert_eq!(0, board.move_stack.len());
             board.input_move(square::D7, square::D6, None).unwrap();
             assert_eq!(1, board.move_stack.len());
@@ -940,7 +1103,9 @@ mod tests {
 
     #[test]
     fn it_unmakes_moves() {
-        if let Ok(mut board) = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")) {
+        if let Ok(mut board) = Board::from_fen(String::from(
+            "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
+        )) {
             let before_unmake = board.to_fen();
             board.input_move(square::D7, square::D5, None).unwrap();
             board.undo_move();
@@ -1048,7 +1213,9 @@ mod tests {
     #[test]
     fn it_unwinds_its_move_stack() {
         {
-            let fen = String::from("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+            let fen = String::from(
+                "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
+            );
             let board_orig = Board::from_fen(fen.clone()).unwrap();
             let mut board = Board::from_fen(fen.clone()).unwrap();
             let _ctx = MoveGenerator::perft(&mut board, 4);

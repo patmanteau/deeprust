@@ -1,5 +1,5 @@
- #![feature(test)]
- #![feature(simd_x86_bittest)]
+#![feature(test)]
+#![feature(simd_x86_bittest)]
 
 //extern crate indoc;
 extern crate clap;
@@ -24,7 +24,7 @@ pub mod piece;
 pub mod square;
 pub mod uci;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
 use log::LevelFilter;
 
 fn main() {
@@ -34,12 +34,14 @@ fn main() {
         .version(env!("CARGO_PKG_VERSION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .about("A Rust chess engine")
-        .arg(Arg::with_name("cli")
-            .short("c")
-            .long("cli")
-            .help("Start in CLI mode instead of UCI"))
+        .arg(
+            Arg::with_name("cli")
+                .short("c")
+                .long("cli")
+                .help("Start in CLI mode instead of UCI"),
+        )
         .get_matches();
-    
+
     if matches.is_present("cli") {
         cli::run();
     } else {
@@ -47,4 +49,3 @@ fn main() {
         c.run();
     }
 }
-

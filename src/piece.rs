@@ -1,5 +1,5 @@
-use crate::common::*;
 use crate::color;
+use crate::common::*;
 
 pub type Piece = u8;
 
@@ -18,7 +18,7 @@ pub trait PiecePrimitives {
 }
 
 impl PiecePrimitives for Piece {
-    fn new (piece: u8, color: u8) -> Piece {
+    fn new(piece: u8, color: u8) -> Piece {
         ((color & 0x1) << 3) | (piece & 0x7)
     }
 
@@ -27,7 +27,7 @@ impl PiecePrimitives for Piece {
             2 => "P",
             3 => "N",
             4 => "B",
-            5 => "R", 
+            5 => "R",
             6 => "Q",
             7 => "K",
             10 => "p",
