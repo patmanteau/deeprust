@@ -425,14 +425,14 @@ impl Board {
         assert!(self.pcursor + 1 < PSTACK_SIZE);
         //self.pstack[self.pcursor + 1] = self.current().clone();
         self.pstack[self.pcursor + 1] = *self.current();
-        return match self.pstack[self.pcursor + 1].input_move(orig, dest, promote_to) {
+        match self.pstack[self.pcursor + 1].input_move(orig, dest, promote_to) {
             Ok(mov) => {
                 self.move_stack.push(mov);
                 self.pcursor += 1;
                 Ok(true)
             }
             Err(err) => Err(err),
-        };
+        }
     }
 
     pub fn input_san_move(&mut self, san_move: &str) -> Result<bool, &'static str> {
