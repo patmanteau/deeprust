@@ -216,66 +216,42 @@ impl Board {
                     y -= 1;
                 } else {
                     match chr {
-                        'P' => board.set_piece(
-                            piece::PAWN,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'N' => board.set_piece(
-                            piece::KNIGHT,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'B' => board.set_piece(
-                            piece::BISHOP,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'R' => board.set_piece(
-                            piece::ROOK,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'Q' => board.set_piece(
-                            piece::QUEEN,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'K' => board.set_piece(
-                            piece::KING,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'p' => board.set_piece(
-                            piece::PAWN,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'n' => board.set_piece(
-                            piece::KNIGHT,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'b' => board.set_piece(
-                            piece::BISHOP,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'r' => board.set_piece(
-                            piece::ROOK,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'q' => board.set_piece(
-                            piece::QUEEN,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'k' => board.set_piece(
-                            piece::KING,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
+                        'P' => {
+                            board.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, y))
+                        }
+                        'N' => {
+                            board.set_piece(piece::KNIGHT, color::WHITE, Square::from_coords(x, y))
+                        }
+                        'B' => {
+                            board.set_piece(piece::BISHOP, color::WHITE, Square::from_coords(x, y))
+                        }
+                        'R' => {
+                            board.set_piece(piece::ROOK, color::WHITE, Square::from_coords(x, y))
+                        }
+                        'Q' => {
+                            board.set_piece(piece::QUEEN, color::WHITE, Square::from_coords(x, y))
+                        }
+                        'K' => {
+                            board.set_piece(piece::KING, color::WHITE, Square::from_coords(x, y))
+                        }
+                        'p' => {
+                            board.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, y))
+                        }
+                        'n' => {
+                            board.set_piece(piece::KNIGHT, color::BLACK, Square::from_coords(x, y))
+                        }
+                        'b' => {
+                            board.set_piece(piece::BISHOP, color::BLACK, Square::from_coords(x, y))
+                        }
+                        'r' => {
+                            board.set_piece(piece::ROOK, color::BLACK, Square::from_coords(x, y))
+                        }
+                        'q' => {
+                            board.set_piece(piece::QUEEN, color::BLACK, Square::from_coords(x, y))
+                        }
+                        'k' => {
+                            board.set_piece(piece::KING, color::BLACK, Square::from_coords(x, y))
+                        }
                         _ => return Err("Invalid FEN string"),
                     }
                     x += 1;
@@ -614,7 +590,8 @@ impl Board {
             self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
         } else if mov.is_double_pawn_push() {
             self.remove_piece(orig_piece, orig_color, orig_square);
-            let new_ep_square = (i32::from(dest_square) - [8i32, -8i32][orig_color as usize]) as Square;
+            let new_ep_square =
+                (i32::from(dest_square) - [8i32, -8i32][orig_color as usize]) as Square;
             self.en_passant = Some([new_ep_square, new_ep_square.flipped()]);
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if mov.is_king_castle() {

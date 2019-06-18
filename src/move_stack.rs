@@ -9,10 +9,7 @@ pub struct MoveStackEntry {
 
 impl MoveStackEntry {
     pub fn new(mov: Move, store: UnmakeInfo) -> MoveStackEntry {
-        MoveStackEntry {
-            mov,
-            store,
-        }
+        MoveStackEntry { mov, store }
     }
 
     // fn empty() -> MoveStackEntry {

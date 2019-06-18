@@ -126,7 +126,11 @@ impl UCIInterface {
     }
 
     fn cmd_perft(&mut self, cmd: Vec<&str>) {
-        let depth = if !cmd.is_empty() { cmd[0].parse::<u32>().unwrap() } else { 3 };
+        let depth = if !cmd.is_empty() {
+            cmd[0].parse::<u32>().unwrap()
+        } else {
+            3
+        };
 
         let ctx = MoveGenerator::perft(&mut self.board, depth);
         println!("perft result: {}", ctx);
