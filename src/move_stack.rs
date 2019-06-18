@@ -10,8 +10,8 @@ pub struct MoveStackEntry {
 impl MoveStackEntry {
     pub fn new(mov: Move, store: UnmakeInfo) -> MoveStackEntry {
         MoveStackEntry {
-            mov: mov,
-            store: store,
+            mov,
+            store,
         }
     }
 
@@ -30,7 +30,7 @@ impl fmt::Display for MoveStackEntry {
 }
 
 /// Keeps a move history for unmaking moves
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct MoveStack {
     entries: Vec<MoveStackEntry>,
     current: usize,
@@ -70,6 +70,10 @@ impl MoveStack {
     pub fn len(&self) -> usize {
         // self.current
         self.entries.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
     }
 }
 

@@ -13,6 +13,12 @@ pub struct UCIInterface {
     run: bool,
 }
 
+impl Default for UCIInterface {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl UCIInterface {
     pub fn new() -> UCIInterface {
         UCIInterface {
@@ -23,15 +29,15 @@ impl UCIInterface {
     }
 
     fn cmd_position(&mut self, cmd: Vec<&str>) {
-        if cmd.len() < 1 {
+        if cmd.is_empty() {
             return;
         }
         let mut tokens = cmd.iter();
 
         if let Some(postype) = tokens.next() {
-            match postype {
-                &"startpos" => self.board = Board::startpos(),
-                &"fen" => {
+            match *postype {
+                "startpos" => self.board = Board::startpos(),
+                "fen" => {
                     let s = Board::from_fen(cmd[1..7].join(" "));
                     match s {
                         Ok(b) => self.board = b,
@@ -40,16 +46,16 @@ impl UCIInterface {
                             return;
                         }
                     }
-                    for _i in 0..6 {
+                    for _ in 0..6 {
                         tokens.next();
                     }
                 }
-                &_ => (),
+                _ => (),
             }
         }
 
-        if let Some(_) = tokens.next() {
-            while let Some(mov) = tokens.next() {
+        if tokens.next().is_some() {
+            for mov in tokens {
                 if mov.len() < 4 {
                     eprintln!("error: incomplete move");
                     return;
@@ -71,13 +77,11 @@ impl UCIInterface {
     }
 
     fn cmd_move(&mut self, cmd: Vec<&str>) {
-        if cmd.len() < 1 {
+        if cmd.is_empty() {
             return;
         }
 
-        let mut tokens = cmd.iter();
-
-        while let Some(mov) = tokens.next() {
+        for mov in cmd.iter() {
             if mov.len() < 4 {
                 eprintln!("error: incomplete move");
                 return;
@@ -122,10 +126,7 @@ impl UCIInterface {
     }
 
     fn cmd_perft(&mut self, cmd: Vec<&str>) {
-        let mut depth = 3;
-        if cmd.len() >= 1 {
-            depth = cmd[0].parse::<u32>().unwrap();
-        }
+        let depth = if !cmd.is_empty() { cmd[0].parse::<u32>().unwrap() } else { 3 };
 
         let ctx = MoveGenerator::perft(&mut self.board, depth);
         println!("perft result: {}", ctx);
@@ -134,7 +135,7 @@ impl UCIInterface {
     pub fn parse(&mut self, cmd: String) {
         let tokens: Vec<&str> = cmd.trim().split_whitespace().collect();
 
-        if tokens.len() > 0 {
+        if !tokens.is_empty() {
             match tokens[0] {
                 "position" => self.cmd_position(tokens[1..].to_vec()),
                 "m" | "move" => self.cmd_move(tokens[1..].to_vec()),

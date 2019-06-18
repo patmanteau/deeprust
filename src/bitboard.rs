@@ -25,7 +25,8 @@ impl BitboardPrimitives<u64> for Bitboard {
     }
 
     fn test(self, pos: Square) -> bool {
-        self.test_bit(pos as u32)
+        //self.test_bit(pos as u32)
+        self.test_bit(u32::from(pos))
     }
 
     fn set(&mut self, pos: Square) {
@@ -88,10 +89,10 @@ macro_rules! mbb_ranks {
 macro_rules! mbb_files {
     ($($bb_id:ident,$file:expr),*) => {
         pub const BB_FILES: [u64; 8] = [
-            $(0x0101010101010101u64 << $file),*
+            $(0x0101_0101_0101_0101u64 << $file),*
         ];
 
-        $(pub const $bb_id: Bitboard = 0x0101010101010101u64 << $file;)*
+        $(pub const $bb_id: Bitboard = 0x0101_0101_0101_0101u64 << $file;)*
     };
 }
 
@@ -113,14 +114,17 @@ mbb_ranks!  (BB_RANK_1, 0, BB_RANK_2, 1, BB_RANK_3, 2, BB_RANK_4, 3,
 mbb_files!  (BB_FILE_A, 0, BB_FILE_B, 1, BB_FILE_C, 2, BB_FILE_D, 3, 
              BB_FILE_E, 4, BB_FILE_F, 5, BB_FILE_G, 6, BB_FILE_H, 7);
 
-pub const BB_DARK_SQUARES: Bitboard = 0xaa55aa55aa55aa55u64;
-pub const BB_LIGHT_SQUARES: Bitboard = 0x55aa55aa55aa55aau64;
+pub const BB_DIAG_A1H8: Bitboard = 0x8040_2010_0804_0201;
+pub const BB_DIAG_A8H1: Bitboard = 0x0102_0408_1020_4080;
+
+pub const BB_DARK_SQUARES: Bitboard = 0xaa55_aa55_aa55_aa55u64;
+pub const BB_LIGHT_SQUARES: Bitboard = 0x55aa_55aa_55aa_55aau64;
 
 pub const BB_BACKRANKS: Bitboard = BB_RANK_1 | BB_RANK_8;
 pub const BB_CORNERS: Bitboard = BB_A1 | BB_H1 | BB_A8 | BB_H8;
 
 pub const BB_EMPTY: Bitboard = 0u64;
-pub const BB_ALL: Bitboard = 0xffffffffffffffffu64;
+pub const BB_ALL: Bitboard = 0xffff_ffff_ffff_ffffu64;
 
 pub const BB_NOT_FILE_A: Bitboard = !BB_FILE_A;
 pub const BB_NOT_FILE_H: Bitboard = !BB_FILE_H;
@@ -138,16 +142,16 @@ pub const BB_NOT_FILE_GH: Bitboard = !(BB_FILE_G | BB_FILE_H);
 
 /// see https://chessprogramming.org/Flipping_Mirroring_and_Rotating
 pub fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
-    let k1 = 0x5500550055005500;
-    let k2 = 0x3333000033330000;
-    let k4 = 0x0f0f0f0f00000000;
+    let k1 = 0x5500_5500_5500_5500;
+    let k2 = 0x3333_0000_3333_0000;
+    let k4 = 0x0f0f_0f0f_0000_0000;
 
     let mut t = k4 & (bb ^ (bb << 28));
-    bb = bb ^ (t ^ (t >> 28));
+    bb ^= t ^ (t >> 28);
     t = k2 & (bb ^ (bb << 14));
-    bb = bb ^ (t ^ (t >> 14));
+    bb ^= t ^ (t >> 14);
     t = k1 & (bb ^ (bb << 7));
-    bb = bb ^ (t ^ (t >> 7));
+    bb ^= t ^ (t >> 7);
     bb
 }
 
@@ -185,12 +189,12 @@ lazy_static! {
     pub static ref BB_DIAG: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0i64..64i64 {
-            let main_diag = 0x8040201008040201u64;
+            //let main_diag = 0x8040_2010_0804_0201u64;
             let diag = 8 * (i & 7) - (i & 56);
             let north = -diag & (diag >> 31);
             let south = diag & (-diag >> 31);
 
-            arr[i as usize] = (main_diag >> south) << north;
+            arr[i as usize] = (BB_DIAG_A1H8 >> south) << north;
         }
         arr
     };
@@ -206,12 +210,12 @@ lazy_static! {
     pub static ref BB_ANTI_DIAG: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0i64..64i64 {
-            let main_diag = 0x0102040810204080u64;
+            //let main_diag = 0x0102_0408_1020_4080u64;
             let diag = 56 - 8 * (i & 7) - (i & 56);
             let north = -diag & (diag >> 31);
             let south = diag & (-diag >> 31);
 
-            arr[i as usize] = (main_diag >> south) << north;
+            arr[i as usize] = (BB_DIAG_A8H1 >> south) << north;
         }
         arr
     };
@@ -289,7 +293,7 @@ lazy_static! {
     };
 
     pub static ref BB_A_FILE_ATTACKS: [[Bitboard; 64]; 8] = {
-        let _diag_a1h8: Bitboard = 0x8040201008040201;
+        //let _diag_a1h8: Bitboard = 0x8040_2010_0804_0201;
         let mut arr: [[Bitboard; 64]; 8] = [[0; 64]; 8];
         for sq in 0..8 {
             for occ in 0..64 {
@@ -346,7 +350,7 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 pub fn file_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
     //let diag_c2h7: Bitboard = 0x0080402010080400;
     //let diag_c7h2: Bitboard = diag_c2h7.swap_bytes();
-    let diag_c7h2: Bitboard = 0x0004081020408000;
+    let diag_c7h2: Bitboard = 0x0004_0810_2040_8000;
     occupied = BB_FILE_A & (occupied >> (square & 0x7));
     occupied = (diag_c7h2.overflowing_mul(occupied).0) >> 58;
     BB_A_FILE_ATTACKS[(square >> 0x3) as usize][occupied as usize] << (square & 0x7)

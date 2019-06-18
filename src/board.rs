@@ -67,8 +67,8 @@ impl fmt::Display for Board {
             "bb_bishops  bb_rooks    bb_queens   bb_king",
         ];
 
-        for block in 0..2 {
-            writeln!(f, "{}", bb_titles[block]).unwrap();
+        for (block, title) in bb_titles.iter().enumerate() {
+            writeln!(f, "{}", title).unwrap();
             for rank in (0..8).rev() {
                 for cur_bb in 0..4 {
                     write!(
@@ -86,9 +86,15 @@ impl fmt::Display for Board {
     }
 }
 
+impl Default for Board {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Board {
     pub fn new() -> Board {
-        let board = Board {
+        Board {
             bb: [[0; 8]; 2],
             occupied: [0; 64],
             to_move: color::WHITE,
@@ -97,8 +103,7 @@ impl Board {
             halfmoves: 0,
             fullmoves: 1,
             move_stack: MoveStack::new(),
-        };
-        board
+        }
     }
 
     pub fn equals(&self, board: &Board) -> bool {
@@ -206,76 +211,74 @@ impl Board {
             for chr in position.chars() {
                 if let Some(empty) = chr.to_digit(10) {
                     x += empty
+                } else if chr == '/' {
+                    x = 0;
+                    y -= 1;
                 } else {
-                    if chr == '/' {
-                        x = 0;
-                        y -= 1;
-                    } else {
-                        match chr {
-                            'P' => board.set_piece(
-                                piece::PAWN,
-                                color::WHITE,
-                                Square::from_coords(x, y),
-                            ),
-                            'N' => board.set_piece(
-                                piece::KNIGHT,
-                                color::WHITE,
-                                Square::from_coords(x, y),
-                            ),
-                            'B' => board.set_piece(
-                                piece::BISHOP,
-                                color::WHITE,
-                                Square::from_coords(x, y),
-                            ),
-                            'R' => board.set_piece(
-                                piece::ROOK,
-                                color::WHITE,
-                                Square::from_coords(x, y),
-                            ),
-                            'Q' => board.set_piece(
-                                piece::QUEEN,
-                                color::WHITE,
-                                Square::from_coords(x, y),
-                            ),
-                            'K' => board.set_piece(
-                                piece::KING,
-                                color::WHITE,
-                                Square::from_coords(x, y),
-                            ),
-                            'p' => board.set_piece(
-                                piece::PAWN,
-                                color::BLACK,
-                                Square::from_coords(x, y),
-                            ),
-                            'n' => board.set_piece(
-                                piece::KNIGHT,
-                                color::BLACK,
-                                Square::from_coords(x, y),
-                            ),
-                            'b' => board.set_piece(
-                                piece::BISHOP,
-                                color::BLACK,
-                                Square::from_coords(x, y),
-                            ),
-                            'r' => board.set_piece(
-                                piece::ROOK,
-                                color::BLACK,
-                                Square::from_coords(x, y),
-                            ),
-                            'q' => board.set_piece(
-                                piece::QUEEN,
-                                color::BLACK,
-                                Square::from_coords(x, y),
-                            ),
-                            'k' => board.set_piece(
-                                piece::KING,
-                                color::BLACK,
-                                Square::from_coords(x, y),
-                            ),
-                            _ => return Err("Invalid FEN string"),
-                        }
-                        x += 1;
+                    match chr {
+                        'P' => board.set_piece(
+                            piece::PAWN,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'N' => board.set_piece(
+                            piece::KNIGHT,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'B' => board.set_piece(
+                            piece::BISHOP,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'R' => board.set_piece(
+                            piece::ROOK,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'Q' => board.set_piece(
+                            piece::QUEEN,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'K' => board.set_piece(
+                            piece::KING,
+                            color::WHITE,
+                            Square::from_coords(x, y),
+                        ),
+                        'p' => board.set_piece(
+                            piece::PAWN,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        'n' => board.set_piece(
+                            piece::KNIGHT,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        'b' => board.set_piece(
+                            piece::BISHOP,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        'r' => board.set_piece(
+                            piece::ROOK,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        'q' => board.set_piece(
+                            piece::QUEEN,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        'k' => board.set_piece(
+                            piece::KING,
+                            color::BLACK,
+                            Square::from_coords(x, y),
+                        ),
+                        _ => return Err("Invalid FEN string"),
                     }
+                    x += 1;
                 }
             }
         } else {
@@ -611,7 +614,7 @@ impl Board {
             self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
         } else if mov.is_double_pawn_push() {
             self.remove_piece(orig_piece, orig_color, orig_square);
-            let new_ep_square = (dest_square as i32 - [8i32, -8i32][orig_color as usize]) as Square;
+            let new_ep_square = (i32::from(dest_square) - [8i32, -8i32][orig_color as usize]) as Square;
             self.en_passant = Some([new_ep_square, new_ep_square.flipped()]);
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if mov.is_king_castle() {
@@ -667,7 +670,7 @@ impl Board {
 
         // Full move clock needs to be incremented after black moves
         // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
-        self.fullmoves += self.to_move as u32;
+        self.fullmoves += u32::from(self.to_move);
 
         // set half move clock
         if orig_piece == piece::PAWN || is_capture {
@@ -698,7 +701,7 @@ impl Board {
 
         // Full move clock needs to be decremented after black unmakes
         // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
-        self.fullmoves -= 1 ^ (self.to_move as u32);
+        self.fullmoves -= 1 ^ u32::from(self.to_move);
 
         // Half moves come from the unmake struct
         self.halfmoves = unmake_info.halfmoves();

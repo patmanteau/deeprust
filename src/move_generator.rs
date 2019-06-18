@@ -9,6 +9,7 @@ use crate::square::{self, Square};
 
 use quanta::Clock;
 
+#[derive(Default)]
 pub struct PerftContext {
     nodes: u128,
     captures: u128,
@@ -47,6 +48,7 @@ impl fmt::Display for PerftContext {
     }
 }
 
+#[derive(Default)]
 pub struct MoveGenerator {}
 
 impl MoveGenerator {
@@ -376,12 +378,9 @@ impl MoveGenerator {
         let mut ep_bb = bitboard::BB_EMPTY;
         let mut ep_square = 0;
 
-        match board.en_passant() {
-            Some(ep_squares) => {
-                ep_square = ep_squares[0];
-                ep_bb = bitboard::BB_SQUARES[ep_square as usize];
-            }
-            None => (),
+        if let Some(ep_squares) = board.en_passant() {
+            ep_square = ep_squares[0];
+            ep_bb = bitboard::BB_SQUARES[ep_square as usize];
         }
 
         while 0 != pawns {

@@ -37,35 +37,35 @@ impl UnmakeInfo {
         UnmakeInfo(
             ((halfmoves & 0x1ffff) << 15)
                 | ((ep_available as u32 & 0x1) << 14)
-                | ((ep_square as u32 & 0x3f) << 8)
+                | ((u32::from(ep_square) & 0x3f) << 8)
                 | ((castling[1] & 0x3) << 6)
                 | ((castling[0] & 0x3) << 4)
-                | ((cap_color as u32 & 0x1) << 3)
-                | (cap_piece as u32 & 0x7),
+                | ((u32::from(cap_color) & 0x1) << 3)
+                | (u32::from(cap_piece) & 0x7),
         )
     }
 
-    pub fn captured_piece(&self) -> Piece {
+    pub fn captured_piece(self) -> Piece {
         self.0.extract_bits(0, 3) as Piece
     }
 
-    pub fn captured_color(&self) -> Color {
+    pub fn captured_color(self) -> Color {
         self.0.extract_bits(3, 1) as Color
     }
 
-    pub fn castling(&self) -> [u32; 2] {
+    pub fn castling(self) -> [u32; 2] {
         [self.0.extract_bits(4, 2), self.0.extract_bits(6, 2)]
     }
 
-    pub fn ep_square(&self) -> Square {
+    pub fn ep_square(self) -> Square {
         self.0.extract_bits(8, 6) as Square
     }
 
-    pub fn ep_available(&self) -> bool {
+    pub fn ep_available(self) -> bool {
         self.0.test_bit(14)
     }
 
-    pub fn halfmoves(&self) -> u32 {
+    pub fn halfmoves(self) -> u32 {
         self.0.extract_bits(15, 16)
     }
 }
@@ -169,12 +169,12 @@ impl Move {
         self.0.flip_bit(9);
     }
 
-    pub fn orig(&self) -> Square {
+    pub fn orig(self) -> Square {
         // (self.0.m >> 10) & 0x3f
         self.0.extract_bits(10, 6) as Square
     }
 
-    pub fn dest(&self) -> Square {
+    pub fn dest(self) -> Square {
         (self.0 & 0x3f) as Square
     }
 
@@ -188,43 +188,43 @@ impl Move {
     //     bits::extract_bits(self.0.m, 17, 3)
     // }
 
-    pub fn special(&self) -> u16 {
+    pub fn special(self) -> u16 {
         self.0.extract_bits(6, 2)
     }
 
-    pub fn has_special_0(&self) -> bool {
+    pub fn has_special_0(self) -> bool {
         self.0.test_bit(6)
     }
 
-    pub fn has_special_1(&self) -> bool {
+    pub fn has_special_1(self) -> bool {
         self.0.test_bit(7)
     }
 
-    pub fn is_quiet(&self) -> bool {
+    pub fn is_quiet(self) -> bool {
         MOV_QUIET == self.0.extract_bits(6, 4)
     }
 
-    pub fn is_capture(&self) -> bool {
+    pub fn is_capture(self) -> bool {
         self.0.test_bit(8)
     }
 
-    pub fn is_capture_en_passant(&self) -> bool {
+    pub fn is_capture_en_passant(self) -> bool {
         MOV_CAPTURE_EP == self.0.extract_bits(6, 4)
     }
 
-    pub fn is_double_pawn_push(&self) -> bool {
+    pub fn is_double_pawn_push(self) -> bool {
         MOV_DPP == self.0.extract_bits(6, 4)
     }
 
-    pub fn is_promotion(&self) -> bool {
+    pub fn is_promotion(self) -> bool {
         self.0.test_bit(9)
     }
 
-    pub fn is_king_castle(&self) -> bool {
+    pub fn is_king_castle(self) -> bool {
         MOV_K_CASTLE == self.0.extract_bits(6, 4)
     }
 
-    pub fn is_queen_castle(&self) -> bool {
+    pub fn is_queen_castle(self) -> bool {
         MOV_Q_CASTLE == self.0.extract_bits(6, 4)
     }
 
@@ -259,10 +259,7 @@ impl fmt::Display for Move {
             f,
             "{}{}{}",
             self.orig().to_san_string(),
-            match self.is_capture() {
-                true => "x",
-                false => "-",
-            },
+            if self.is_capture() { "x" } else { "-" },
             self.dest().to_san_string()
         )
     }

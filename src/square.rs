@@ -79,7 +79,7 @@ msq!(A1, 0, B1, 1, C1, 2, D1, 3, E1, 4, F1, 5, G1, 6, H1, 7,
      A8,56, B8,57, C8,58, D8,59, E8,60, F8,61, G8,62, H8,63);
 
 #[rustfmt::skip]
-pub const SQUARE_NAMES: [&'static str; 64] = [
+pub const SQUARE_NAMES: [&str; 64] = [
     "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
     "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
     "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
@@ -90,9 +90,9 @@ pub const SQUARE_NAMES: [&'static str; 64] = [
     "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
 ];
 
-pub const FILE_NAMES: [&'static str; 8] = ["a", "b", "c", "d", "e", "f", "g", "h"];
+pub const FILE_NAMES: [&str; 8] = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
-pub const RANK_NAMES: [&'static str; 8] = ["1", "2", "3", "4", "5", "6", "7", "8"];
+pub const RANK_NAMES: [&str; 8] = ["1", "2", "3", "4", "5", "6", "7", "8"];
 
 #[rustfmt::skip]
 pub const EP_CAPTURE_SQUARES: [Square; 64] = [
