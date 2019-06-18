@@ -20,6 +20,7 @@ impl BitboardPrimitives<u64> for Bitboard {
         self.count_ones()
     }
 
+    // TODO: scan and reset LSB
     fn scan(self) -> Square {
         self.trailing_zeros() as Square
     }
@@ -131,6 +132,12 @@ pub const BB_NOT_FILE_H: Bitboard = !BB_FILE_H;
 pub const BB_NOT_FILE_AB: Bitboard = !(BB_FILE_A | BB_FILE_B);
 pub const BB_NOT_FILE_GH: Bitboard = !(BB_FILE_G | BB_FILE_H);
 
+pub const BB_NOT_RANK_1: Bitboard = !BB_RANK_1;
+pub const BB_NOT_RANK_2: Bitboard = !BB_RANK_8;
+pub const BB_NOT_RANK_12: Bitboard = !BB_RANK_2 & !BB_RANK_1;
+pub const BB_NOT_RANK_78: Bitboard = !BB_RANK_7 & !BB_RANK_8;
+
+// TODO: Pawn attack and push tables
 #[rustfmt::skip] pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
 #[rustfmt::skip] pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
 #[rustfmt::skip] pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
@@ -156,6 +163,52 @@ pub fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
 }
 
 lazy_static! {
+    pub static ref BB_WPAWN_ATTACKS: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 8..56 {
+            let orig_bb = BB_SQUARES[i];
+            arr[i] = north_west_one(orig_bb) | north_east_one(orig_bb);
+        }
+        arr
+    };
+
+    pub static ref BB_BPAWN_ATTACKS: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 8..56 {
+            let orig_bb = BB_SQUARES[i];
+            arr[i] = south_west_one(orig_bb) | south_east_one(orig_bb);
+        }
+        arr
+    };
+
+    pub static ref BB_WPAWN_PUSHES: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 8..16 {
+            let orig_bb = BB_SQUARES[i];
+            arr[i] = north_one(orig_bb);
+            arr[i] |= north_one(arr[i]);
+        }
+        for i in 16..56 {
+            let orig_bb = BB_SQUARES[i];
+            arr[i] = north_one(orig_bb);
+        }
+        arr
+    };
+
+    pub static ref BB_BPAWN_PUSHES: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 8..48 {
+            let orig_bb = BB_SQUARES[i];
+            arr[i] = south_one(orig_bb);
+        }
+        for i in 48..56 {
+            let orig_bb = BB_SQUARES[i];
+            arr[i] = south_one(orig_bb);
+            arr[i] |= south_one(arr[i]);
+        }
+        arr
+    };
+
     pub static ref BB_KNIGHT_ATTACKS: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0..64 {

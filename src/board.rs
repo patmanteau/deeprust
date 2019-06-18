@@ -105,7 +105,6 @@ impl Board {
 
     pub fn from_fen(fen_string: String) -> Result<Board, &'static str> {
         let mut board = Self::new();
-        // let &mut position = &mut board.pstack[board.pcursor];
         let mut position = Position::new();
 
         // position
@@ -240,9 +239,7 @@ impl Board {
                 }
             }
         }
-
         Ok(board)
-
     }
 
     pub fn to_fen(&self) -> String {
@@ -318,12 +315,12 @@ impl Board {
         fen_string.push(' ');
         fen_string.push_str(&self.fullmoves().to_string());
 
-        if self.has_moves() {
-            fen_string.push_str(" moves");
-            for mov in &self.move_stack {
-                fen_string.push_str(&format!(" {}{}", mov.orig().to_san_string(), mov.dest().to_san_string()));
-            }
-        }
+        // if self.has_moves() {
+        //     fen_string.push_str(" moves");
+        //     for mov in &self.move_stack {
+        //         fen_string.push_str(&format!(" {}{}", mov.orig().to_san_string(), mov.dest().to_san_string()));
+        //     }
+        // }
         fen_string
     }
 
@@ -497,38 +494,25 @@ mod tests {
 
     #[test]
     fn it_makes_correct_fen_strings() {
-        let board = Board::startpos();
-        assert_eq!(
+        let fen_strs = vec![
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-            board.to_fen()
-        );
+        ];
+        
+        let mut board = Board::startpos();
         assert!(!board.has_moves());
+        
+        for fen_str in fen_strs {
+            if let Ok(mut board) = Board::from_fen(String::from(fen_str)) {
+                assert_eq!(fen_str, board.to_fen());
+            } else {
+                assert!(false);
+            }
+            
+        }
     }
 
     #[test]
     fn it_parses_fen_strings_correctly() {
-        let b = Board::from_fen(String::from(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-        ));
-        match b {
-            Err(e) => assert!(false, e),
-            Ok(board) => assert_eq!(
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                board.to_fen()
-            ),
-        }
-
-        let b = Board::from_fen(String::from(
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - e3 0 1",
-        ));
-        match b {
-            Err(e) => assert!(false, e),
-            Ok(board) => assert_eq!(
-                "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - e3 0 1",
-                board.to_fen()
-            ),
-        }
-
         let pospath = Path::new("tests/hyatt-4000-openings.epd");
         let posfile = match File::open(&pospath) {
             Err(why) => panic!(
@@ -548,54 +532,23 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn it_rejects_invalid_fen_strings() {
-    //     let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"));
-    //     match b {
-    //         Err(_e) => assert!(true),
-    //         Ok(_board) => assert!(false),
-    //     }
-
-    //     let b = Board::from_fen(String::from(
-    //         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq abcdefg 0 1",
-    //     ));
-    //     match b {
-    //         Err(_e) => assert!(true),
-    //         Ok(_board) => assert!(false),
-    //     }
-
-    //     let b = Board::from_fen(String::from(
-    //         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR y KQkq e3 0 1",
-    //     ));
-    //     match b {
-    //         Err(_e) => assert!(true),
-    //         Ok(_board) => assert!(false),
-    //     }
-
-    //     let b = Board::from_fen(String::from(
-    //         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HFhf e3 0 1",
-    //     ));
-    //     match b {
-    //         Err(_e) => assert!(true),
-    //         Ok(_board) => assert!(false),
-    //     }
-    // }
-
-    // #[test]
-    // fn it_calculates_ep_squares_correctly() {
-    //     for x in 0..8 {
-    //         // white
-    //         assert_eq!(
-    //             Square::from_coords(x, 3),
-    //             square::ep_capture_square(Square::from_coords(x, 2))
-    //         );
-    //         // black
-    //         assert_eq!(
-    //             Square::from_coords(x, 4),
-    //             square::ep_capture_square(Square::from_coords(x, 5))
-    //         );
-    //     }
-    // }
+    #[test]
+    fn it_rejects_invalid_fen_strings() {
+        let fen_strs = vec![
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq abcdefg 0 1",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR y KQkq e3 0 1",
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HFhf e3 0 1",
+        ];
+        
+        for fen_str in fen_strs {
+            let b = Board::from_fen(String::from(fen_str));
+            match b {
+                Err(_e) => assert!(true),
+                Ok(_board) => assert!(false),
+            }
+        }
+    }
 
     #[test]
     fn it_makes_moves() {
@@ -609,15 +562,6 @@ mod tests {
             let last_move = board.last_move().unwrap();
             assert_eq!(last_move.orig(), square::D7);
             assert_eq!(last_move.dest(), square::D6);
-
-            // assert!(move_stack_entry.store.ep_available());
-            // assert_eq!(square::D3, move_stack_entry.store.ep_square());
-            // let move_stack_entry = board.move_stack[board.move_stack.len() - 1];
-            // assert_eq!(move_stack_entry.orig(), square::D7);
-            // assert_eq!(move_stack_entry.dest(), square::D6);
-
-            //assert!(move_stack_entry.store.ep_available());
-            //assert_eq!(square::D3, move_stack_entry.store.ep_square());
         }
 
         let mut board = Board::from_fen(String::from("8/3p4/8/4P/8/8/8/8 b - - 0 1")).unwrap();
@@ -628,110 +572,49 @@ mod tests {
 
     #[test]
     fn it_unmakes_moves() {
-        if let Ok(mut board) = Board::from_fen(String::from(
-            "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
-        )) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::D7, square::D5, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
+        let one_move_strs = vec![
+            ("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1", " moves d7d5"),
+            // castling, king moves
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1g1"),
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1c1"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves e8g8"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves e8c8"),
+            // castling, rook moves
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves a1b1"),
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves h1g1"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves a8b8"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves h8g8"),
+            
+        ];
+
+        let two_move_strs = vec![
+            // en passant
+            ("8/3p4/8/4P3/8/8/8/8 b - - 0 1", " moves d7d5 e5d6"),
+        ];
+
+        for (one_mover_fen, one_mover_moves) in one_move_strs {
+            if let Ok(mut board) = Board::from_fen(
+                String::from(one_mover_fen) + &String::from(one_mover_moves)
+            ) {
+                board.unmake_move();
+                assert_eq!(one_mover_fen, board.to_fen());
+            } else {
+                assert!(false);
+            }
+            
         }
 
-        // castling, king moves
-        if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::E1, square::G1, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::E1, square::C1, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::E8, square::G8, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::E8, square::C8, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        // castling, rook moves
-        if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::A1, square::B1, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("8/8/8/8/8/8/8/R3K2R w KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::H1, square::G1, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::A8, square::B8, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::H8, square::G8, None).unwrap();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
-        }
-
-        if let Ok(mut board) = Board::from_fen(String::from("8/3p4/8/4P/8/8/8/8 b - - 0 1")) {
-            let before_unmake = board.to_fen();
-            board.input_move(square::D7, square::D5, None).unwrap();
-            board.input_move(square::E5, square::D6, None).unwrap();
-            board.unmake_move();
-            board.unmake_move();
-            let after_unmake = board.to_fen();
-            assert_eq!(before_unmake, after_unmake);
-        } else {
-            assert!(false);
+        for (two_mover_fen, two_mover_moves) in two_move_strs {
+            if let Ok(mut board) = Board::from_fen(
+                String::from(two_mover_fen) + &String::from(two_mover_moves)
+            ) {
+                board.unmake_move();
+                board.unmake_move();
+                assert_eq!(two_mover_fen, board.to_fen());
+            } else {
+                assert!(false);
+            }
+            
         }
     }
 
@@ -741,17 +624,14 @@ mod tests {
             let fen = String::from(
                 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
             );
-            let board_orig = Board::from_fen(fen.clone()).unwrap();
             let mut board = Board::from_fen(fen.clone()).unwrap();
             let _ctx = MoveGenerator::perft(&mut board, 4);
             assert_eq!(fen, board.to_fen());
-            //assert!(board_orig.equals(&board));
         }
         {
             let board_orig = Board::startpos();
             let mut board = board_orig.clone();
             let _ctx = MoveGenerator::perft(&mut board, 4);
-            //assert!(board_orig.equals(&board));
         }
     }
 }

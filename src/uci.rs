@@ -211,51 +211,71 @@ mod tests {
     #[test]
     fn it_handles_moves() {
         let mut c = UCIInterface::new();
-        c.parse(String::from("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves d2d4 d7d5 e2e4 e7e5"));
-        assert_eq!(
-            "rnbqkbnr/ppp2ppp/8/3pp3/3PP3/8/PPP2PPP/RNBQKBNR w KQkq e6 0 3 moves d2d4 d7d5 e2e4 e7e5",
-            c.board.to_fen()
-        );
+        let one_move_strs = vec![
+            ("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1", " moves d7d5"),
+            // castling, king moves
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1g1"),
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves e1c1"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves e8g8"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves e8c8"),
+            // castling, rook moves
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves a1b1"),
+            ("4k3/8/8/8/8/8/8/R3K2R w KQkq - 0 1", " moves h1g1"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves a8b8"),
+            ("r3k2r/8/8/8/8/8/8/4K3 b KQkq - 0 1", " moves h8g8"),
+            
+        ];
 
-        // castling, king moves
-        c.parse(String::from(
-            "position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves e1g1",
-        ));
-        assert_eq!("8/8/8/8/8/8/8/R4RK1 b kq - 1 1 moves e1g1", c.board.to_fen());
-        c.parse(String::from(
-            "position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves e1c1",
-        ));
-        assert_eq!("8/8/8/8/8/8/8/2KR3R b kq - 1 1 moves e1c1", c.board.to_fen());
-        c.parse(String::from(
-            "position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves e8g8",
-        ));
-        assert_eq!("r4rk1/8/8/8/8/8/8/8 w KQ - 1 2 moves e8g8", c.board.to_fen());
-        c.parse(String::from(
-            "position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves e8c8",
-        ));
-        assert_eq!("2kr3r/8/8/8/8/8/8/8 w KQ - 1 2 moves e8c8", c.board.to_fen());
+        let two_move_strs = vec![
+            // en passant
+            ("8/3p4/8/4P3/8/8/8/8 b - - 0 1", " moves d7d5 e5d6"),
+        ];
 
-        // castling, rook moves
-        c.parse(String::from(
-            "position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves a1b1",
-        ));
-        assert_eq!("8/8/8/8/8/8/8/1R2K2R b Kkq - 1 1 moves a1b1", c.board.to_fen());
-        c.parse(String::from(
-            "position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves h1g1",
-        ));
-        assert_eq!("8/8/8/8/8/8/8/R3K1R1 b Qkq - 1 1 moves h1g1", c.board.to_fen());
-        c.parse(String::from(
-            "position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves a8b8",
-        ));
-        assert_eq!("1r2k2r/8/8/8/8/8/8/8 w KQk - 1 2 moves a8b8", c.board.to_fen());
-        c.parse(String::from(
-            "position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves h8g8",
-        ));
-        assert_eq!("r3k1r1/8/8/8/8/8/8/8 w KQq - 1 2 moves h8g8", c.board.to_fen());
+        for (one_mover_fen, one_mover_moves) in one_move_strs {
+            if let Ok(mut board) = Board::from_fen(
+                String::from(one_mover_fen) + &String::from(one_mover_moves)
+            ) {
+                board.unmake_move();
+                assert_eq!(one_mover_fen, board.to_fen());
+            } else {
+                assert!(false);
+            }
+            
+        }
 
-        c.parse(String::from(
-            "position fen 8/8/8/8/8/8/4P3/8 w KQkq - 0 1 moves e2e4",
-        ));
-        assert_eq!("8/8/8/8/4P3/8/8/8 b KQkq e3 0 1 moves e2e4", c.board.to_fen());
+        for (two_mover_fen, two_mover_moves) in two_move_strs {
+            if let Ok(mut board) = Board::from_fen(
+                String::from(two_mover_fen) + &String::from(two_mover_moves)
+            ) {
+                board.unmake_move();
+                board.unmake_move();
+                assert_eq!(two_mover_fen, board.to_fen());
+            } else {
+                assert!(false);
+            }
+            
+        }
+        let uci_strs = vec![
+            ("position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves d2d4 d7d5 e2e4 e7e5", "rnbqkbnr/ppp2ppp/8/3pp3/3PP3/8/PPP2PPP/RNBQKBNR w KQkq e6 0 3"),
+            // castling, king moves
+            ("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves e1g1", "8/8/8/8/8/8/8/R4RK1 b kq - 1 1"),
+            ("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves e1c1", "8/8/8/8/8/8/8/2KR3R b kq - 1 1"),
+            ("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves e8g8", "r4rk1/8/8/8/8/8/8/8 w KQ - 1 2"),
+            ("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves e8c8", "2kr3r/8/8/8/8/8/8/8 w KQ - 1 2"),
+            // castling, rook moves
+            ("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves a1b1", "8/8/8/8/8/8/8/1R2K2R b Kkq - 1 1"),
+            ("position fen 8/8/8/8/8/8/8/R3K2R w KQkq - 0 1 moves h1g1", "8/8/8/8/8/8/8/R3K1R1 b Qkq - 1 1"),
+            ("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves a8b8", "1r2k2r/8/8/8/8/8/8/8 w KQk - 1 2"),
+            ("position fen r3k2r/8/8/8/8/8/8/8 b KQkq - 0 1 moves h8g8", "r3k1r1/8/8/8/8/8/8/8 w KQq - 1 2"),
+            // pawn move
+            ("position fen 8/8/8/8/8/8/4P3/8 w KQkq - 0 1 moves e2e4", "8/8/8/8/4P3/8/8/8 b KQkq e3 0 1"),
+        ];
+
+        for (uci_in, fen_out) in uci_strs {
+            c.parse(String::from(uci_in));
+            assert_eq!(fen_out, c.board.to_fen())
+        }
+
+        
     }
 }

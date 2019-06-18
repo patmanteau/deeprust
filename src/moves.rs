@@ -42,19 +42,22 @@ pub struct Move(Movesize);
 // /
 // 10..15:  Origin square
 
-pub const MOV_QUIET: Movesize = 0b0000;
-pub const MOV_DPP: Movesize = 0b0001;
+pub mod flags {
+    use super::*;
+    pub const MOV_QUIET: Movesize = 0b0000;
+    pub const MOV_DPP: Movesize = 0b0001;
 
-pub const MOV_K_CASTLE: Movesize = 0b0010;
-pub const MOV_Q_CASTLE: Movesize = 0b0011;
+    pub const MOV_K_CASTLE: Movesize = 0b0010;
+    pub const MOV_Q_CASTLE: Movesize = 0b0011;
 
-pub const MOV_CAPTURE: Movesize = 0b0100;
-pub const MOV_CAPTURE_EP: Movesize = 0b0101;
+    pub const MOV_CAPTURE: Movesize = 0b0100;
+    pub const MOV_CAPTURE_EP: Movesize = 0b0101;
 
-pub const MOV_PROM_QUEEN: Movesize = 0b1011;
-pub const MOV_PROM_ROOK: Movesize = 0b1010;
-pub const MOV_PROM_BISHOP: Movesize = 0b1001;
-pub const MOV_PROM_KNIGHT: Movesize = 0b1000;
+    pub const MOV_PROM_QUEEN: Movesize = 0b1011;
+    pub const MOV_PROM_ROOK: Movesize = 0b1010;
+    pub const MOV_PROM_BISHOP: Movesize = 0b1001;
+    pub const MOV_PROM_KNIGHT: Movesize = 0b1000;
+}
 
 impl Move {
     /// Constructs a new Move
@@ -121,7 +124,7 @@ impl Move {
     }
 
     pub fn is_quiet(self) -> bool {
-        MOV_QUIET == self.0.extract_bits(6, 4)
+        flags::MOV_QUIET == self.0.extract_bits(6, 4)
     }
 
     pub fn is_capture(self) -> bool {
@@ -129,11 +132,11 @@ impl Move {
     }
 
     pub fn is_capture_en_passant(self) -> bool {
-        MOV_CAPTURE_EP == self.0.extract_bits(6, 4)
+        flags::MOV_CAPTURE_EP == self.0.extract_bits(6, 4)
     }
 
     pub fn is_double_pawn_push(self) -> bool {
-        MOV_DPP == self.0.extract_bits(6, 4)
+        flags::MOV_DPP == self.0.extract_bits(6, 4)
     }
 
     pub fn is_promotion(self) -> bool {
@@ -141,11 +144,11 @@ impl Move {
     }
 
     pub fn is_king_castle(self) -> bool {
-        MOV_K_CASTLE == self.0.extract_bits(6, 4)
+        flags::MOV_K_CASTLE == self.0.extract_bits(6, 4)
     }
 
     pub fn is_queen_castle(self) -> bool {
-        MOV_Q_CASTLE == self.0.extract_bits(6, 4)
+        flags::MOV_Q_CASTLE == self.0.extract_bits(6, 4)
     }
 }
 
