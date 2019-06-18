@@ -1,13 +1,13 @@
 use std::fmt;
 
-use common::*;
-use bitboard::*;
+use crate::common::*;
+use crate::bitboard::*;
 
-use square::{self, Square, SquarePrimitives};
-use piece::{self, Piece, PiecePrimitives};
-use color::{self, Color};
-use moves::{Move, UnmakeInfo};
-use move_stack::{MoveStack, MoveStackEntry};
+use crate::square::{self, Square, SquarePrimitives};
+use crate::piece::{self, Piece, PiecePrimitives};
+use crate::color::{self, Color};
+use crate::moves::{Move, UnmakeInfo};
+use crate::move_stack::{MoveStack, MoveStackEntry};
 
 use std::str::FromStr;
 
@@ -73,7 +73,7 @@ impl fmt::Display for Board {
 
 impl Board {
     pub fn new() -> Board {
-        let mut board = Board { 
+        let board = Board { 
             bb: [[0; 8]; 2],
             occupied: [0; 64],
             to_move: color::WHITE,
@@ -672,8 +672,8 @@ impl Board {
 
     pub fn input_move(&mut self, orig: Square, dest: Square, promote_to: Option<Piece>) -> Result<bool, &'static str> {
         let (mut is_capture, mut is_promotion, mut is_special_0, mut is_special_1) = (false, false, false, false);
-        let (piece, color) = self.get_piece_and_color(orig);
-        let (dest_piece, dest_color) = self.get_piece_and_color(dest);
+        let (piece, _color) = self.get_piece_and_color(orig);
+        let (dest_piece, _dest_color) = self.get_piece_and_color(dest);
         if 0 == piece {
             return Err("No piece at given square")
         };
@@ -740,8 +740,8 @@ mod tests {
     use std::fs::File;
     use std::io::{BufReader, BufRead};
     use std::path::Path;
-    use move_generator::{MoveGenerator, PerftContext};
-    use bitboard as bb;
+    use crate::move_generator::{MoveGenerator};
+    use crate::bitboard as bb;
 
     #[test]
     fn it_has_correct_piece_enum_values() {
@@ -866,7 +866,7 @@ mod tests {
         }
 
         let pospath = Path::new("tests/hyatt-4000-openings.epd");
-        let mut posfile = match File::open(&pospath) {
+        let posfile = match File::open(&pospath) {
             Err(why) => panic!("Could not open {}: {}", pospath.display(), why.description()),
             Ok(file) => file,
         };
@@ -884,26 +884,26 @@ mod tests {
     fn it_rejects_invalid_fen_strings() {
         let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"));
         match b {
-            Err(e) => assert!(true),
-            Ok(board) => assert!(false),
+            Err(_e) => assert!(true),
+            Ok(_board) => assert!(false),
         }
 
         let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq abcdefg 0 1"));
         match b {
-            Err(e) => assert!(true),
-            Ok(board) => assert!(false),
+            Err(_e) => assert!(true),
+            Ok(_board) => assert!(false),
         }
 
         let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR y KQkq e3 0 1"));
         match b {
-            Err(e) => assert!(true),
-            Ok(board) => assert!(false),
+            Err(_e) => assert!(true),
+            Ok(_board) => assert!(false),
         }
 
         let b = Board::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HFhf e3 0 1"));
         match b {
-            Err(e) => assert!(true),
-            Ok(board) => assert!(false),
+            Err(_e) => assert!(true),
+            Ok(_board) => assert!(false),
         }
     }
 
@@ -1051,14 +1051,14 @@ mod tests {
             let fen = String::from("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
             let board_orig = Board::from_fen(fen.clone()).unwrap();
             let mut board = Board::from_fen(fen.clone()).unwrap();
-            let ctx = MoveGenerator::perft(&mut board, 4);
+            let _ctx = MoveGenerator::perft(&mut board, 4);
             assert_eq!(fen, board.to_fen());
             assert!(board_orig.equals(&board));
         }
         {
-            let mut board_orig = Board::startpos();
+            let board_orig = Board::startpos();
             let mut board = board_orig.clone();
-            let ctx = MoveGenerator::perft(&mut board, 4);
+            let _ctx = MoveGenerator::perft(&mut board, 4);
             assert!(board_orig.equals(&board));
         }
     }

@@ -1,5 +1,5 @@
 use std::arch::x86_64::*;
-use square::{Square, SquarePrimitives};
+
 
 pub trait BitTwiddling<T> {
     fn bit_at(pos: u32) -> Self;
@@ -59,7 +59,7 @@ twiddle_impl!(u64);
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    
     use test::Bencher;
 
     #[bench]
@@ -68,7 +68,7 @@ mod tests {
     }
 
     #[bench]
-    fn bench_u64_test_bit(b: &mut Bencher) {
+    fn bench_u64_test_bit(_b: &mut Bencher) {
 
         // let _8 = 0xffu8;
         // let mut res = false;

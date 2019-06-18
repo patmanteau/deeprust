@@ -3,7 +3,7 @@ extern crate indoc;
 use std::io;
 use std::io::Write;
 
-use uci;
+use crate::uci;
 
 fn print_version() {
     println!("deeprust v{}", env!("CARGO_PKG_VERSION"));

@@ -1,12 +1,12 @@
 use std::io;
 use std::io::Write;
 
-use board::*;
-use bitboard::{self, Bitboard, BitboardPrimitives};
-use piece;
-use color;
-use move_generator::{MoveGenerator, PerftContext};
-use square::{self, Square, SquarePrimitives};
+use crate::board::*;
+
+
+use crate::color;
+use crate::move_generator::{MoveGenerator};
+use crate::square::{Square, SquarePrimitives};
 
 pub struct UCIInterface {
     pub board: Board,
@@ -38,7 +38,7 @@ impl UCIInterface {
                             return;
                         }
                     }
-                    for i in 0..6 { tokens.next(); }
+                    for _i in 0..6 { tokens.next(); }
                 }
                 &_ => ()
             }

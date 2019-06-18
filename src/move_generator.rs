@@ -1,11 +1,11 @@
 use std::fmt;
-use board::Board;
-use common::*;
-use bitboard::{self, Bitboard, BitboardPrimitives};
-use moves::Move;
-use piece;
-use color::{self, Color};
-use square::{self, Square, SquarePrimitives};
+use crate::board::Board;
+use crate::common::*;
+use crate::bitboard::{self, BitboardPrimitives};
+use crate::moves::Move;
+
+use crate::color::{self, Color};
+use crate::square::{self, Square};
 
 use quanta::Clock;
 
@@ -100,10 +100,10 @@ impl MoveGenerator {
     }
 
     fn break_helper() {
-        let a = 0;
+        let _a = 0;
     }
 
-    pub fn is_mate(board: &mut Board, color: Color) -> bool {
+    pub fn is_mate(board: &mut Board, _color: Color) -> bool {
         let moves = MoveGenerator::from_board(board);
         for mov in moves.iter() {
             board.make_move(*mov);
@@ -651,11 +651,11 @@ impl MoveGenerator {
 
 #[cfg(test)]
 mod tests {
-    use uci::UCIInterface;
-    use move_generator::MoveGenerator;
-    use board::Board;
-    use color;
-    use square;
+    use crate::uci::UCIInterface;
+    use crate::move_generator::MoveGenerator;
+    use crate::board::Board;
+    use crate::color;
+    use crate::square;
 
     #[test]
     fn it_generates_pawn_moves() {
@@ -673,7 +673,7 @@ mod tests {
 
     #[test]
     fn it_generates_pawn_captures() {
-        let mut gen = MoveGenerator::new();
+        let _gen = MoveGenerator::new();
         let mut board = Board::from_fen(String::from("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1")).unwrap();
         assert_eq!(0, MoveGenerator::gen_white_pawn_captures(&board).len());
 

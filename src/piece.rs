@@ -1,5 +1,5 @@
-use common::*;
-use color;
+use crate::common::*;
+use crate::color;
 
 pub type Piece = u8;
 

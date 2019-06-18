@@ -1,8 +1,8 @@
-use common::*;
+use crate::common::*;
 use std::fmt;
-use square::{Square, SquarePrimitives};
-use piece::Piece;
-use color::Color;
+use crate::square::{Square, SquarePrimitives};
+use crate::piece::Piece;
+use crate::color::Color;
 
 /// Stores information required for unmaking moves - captured piece,
 /// castling rights, en passant square and half move clock.
@@ -305,8 +305,8 @@ mod tests {
 
     #[test]
     fn it_encodes_moves() {
-        for color in 0..2 { // WHITE..BLACK
-            for piece in 2..8 { // PAWN..KING
+        for _color in 0..2 { // WHITE..BLACK
+            for _piece in 2..8 { // PAWN..KING
                 for from in 0..64 {
                     for to in 0..64 {
                         for i in 0..15 {

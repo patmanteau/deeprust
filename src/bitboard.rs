@@ -1,5 +1,5 @@
-use common::*;
-use square::{Square, SquarePrimitives};
+use crate::common::*;
+use crate::square::{Square};
 
 pub type Bitboard = u64;
 
@@ -285,7 +285,7 @@ lazy_static! {
     };
 
     pub static ref BB_A_FILE_ATTACKS: [[Bitboard; 64]; 8] = {
-        let diag_a1h8: Bitboard = 0x8040201008040201;
+        let _diag_a1h8: Bitboard = 0x8040201008040201;
         let mut arr: [[Bitboard; 64]; 8] = [[0; 64]; 8];
         for sq in 0..8 {
             for occ in 0..64 {

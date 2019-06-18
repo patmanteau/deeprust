@@ -1,12 +1,12 @@
  #![feature(test)]
  #![feature(simd_x86_bittest)]
 
-extern crate indoc;
+//extern crate indoc;
 extern crate clap;
-extern crate unicode_segmentation;
+//extern crate unicode_segmentation;
 //extern crate bitwise;
 extern crate log;
-extern crate simple_logging;
+//extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
 extern crate quanta;
