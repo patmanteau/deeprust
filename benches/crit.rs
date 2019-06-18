@@ -6,7 +6,7 @@ extern crate criterion;
 use criterion::Criterion;
 use criterion::black_box;
 
-use ::deeprust::common::*;
+// use ::deeprust::common::*;
 
 fn fibonacci(n: u64) -> u64 {
     match n {
