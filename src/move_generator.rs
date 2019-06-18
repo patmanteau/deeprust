@@ -125,10 +125,8 @@ impl MoveGenerator {
     pub fn is_attacked(board: &Board, color: Color, target: Square) -> bool {
         let occupied = board.bb_own(color) | board.bb_opponent(color);
 
-        if 63 < target {
-            MoveGenerator::break_helper();
-        }
-
+        assert!(target < 64);
+        
         // by black pawns
         if color == color::WHITE {
             if 0 < 
@@ -156,29 +154,40 @@ impl MoveGenerator {
             return true
         }
 
-        // by bishops
-        if 0 < ((bitboard::diagonal_attacks(target, occupied) | bitboard::anti_diagonal_attacks(target, occupied)) 
-                & board.bb_bishops(1 ^ color)) {
+        let all_diag_attacks = bitboard::diagonal_attacks(target, occupied) | bitboard::anti_diagonal_attacks(target, occupied);
+        let rank_file_attacks =  bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied);
+
+        // by bishops or queens
+        if 0 < all_diag_attacks & (board.bb_bishops(1 ^ color) | board.bb_queens(1 ^ color)) {
             return true
         }
 
-        // by rooks
-        if 0 < ((
-                bitboard::rank_attacks(target, occupied) | 
-                bitboard::file_attacks(target, occupied)
-        ) & board.bb_rooks(1 ^ color)) {
+        // if 0 < ((bitboard::diagonal_attacks(target, occupied) | bitboard::anti_diagonal_attacks(target, occupied)) 
+        //         & board.bb_bishops(1 ^ color)) {
+        //     return true
+        // }
+
+        // by rooks or queens
+        if 0 < rank_file_attacks & (board.bb_rooks(1 ^ color) | board.bb_queens(1 ^ color)) {
             return true
         }
+        
+        // if 0 < ((
+        //         bitboard::rank_attacks(target, occupied) | 
+        //         bitboard::file_attacks(target, occupied)
+        // ) & board.bb_rooks(1 ^ color)) {
+        //     return true
+        // }
 
         // by queens
-        if 0 < ((
-                bitboard::diagonal_attacks(target, occupied) | 
-                bitboard::anti_diagonal_attacks(target, occupied) |
-                bitboard::rank_attacks(target, occupied) | 
-                bitboard::file_attacks(target, occupied)
-        ) & board.bb_queens(1 ^ color)) {
-            return true
-        }
+        // if 0 < ((
+        //         bitboard::diagonal_attacks(target, occupied) | 
+        //         bitboard::anti_diagonal_attacks(target, occupied) |
+        //         bitboard::rank_attacks(target, occupied) | 
+        //         bitboard::file_attacks(target, occupied)
+        // ) & board.bb_queens(1 ^ color)) {
+        //     return true
+        // }
 
         false
     }

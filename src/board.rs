@@ -551,18 +551,18 @@ impl Board {
 
         // clear castling rights on rook move
         if piece::ROOK == orig_piece {
-            if 0 < Bitboard::bit_at(orig_square as u32) & BB_CORNERS & BB_FILE_A {
+            if 0 < BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_A {
                 self.castling[self.to_move as usize].clear_bit(1);
-            } else if 0 < Bitboard::bit_at(orig_square as u32) & BB_CORNERS & BB_FILE_H {
+            } else if 0 < BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_H {
                 self.castling[self.to_move as usize].clear_bit(0);
             }
         }
 
         // clear castling rights on rook capture at home square
         if dest_piece == piece::ROOK {
-            if 0 < Bitboard::bit_at(dest_square as u32) & BB_CORNERS & BB_FILE_A {
+            if 0 < BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_A {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
-            } else if 0 < Bitboard::bit_at(dest_square as u32) & BB_CORNERS & BB_FILE_H {
+            } else if 0 < BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_H {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
             }
         }

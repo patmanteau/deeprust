@@ -19,7 +19,10 @@ macro_rules!  twiddle_impl {
             }
 
             fn test_bit(&self, pos: u32) -> bool {
-                self & Self::bit_at(pos) > 0
+                //self & Self::bit_at(pos) > 0
+                unsafe {
+                    return 0 < _bittest64(&(*self as i64), pos as i64)
+                }
             }
 
             fn set_bit(&mut self, pos: u32) {
@@ -53,3 +56,30 @@ twiddle_impl!(u8);
 twiddle_impl!(u16);
 twiddle_impl!(u32);
 twiddle_impl!(u64);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+
+    #[bench]
+    fn empty(b: &mut Bencher) {
+        b.iter(|| 1)
+    }
+
+    #[bench]
+    fn bench_u64_test_bit(b: &mut Bencher) {
+
+        // let _8 = 0xffu8;
+        // let mut res = false;
+        // b.iter(|| {
+        //     let n = test::black_box(1000000);
+        //     (0..n).map(|i| {
+        //         let m = test::black_box(1000000000);
+        //         for j in 0..m {
+        //             res = _8.test_bit(8);
+        //         }
+        //     })
+        // });
+    }
+}

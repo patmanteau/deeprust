@@ -29,7 +29,8 @@ impl BitboardPrimitives<u64> for Bitboard {
     }
 
     fn set(&mut self, pos: Square) {
-        self.set_bit(pos as u32)
+        *self |= BB_SQUARES[pos as usize]
+        //self.set_bit(pos as u32)
     }
 
     fn clear(&mut self, pos: Square) {
@@ -190,6 +191,14 @@ lazy_static! {
         arr
     };
 
+    pub static ref BB_DIAG_MASK_EX: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 0..64 {
+            arr[i] = BB_DIAG[i] ^ BB_SQUARES[i];
+        }
+        arr
+    };
+
     pub static ref BB_ANTI_DIAG: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0i64..64i64 {
@@ -199,6 +208,14 @@ lazy_static! {
             let south = diag & (-diag >> 31);
 
             arr[i as usize] = (main_diag >> south) << north;
+        }
+        arr
+    };
+
+    pub static ref BB_ANTI_DIAG_MASK_EX: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 0..64 {
+            arr[i] = BB_ANTI_DIAG[i] ^ BB_SQUARES[i];
         }
         arr
     };
@@ -297,18 +314,21 @@ lazy_static! {
         }
         arr
     };
+
 }
 
-/// See https://chessprogramming.wikispaces.com/Kindergarten+Bitboards
+/// See https://www.chessprogramming.org/Kindergarten_Bitboards
 pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    let diag_mask_ex = BB_DIAG[square as usize] ^ BB_SQUARES[square as usize];
+    //let diag_mask_ex = BB_DIAG[square as usize] ^ BB_SQUARES[square as usize];
+    let diag_mask_ex = BB_DIAG_MASK_EX[square as usize];
     let north_fill = (diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
     occupied = north_fill.0 >> 58;
     diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
 }
 
 pub fn anti_diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    let anti_diag_mask_ex = BB_ANTI_DIAG[square as usize] ^ BB_SQUARES[square as usize];
+    //let anti_diag_mask_ex = BB_ANTI_DIAG[square as usize] ^ BB_SQUARES[square as usize];
+    let anti_diag_mask_ex = BB_ANTI_DIAG_MASK_EX[square as usize];
     let north_fill = (anti_diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
     occupied = north_fill.0 >> 58;
     anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
