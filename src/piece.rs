@@ -48,3 +48,18 @@ impl PiecePrimitives for Piece {
         self.extract_bits(3, 1)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn it_has_correct_piece_enum_values() {
+        assert_eq!(2, PAWN);
+        assert_eq!(3, KNIGHT);
+        assert_eq!(4, BISHOP);
+        assert_eq!(5, ROOK);
+        assert_eq!(6, QUEEN);
+        assert_eq!(7, KING);
+    }
+}

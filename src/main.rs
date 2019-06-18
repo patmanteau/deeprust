@@ -18,9 +18,10 @@ pub mod cli;
 pub mod color;
 pub mod common;
 pub mod move_generator;
-pub mod move_stack;
+//pub mod move_stack;
 pub mod moves;
 pub mod piece;
+pub mod position;
 pub mod square;
 pub mod uci;
 

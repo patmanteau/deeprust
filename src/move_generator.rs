@@ -69,8 +69,8 @@ impl MoveGenerator {
     fn do_perft(board: &mut Board, ctx: &mut PerftContext, depth: u32) {
         if depth == 0 {
             ctx.nodes += 1;
-            if !board.move_stack().is_empty() {
-                let mov = board.move_stack().peek().mov;
+            if board.has_moves() {
+                let mov = board.last_move().unwrap();
                 if mov.is_capture() {
                     ctx.captures += 1;
                 }
