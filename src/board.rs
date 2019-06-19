@@ -64,43 +64,7 @@ impl Board {
     }
 
     pub fn startpos() -> Board {
-        let mut board = Board::new();
-        let mut position = &mut board.pstack[board.pcursor];
-
-        // pawns
-        for x in 0..8 {
-            position.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, 1));
-            position.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, 6));
-        }
-
-        // knights
-        position.set_piece(piece::KNIGHT, color::WHITE, square::B1);
-        position.set_piece(piece::KNIGHT, color::WHITE, square::G1);
-        position.set_piece(piece::KNIGHT, color::BLACK, square::B8);
-        position.set_piece(piece::KNIGHT, color::BLACK, square::G8);
-
-        // bishops
-        position.set_piece(piece::BISHOP, color::WHITE, square::C1);
-        position.set_piece(piece::BISHOP, color::WHITE, square::F1);
-        position.set_piece(piece::BISHOP, color::BLACK, square::C8);
-        position.set_piece(piece::BISHOP, color::BLACK, square::F8);
-
-        // rooks
-        position.set_piece(piece::ROOK, color::WHITE, square::A1);
-        position.set_piece(piece::ROOK, color::WHITE, square::H1);
-        position.set_piece(piece::ROOK, color::BLACK, square::A8);
-        position.set_piece(piece::ROOK, color::BLACK, square::H8);
-
-        // queens
-        position.set_piece(piece::QUEEN, color::WHITE, square::D1);
-        position.set_piece(piece::QUEEN, color::BLACK, square::D8);
-
-        // kings
-        position.set_piece(piece::KING, color::WHITE, square::E1);
-        position.set_piece(piece::KING, color::BLACK, square::E8);
-
-        position.castling = [3, 3];
-        board
+        Self::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")).unwrap()
     }
 
     pub fn from_fen(fen_string: String) -> Result<Board, &'static str> {
