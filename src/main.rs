@@ -1,3 +1,4 @@
+#![warn(clippy::all)]
 #![feature(test)]
 #![feature(simd_x86_bittest)]
 
@@ -10,6 +11,7 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 extern crate quanta;
+extern crate regex;
 extern crate test;
 
 pub mod bitboard;
@@ -17,6 +19,7 @@ pub mod board;
 pub mod cli;
 pub mod color;
 pub mod common;
+pub mod fen;
 pub mod move_generator;
 //pub mod move_stack;
 pub mod moves;

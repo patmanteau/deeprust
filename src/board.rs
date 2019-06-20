@@ -3,11 +3,14 @@ use std::fmt;
 use crate::bitboard::*;
 use crate::common::*;
 
+use crate::fen::BoardFen;
 use crate::color::{self, Color};
 use crate::moves::{Move, MoveStack};
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::position::{Position, PositionStack};
 use crate::square::{self, Square, SquarePrimitives};
+
+use regex::Regex;
 
 use std::str::FromStr;
 
@@ -64,159 +67,130 @@ impl Board {
     }
 
     pub fn startpos() -> Board {
-        Self::from_fen(String::from("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")).unwrap()
+        Self::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
     }
 
-    pub fn from_fen(fen_string: String) -> Result<Board, &'static str> {
-        let mut board = Self::new();
-        let mut position = Position::new();
-
-        // position
-        let mut x = 0;
-        let mut y = 7;
-        let mut fen_iter = fen_string.split_whitespace();
-        if let Some(piece_list) = fen_iter.next() {
-            for chr in piece_list.chars() {
-                if let Some(empty) = chr.to_digit(10) {
-                    x += empty
-                } else if chr == '/' {
-                    x = 0;
-                    y -= 1;
-                } else {
-                    match chr {
-                        'P' => {
-                            position.set_piece(piece::PAWN, color::WHITE, Square::from_coords(x, y))
-                        }
-                        'N' => position.set_piece(
-                            piece::KNIGHT,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'B' => position.set_piece(
-                            piece::BISHOP,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'R' => {
-                            position.set_piece(piece::ROOK, color::WHITE, Square::from_coords(x, y))
-                        }
-                        'Q' => position.set_piece(
-                            piece::QUEEN,
-                            color::WHITE,
-                            Square::from_coords(x, y),
-                        ),
-                        'K' => {
-                            position.set_piece(piece::KING, color::WHITE, Square::from_coords(x, y))
-                        }
-                        'p' => {
-                            position.set_piece(piece::PAWN, color::BLACK, Square::from_coords(x, y))
-                        }
-                        'n' => position.set_piece(
-                            piece::KNIGHT,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'b' => position.set_piece(
-                            piece::BISHOP,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'r' => {
-                            position.set_piece(piece::ROOK, color::BLACK, Square::from_coords(x, y))
-                        }
-                        'q' => position.set_piece(
-                            piece::QUEEN,
-                            color::BLACK,
-                            Square::from_coords(x, y),
-                        ),
-                        'k' => {
-                            position.set_piece(piece::KING, color::BLACK, Square::from_coords(x, y))
-                        }
-                        _ => return Err("Invalid FEN string"),
-                    }
-                    x += 1;
-                }
-            }
-        } else {
-            return Err("Invalid FEN string, no piece list found");
-        }
-
-        // to move
-        if let Some(to_move) = fen_iter.next() {
-            match to_move {
-                "w" => position.to_move = color::WHITE,
-                "b" => position.to_move = color::BLACK,
-                _ => return Err("Invalid ToMove char"),
-            }
-        } else {
-            return Err("Invalid FEN string, don't know who moves next");
-        }
-
-        // Castling rights
-        if let Some(castling) = fen_iter.next() {
-            for chr in castling.chars() {
-                match chr {
-                    '-' => position.castling = [0, 0],
-                    'K' => position.castling[color::WHITE as usize] |= 0x1,
-                    'Q' => position.castling[color::WHITE as usize] |= 0x2,
-                    'k' => position.castling[color::BLACK as usize] |= 0x1,
-                    'q' => position.castling[color::BLACK as usize] |= 0x2,
-                    _ => return Err("Invalid castling char"),
-                }
-            }
-        } else {
-            return Err("Invalid FEN string, no castling rights found");
-        }
-
-        // en passant
-        if let Some(en_passant) = fen_iter.next() {
-            if en_passant == "-" {
-                position.en_passant = None;
-            } else {
-                //match SAN::square_str_to_index(en_passant) {
-                match Square::from_san_string(en_passant) {
-                    Ok(eps) => position.en_passant = Some([eps, eps.flipped()]),
-                    Err(_) => return Err("Error parsing en passant field"),
-                }
-            }
-        } else {
-            return Err("Invalid FEN string, no en passant information");
-        }
-
-        // Halfmoves
-        if let Some(halfmoves) = fen_iter.next() {
-            match u32::from_str(halfmoves) {
-                Ok(val) => position.halfmoves = val,
-                Err(_) => return Err("Error parsing halfmoves"),
-            }
-        } else {
-            return Err("Invalid FEN string, no halfmoves given");
-        }
-
-        // Fullmoves
-        if let Some(fullmoves) = fen_iter.next() {
-            match u32::from_str(fullmoves) {
-                Ok(val) => position.fullmoves = val,
-                Err(_) => return Err("Error parsing fullmoves"),
-            }
-        } else {
-            return Err("Invalid FEN string, no fullmoves given");
-        }
-
-        board.pstack[0] = position;
-
-        if let Some(move_token) = fen_iter.next() {
-            if move_token == "moves" {
-                for mov in fen_iter {
-                    match board.input_san_move(mov) {
-                        Ok(_) => continue,
-                        Err(err) => return Err(err),
-                    }
-                }
-            }
-        }
-        Ok(board)
+    pub fn set_position(&mut self, position: &Position) {
+        self.pstack[self.pcursor] = *position;
     }
+
+    // pub fn from_fen(fen_string: String) -> Result<Board, &'static str> {
+    //     let mut board = Self::new();
+    //     let mut position = Position::new();
+    //     let mut fen_iter = fen_string.split_whitespace();
+        
+    //     // position
+    //     if let Some(piece_list) = fen_iter.next() {
+    //         let ranks: Vec<&str> = piece_list.split('/').collect();
+    //         if ranks.len() != 8 {
+    //             return Err("Not enough ranks in FEN position")
+    //         }
+
+    //         for (rank, rank_string) in ranks.iter().rev().enumerate() {
+    //             let mut file = 0;
+    //             for chr in rank_string.chars() {
+    //                 if chr.is_digit(10) {
+    //                     file += chr.to_digit(10).unwrap();
+    //                 } else {
+    //                     let (piece_code, color) = match chr {
+    //                         'P' => (piece::PAWN, color::WHITE),
+    //                         'N' => (piece::KNIGHT, color::WHITE),
+    //                         'B' => (piece::BISHOP, color::WHITE),
+    //                         'R' => (piece::ROOK, color::WHITE),
+    //                         'Q' => (piece::QUEEN, color::WHITE),
+    //                         'K' => (piece::KING, color::WHITE),
+    //                         'p' => (piece::PAWN, color::BLACK),
+    //                         'n' => (piece::KNIGHT, color::BLACK),
+    //                         'b' => (piece::BISHOP, color::BLACK),
+    //                         'r' => (piece::ROOK, color::BLACK),
+    //                         'q' => (piece::QUEEN, color::BLACK),
+    //                         'k' => (piece::KING, color::BLACK),
+    //                         _ => return Err("Invalid character in FEN position")
+    //                     };
+    //                     position.set_piece(piece_code, color, Square::from_coords(file, rank as u32));
+    //                 }
+    //             }
+    //         }
+    //     } else {
+    //         return Err(FenParseError::InvalidPosition);
+    //     }
+
+    //     // to move
+    //     if let Some(to_move) = fen_iter.next() {
+    //         match to_move {
+    //             "w" => position.to_move = color::WHITE,
+    //             "b" => position.to_move = color::BLACK,
+    //             _ => return Err("Invalid ToMove char"),
+    //         }
+    //     } else {
+    //         return Err("Invalid FEN string, don't know who moves next");
+    //     }
+
+    //     // Castling rights
+    //     if let Some(castling) = fen_iter.next() {
+    //         for chr in castling.chars() {
+    //             match chr {
+    //                 '-' => position.castling = [0, 0],
+    //                 'K' => position.castling[color::WHITE as usize] |= 0x1,
+    //                 'Q' => position.castling[color::WHITE as usize] |= 0x2,
+    //                 'k' => position.castling[color::BLACK as usize] |= 0x1,
+    //                 'q' => position.castling[color::BLACK as usize] |= 0x2,
+    //                 _ => return Err("Invalid castling char"),
+    //             }
+    //         }
+    //     } else {
+    //         return Err("Invalid FEN string, no castling rights found");
+    //     }
+
+    //     // en passant
+    //     if let Some(en_passant) = fen_iter.next() {
+    //         if en_passant == "-" {
+    //             position.en_passant = None;
+    //         } else {
+    //             //match SAN::square_str_to_index(en_passant) {
+    //             match Square::from_san_string(en_passant) {
+    //                 Ok(eps) => position.en_passant = Some([eps, eps.flipped()]),
+    //                 Err(_) => return Err("Error parsing en passant field"),
+    //             }
+    //         }
+    //     } else {
+    //         return Err("Invalid FEN string, no en passant information");
+    //     }
+
+    //     // Halfmoves
+    //     if let Some(halfmoves) = fen_iter.next() {
+    //         match u32::from_str(halfmoves) {
+    //             Ok(val) => position.halfmoves = val,
+    //             Err(_) => return Err("Error parsing halfmoves"),
+    //         }
+    //     } else {
+    //         return Err("Invalid FEN string, no halfmoves given");
+    //     }
+
+    //     // Fullmoves
+    //     if let Some(fullmoves) = fen_iter.next() {
+    //         match u32::from_str(fullmoves) {
+    //             Ok(val) => position.fullmoves = val,
+    //             Err(_) => return Err("Error parsing fullmoves"),
+    //         }
+    //     } else {
+    //         return Err("Invalid FEN string, no fullmoves given");
+    //     }
+
+    //     board.pstack[0] = position;
+
+    //     if let Some(move_token) = fen_iter.next() {
+    //         if move_token == "moves" {
+    //             for mov in fen_iter {
+    //                 match board.input_san_move(mov) {
+    //                     Ok(_) => continue,
+    //                     Err(err) => return Err(err),
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     Ok(board)
+    // }
 
     pub fn to_fen(&self) -> String {
         let mut fen_string = String::new();
@@ -476,7 +450,7 @@ mod tests {
         assert!(!board.has_moves());
 
         for fen_str in fen_strs {
-            if let Ok(board) = Board::from_fen(String::from(fen_str)) {
+            if let Ok(board) = Board::from_fen_str(fen_str) {
                 assert_eq!(fen_str, board.to_fen());
             } else {
                 panic!("Illegal FEN string");
@@ -497,7 +471,7 @@ mod tests {
         };
 
         for (line, position) in BufReader::new(posfile).lines().map(|l| l.unwrap()).enumerate() {
-            let b = Board::from_fen(position.clone());
+            let b = Board::from_fen_str(&position);
             match b {
                 Err(e) => panic!("Error reading {}:{}:{}", pospath.display(), line, e),
                 Ok(board) => assert_eq!(position, board.to_fen()),
@@ -515,7 +489,7 @@ mod tests {
         ];
 
         for fen_str in fen_strs {
-            let b = Board::from_fen(String::from(fen_str));
+            let b = Board::from_fen_str(fen_str);
             match b {
                 Err(_e) => assert!(true),
                 Ok(_board) => assert!(false),
@@ -525,9 +499,9 @@ mod tests {
 
     #[test]
     fn it_makes_moves() {
-        if let Ok(mut board) = Board::from_fen(String::from(
+        if let Ok(mut board) = Board::from_fen_str(
             "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
-        )) {
+        ) {
             assert_eq!(0, board.move_stack.len());
             board.input_move(square::D7, square::D6, None).unwrap();
             assert_eq!(1, board.move_stack.len());
@@ -537,7 +511,7 @@ mod tests {
             assert_eq!(last_move.dest(), square::D6);
         }
 
-        let mut board = Board::from_fen(String::from("8/3p4/8/4P/8/8/8/8 b - - 0 1")).unwrap();
+        let mut board = Board::from_fen_str("8/3p4/8/4P/8/8/8/8 b - - 0 1").unwrap();
         board.input_move(square::D7, square::D5, None).unwrap();
         board.input_move(square::E5, square::D6, None).unwrap();
         assert_eq!(0, board.occupied()[square::D5 as usize]);
@@ -569,7 +543,7 @@ mod tests {
 
         for (one_mover_fen, one_mover_moves) in one_move_strs {
             if let Ok(mut board) =
-                Board::from_fen(String::from(one_mover_fen) + &String::from(one_mover_moves))
+                Board::from_fen_str(&(String::from(one_mover_fen) + &String::from(one_mover_moves)))
             {
                 board.unmake_move();
                 assert_eq!(one_mover_fen, board.to_fen());
@@ -580,7 +554,7 @@ mod tests {
 
         for (two_mover_fen, two_mover_moves) in two_move_strs {
             if let Ok(mut board) =
-                Board::from_fen(String::from(two_mover_fen) + &String::from(two_mover_moves))
+                Board::from_fen_str(&(String::from(two_mover_fen) + &String::from(two_mover_moves)))
             {
                 board.unmake_move();
                 board.unmake_move();
@@ -597,7 +571,7 @@ mod tests {
             let fen = String::from(
                 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
             );
-            let mut board = Board::from_fen(fen.clone()).unwrap();
+            let mut board = Board::from_fen_str(&fen.clone()).unwrap();
             let _ctx = MoveGenerator::perft(&mut board, 4);
             assert_eq!(fen, board.to_fen());
         }

@@ -2,11 +2,9 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::String;
 
-const FILE: [&str; 8] = ["a", "b", "c", "d", "e", "f", "g", "h"];
-
 pub type Square = u16;
 
-pub trait SquarePrimitives {
+pub trait SquarePrimitives<T> {
     fn from_coords(x: u32, y: u32) -> Square;
     fn from_san_string(square: &str) -> Result<Square, &'static str>;
     fn to_san_string(self) -> String;
@@ -14,7 +12,7 @@ pub trait SquarePrimitives {
     fn flipped(self) -> Square;
 }
 
-impl SquarePrimitives for Square {
+impl SquarePrimitives<Square> for Square {
     fn from_coords(x: u32, y: u32) -> Square {
         ((y << 3) + x) as Square
     }
@@ -52,7 +50,7 @@ impl SquarePrimitives for Square {
 
     fn to_san_string(self) -> String {
         let mut san = String::new();
-        san.push_str(FILE[(self & 0x7) as usize]);
+        san.push_str(FILE_NAMES[(self & 0x7) as usize]);
         san.push_str(&(((self >> 3) + 1).to_string()));
         san
     }
@@ -93,18 +91,6 @@ pub const SQUARE_NAMES: [&str; 64] = [
 pub const FILE_NAMES: [&str; 8] = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 pub const RANK_NAMES: [&str; 8] = ["1", "2", "3", "4", "5", "6", "7", "8"];
-
-#[rustfmt::skip]
-pub const EP_CAPTURE_SQUARES: [Square; 64] = [
-        0,  0,  0,  0,  0,  0,  0,  0, 
-        0,  0,  0,  0,  0,  0,  0,  0, 
-        24, 25, 26, 27, 28, 29, 30, 31,
-        0,  0,  0,  0,  0,  0,  0,  0, 
-        0,  0,  0,  0,  0,  0,  0,  0, 
-        32, 33, 34, 35, 36, 37, 38, 39,
-        0,  0,  0,  0,  0,  0,  0,  0, 
-        0,  0,  0,  0,  0,  0,  0,  0, 
-];
 
 #[rustfmt::skip]
 pub fn ep_capture_square(ep_square: Square) -> Square {

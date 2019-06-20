@@ -854,6 +854,7 @@ impl MoveGenerator {
 #[cfg(test)]
 mod tests {
     use crate::board::Board;
+    use crate::fen::BoardFen;
     use crate::color;
     use crate::move_generator::MoveGenerator;
     use crate::square;
@@ -867,9 +868,9 @@ mod tests {
         board.input_move(square::E2, square::E4, None).unwrap();
         assert_eq!(16, MoveGenerator::gen_black_pawn_pushes(&board).len());
 
-        board = Board::from_fen(String::from("8/PPPPPPPP/8/8/8/8/8/8 w - - 0 1")).unwrap();
+        board = Board::from_fen_str("8/PPPPPPPP/8/8/8/8/8/8 w - - 0 1").unwrap();
         assert_eq!(32, MoveGenerator::gen_white_pawn_pushes(&board).len());
-        board = Board::from_fen(String::from("8/8/8/8/8/8/pppppppp/8 b - - 0 1")).unwrap();
+        board = Board::from_fen_str("8/8/8/8/8/8/pppppppp/8 b - - 0 1").unwrap();
         assert_eq!(32, MoveGenerator::gen_black_pawn_pushes(&board).len());
     }
 
@@ -877,16 +878,16 @@ mod tests {
     fn it_generates_pawn_captures() {
         let _gen = MoveGenerator::new();
         let mut board =
-            Board::from_fen(String::from("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1")).unwrap();
+            Board::from_fen_str("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1").unwrap();
         assert_eq!(0, MoveGenerator::gen_white_pawn_captures(&board).len());
 
         board =
-            Board::from_fen(String::from("1k6/8/8/p1p1p1p1/1P1P1P1P/8/8/K7 w - - 0 1")).unwrap();
+            Board::from_fen_str("1k6/8/8/p1p1p1p1/1P1P1P1P/8/8/K7 w - - 0 1").unwrap();
         assert_eq!(7, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(4, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
 
-        board = Board::from_fen(String::from("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1")).unwrap();
+        board = Board::from_fen_str("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1").unwrap();
         board.input_move(square::D7, square::D5, None).unwrap();
         assert_eq!(1, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(1, MoveGenerator::gen_white_pawn_pushes(&board).len());
@@ -924,28 +925,28 @@ mod tests {
         assert_eq!(20, MoveGenerator::from_board(&board).len());
 
         // Position 2(kiwipete) perft(1)
-        board = Board::from_fen(String::from(
+        board = Board::from_fen_str(
             "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
-        ))
+        )
         .unwrap();
         assert_eq!(48, MoveGenerator::from_board(&board).len());
 
         // // Position 3 perft(1)
-        // board = Board::from_fen(String::from("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1")).unwrap();
+        // board = Board::from_fen_str("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1").unwrap();
         // assert_eq!(14, MoveGenerator::from_board(&board).len());
 
         // // Position 4 perft(1)
-        // board = Board::from_fen(String::from("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1")).unwrap();
+        // board = Board::from_fen_str("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1").unwrap();
         // assert_eq!(6, MoveGenerator::from_board(&board).len());
 
         // // Position 5 perft(1)
-        // board = Board::from_fen(String::from("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8")).unwrap();
+        // board = Board::from_fen_str("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8").unwrap();
         // assert_eq!(44, MoveGenerator::from_board(&board).len());
 
         // Position 6 perft(1)
-        board = Board::from_fen(String::from(
+        board = Board::from_fen_str(
             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
-        ))
+        )
         .unwrap();
         MoveGenerator::from_board(&board);
         assert_eq!(46, MoveGenerator::from_board(&board).len());

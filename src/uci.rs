@@ -2,6 +2,7 @@ use std::io;
 use std::io::Write;
 
 use crate::board::*;
+use crate::fen::BoardFen;
 
 use crate::color;
 use crate::move_generator::MoveGenerator;
@@ -38,7 +39,7 @@ impl UCIInterface {
             match *postype {
                 "startpos" => self.board = Board::startpos(),
                 "fen" => {
-                    let s = Board::from_fen(cmd[1..7].join(" "));
+                    let s = Board::from_fen_str(&cmd[1..7].join(" "));
                     match s {
                         Ok(b) => self.board = b,
                         Err(e) => {
@@ -235,7 +236,7 @@ mod tests {
 
         for (one_mover_fen, one_mover_moves) in one_move_strs {
             if let Ok(mut board) =
-                Board::from_fen(String::from(one_mover_fen) + &String::from(one_mover_moves))
+                Board::from_fen_str(&(String::from(one_mover_fen) + &String::from(one_mover_moves)))
             {
                 board.unmake_move();
                 assert_eq!(one_mover_fen, board.to_fen());
@@ -246,7 +247,7 @@ mod tests {
 
         for (two_mover_fen, two_mover_moves) in two_move_strs {
             if let Ok(mut board) =
-                Board::from_fen(String::from(two_mover_fen) + &String::from(two_mover_moves))
+                Board::from_fen_str(&(String::from(two_mover_fen) + &String::from(two_mover_moves)))
             {
                 board.unmake_move();
                 board.unmake_move();
