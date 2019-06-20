@@ -443,27 +443,27 @@ mod tests {
 
         // color boards
         assert_eq!(0xffff, b.bb_own(WHITE));
-        assert_eq!(0xffff << 6 * 8, b.bb_opponent(WHITE));
+        assert_eq!(0xffff << (6 * 8), b.bb_opponent(WHITE));
 
         // pawn boards
         assert_eq!(0xff << 8, b.bb_pawns(WHITE));
-        assert_eq!(0xff << 6 * 8, b.bb_pawns(BLACK));
+        assert_eq!(0xff << (6 * 8), b.bb_pawns(BLACK));
 
         // rook boards
         assert_eq!(0x81, b.bb_rooks(WHITE));
-        assert_eq!(0x81 << 7 * 8, b.bb_rooks(BLACK));
+        assert_eq!(0x81 << (7 * 8), b.bb_rooks(BLACK));
 
         // bishop boards
         assert_eq!(0x24, b.bb_bishops(WHITE));
-        assert_eq!(0x24 << 7 * 8, b.bb_bishops(BLACK));
+        assert_eq!(0x24 << (7 * 8), b.bb_bishops(BLACK));
 
         // queen boards
         assert_eq!(0x8, b.bb_queens(WHITE));
-        assert_eq!(0x8 << 7 * 8, b.bb_queens(BLACK));
+        assert_eq!(0x8 << (7 * 8), b.bb_queens(BLACK));
 
         // king boards
         assert_eq!(0x10, b.bb_king(WHITE));
-        assert_eq!(0x10 << 7 * 8, b.bb_king(BLACK));
+        assert_eq!(0x10 << (7 * 8), b.bb_king(BLACK));
 
         assert!(!b.has_moves());
     }
@@ -479,7 +479,7 @@ mod tests {
             if let Ok(board) = Board::from_fen(String::from(fen_str)) {
                 assert_eq!(fen_str, board.to_fen());
             } else {
-                assert!(false);
+                panic!("Illegal FEN string");
             }
         }
     }
@@ -496,10 +496,10 @@ mod tests {
             Ok(file) => file,
         };
 
-        for position in BufReader::new(posfile).lines().map(|l| l.unwrap()) {
+        for (line, position) in BufReader::new(posfile).lines().map(|l| l.unwrap()).enumerate() {
             let b = Board::from_fen(position.clone());
             match b {
-                Err(e) => assert!(false, e),
+                Err(e) => panic!("Error reading {}:{}:{}", pospath.display(), line, e),
                 Ok(board) => assert_eq!(position, board.to_fen()),
             }
         }
