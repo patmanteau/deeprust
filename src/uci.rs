@@ -119,7 +119,7 @@ impl UCIInterface {
     }
 
     fn cmd_moves(&mut self) {
-        let moves = MoveGenerator::from_board(&self.board);
+        let moves = self.board.generate_moves();
         println!("count: {}", moves.len());
         for m in moves.iter() {
             println!("move: {:#?}", m);
