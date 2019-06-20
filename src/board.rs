@@ -3,8 +3,8 @@ use std::fmt;
 use crate::bitboard::*;
 use crate::common::*;
 
-use crate::fen::BoardFen;
 use crate::color::{self, Color};
+use crate::fen::BoardFen;
 use crate::moves::{Move, MoveStack};
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::position::{Position, PositionStack};
@@ -78,7 +78,7 @@ impl Board {
     //     let mut board = Self::new();
     //     let mut position = Position::new();
     //     let mut fen_iter = fen_string.split_whitespace();
-        
+
     //     // position
     //     if let Some(piece_list) = fen_iter.next() {
     //         let ranks: Vec<&str> = piece_list.split('/').collect();
@@ -470,7 +470,11 @@ mod tests {
             Ok(file) => file,
         };
 
-        for (line, position) in BufReader::new(posfile).lines().map(|l| l.unwrap()).enumerate() {
+        for (line, position) in BufReader::new(posfile)
+            .lines()
+            .map(|l| l.unwrap())
+            .enumerate()
+        {
             let b = Board::from_fen_str(&position);
             match b {
                 Err(e) => panic!("Error reading {}:{}:{}", pospath.display(), line, e),
@@ -499,9 +503,9 @@ mod tests {
 
     #[test]
     fn it_makes_moves() {
-        if let Ok(mut board) = Board::from_fen_str(
-            "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",
-        ) {
+        if let Ok(mut board) =
+            Board::from_fen_str("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")
+        {
             assert_eq!(0, board.move_stack.len());
             board.input_move(square::D7, square::D6, None).unwrap();
             assert_eq!(1, board.move_stack.len());

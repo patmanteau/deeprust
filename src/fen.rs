@@ -1,13 +1,13 @@
-use crate::common::BitTwiddling;
 use crate::board::Board;
-use crate::position::Position;
 use crate::color::*;
+use crate::common::BitTwiddling;
 use crate::piece::*;
+use crate::position::Position;
 use crate::square::{Square, SquarePrimitives};
 
 use regex::Regex;
-use std::fmt;
 use std::error::Error;
+use std::fmt;
 use std::str::FromStr;
 use std::string::String;
 
@@ -71,7 +71,7 @@ impl BoardFen for Board {
         if let Some(piece_list) = fen_iter.next() {
             let ranks: Vec<&str> = piece_list.split('/').collect();
             if ranks.len() != 8 {
-                return Err(FenParseError::InvalidPosition)
+                return Err(FenParseError::InvalidPosition);
             }
 
             for (rank, rank_string) in ranks.iter().rev().enumerate() {
@@ -93,9 +93,13 @@ impl BoardFen for Board {
                             'r' => (ROOK, BLACK),
                             'q' => (QUEEN, BLACK),
                             'k' => (KING, BLACK),
-                            _ => return Err(FenParseError::InvalidPosition)
+                            _ => return Err(FenParseError::InvalidPosition),
                         };
-                        position.set_piece(piece_code, color, Square::from_coords(file, rank as u32));
+                        position.set_piece(
+                            piece_code,
+                            color,
+                            Square::from_coords(file, rank as u32),
+                        );
                         file += 1;
                     }
                 }

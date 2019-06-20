@@ -58,7 +58,7 @@ pub trait MoveGenerator {
     fn is_mate(&mut self, _color: Color) -> bool;
     fn is_in_check(&self, color: Color) -> bool;
     fn is_attacked(&self, color: Color, target: Square) -> bool;
-    
+
     fn gen_white_pawn_pushes(&self) -> Vec<Move>;
     fn gen_black_pawn_pushes(&self) -> Vec<Move>;
     fn gen_white_pawn_captures(&self) -> Vec<Move>;
@@ -272,27 +272,10 @@ impl MoveGenerator for Board {
             if 0 < push {
                 let to = push.scan();
                 // promotion
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_QUEEN,
-                )); // queen
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_ROOK,
-                )); // rook
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_BISHOP,
-                )); // bishop
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_KNIGHT,
-                )); // knight
-
+                moves.push(Move::new(from, to, flags::MOV_PROM_QUEEN)); // queen
+                moves.push(Move::new(from, to, flags::MOV_PROM_ROOK)); // rook
+                moves.push(Move::new(from, to, flags::MOV_PROM_BISHOP)); // bishop
+                moves.push(Move::new(from, to, flags::MOV_PROM_KNIGHT)); // knight
             }
             prom_pawns.clear(from);
         }
@@ -306,20 +289,12 @@ impl MoveGenerator for Board {
 
             if 0 < single_push {
                 let to = single_push.scan();
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_QUIET,
-                ));
+                moves.push(Move::new(from, to, flags::MOV_QUIET));
             }
-            
+
             if 0 < double_push {
                 let to = double_push.scan();
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_DPP,
-                ));
+                moves.push(Move::new(from, to, flags::MOV_DPP));
             }
             norm_pawns.clear(from);
         }
@@ -393,27 +368,10 @@ impl MoveGenerator for Board {
             if 0 < push {
                 let to = push.scan();
                 // promotion
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_QUEEN,
-                )); // queen
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_ROOK,
-                )); // rook
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_BISHOP,
-                )); // bishop
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_PROM_KNIGHT,
-                )); // knight
-
+                moves.push(Move::new(from, to, flags::MOV_PROM_QUEEN)); // queen
+                moves.push(Move::new(from, to, flags::MOV_PROM_ROOK)); // rook
+                moves.push(Move::new(from, to, flags::MOV_PROM_BISHOP)); // bishop
+                moves.push(Move::new(from, to, flags::MOV_PROM_KNIGHT)); // knight
             }
             prom_pawns.clear(from);
         }
@@ -427,20 +385,12 @@ impl MoveGenerator for Board {
 
             if 0 < single_push {
                 let to = single_push.scan();
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_QUIET,
-                ));
+                moves.push(Move::new(from, to, flags::MOV_QUIET));
             }
-            
+
             if 0 < double_push {
                 let to = double_push.scan();
-                moves.push(Move::new(
-                    from,
-                    to,
-                    flags::MOV_DPP,
-                ));
+                moves.push(Move::new(from, to, flags::MOV_DPP));
             }
             norm_pawns.clear(from);
         }
@@ -876,8 +826,8 @@ impl MoveGenerator for Board {
 #[cfg(test)]
 mod tests {
     use crate::board::Board;
-    use crate::fen::BoardFen;
     use crate::color;
+    use crate::fen::BoardFen;
     use crate::move_generator::MoveGenerator;
     use crate::square;
     use crate::uci::UCIInterface;
@@ -899,12 +849,10 @@ mod tests {
     #[test]
     fn it_generates_pawn_captures() {
         //let _gen = MoveGenerator::new();
-        let mut board =
-            Board::from_fen_str("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1").unwrap();
+        let mut board = Board::from_fen_str("8/8/8/p1p1p1p1/P1P1P1P1/8/8/8 w - - 0 1").unwrap();
         assert_eq!(0, MoveGenerator::gen_white_pawn_captures(&board).len());
 
-        board =
-            Board::from_fen_str("1k6/8/8/p1p1p1p1/1P1P1P1P/8/8/K7 w - - 0 1").unwrap();
+        board = Board::from_fen_str("1k6/8/8/p1p1p1p1/1P1P1P1P/8/8/K7 w - - 0 1").unwrap();
         assert_eq!(7, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(4, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
