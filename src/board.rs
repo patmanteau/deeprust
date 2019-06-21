@@ -1,18 +1,17 @@
 use std::fmt;
 
 use crate::bitboard::*;
-use crate::common::*;
 
 use crate::color::{self, Color};
 use crate::fen::BoardFen;
 use crate::moves::{Move, MoveStack};
-use crate::piece::{self, Piece, PiecePrimitives};
+use crate::piece::Piece;
 use crate::position::{Position, PositionStack};
-use crate::square::{self, Square, SquarePrimitives};
+use crate::square::{Square, SquarePrimitives};
 
-use regex::Regex;
+//use regex::Regex;
 
-use std::str::FromStr;
+//use std::str::FromStr;
 
 pub const PSTACK_SIZE: usize = 64;
 
@@ -206,6 +205,7 @@ mod tests {
     use super::*;
 
     use crate::color::*;
+    use crate::square;
     use crate::move_generator::MoveGenerator;
     use std::error::Error;
     use std::fs::File;
@@ -296,8 +296,8 @@ mod tests {
         for fen_str in fen_strs {
             let b = Board::from_fen_str(fen_str);
             match b {
-                Err(_e) => assert!(true),
-                Ok(_board) => assert!(false),
+                Err(_e) => continue,
+                Ok(_board) => panic!(),
             }
         }
     }
@@ -353,7 +353,7 @@ mod tests {
                 board.unmake_move();
                 assert_eq!(one_mover_fen, board.to_fen_string());
             } else {
-                assert!(false);
+                panic!();
             }
         }
 
@@ -365,7 +365,7 @@ mod tests {
                 board.unmake_move();
                 assert_eq!(two_mover_fen, board.to_fen_string());
             } else {
-                assert!(false);
+                panic!();
             }
         }
     }

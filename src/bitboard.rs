@@ -1,5 +1,5 @@
 use crate::common::*;
-use crate::square::{Square, SquarePrimitives};
+use crate::square::Square;
 
 use std::iter::Iterator;
 

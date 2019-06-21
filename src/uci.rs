@@ -248,7 +248,7 @@ mod tests {
                 board.unmake_move();
                 assert_eq!(one_mover_fen, board.to_fen_string());
             } else {
-                assert!(false);
+                panic!();
             }
         }
 
@@ -260,7 +260,7 @@ mod tests {
                 board.unmake_move();
                 assert_eq!(two_mover_fen, board.to_fen_string());
             } else {
-                assert!(false);
+                panic!();
             }
         }
         let uci_strs = vec![

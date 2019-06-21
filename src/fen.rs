@@ -5,7 +5,7 @@ use crate::piece::*;
 use crate::position::Position;
 use crate::square::{Square, SquarePrimitives};
 
-use regex::Regex;
+//use regex::Regex;
 use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
@@ -15,7 +15,7 @@ use std::string::String;
 //     s: String,
 // }
 
-const VALID_FEN_RE: &str = r"/^\s*([rnbqkpRNBQKP1-8]+/){7}([rnbqkpRNBQKP1-8]+)\s[bw]\s(-|K?Q?k?q?)\s(-|[a-h][36])\s(0|[1-9][0-9]*)\s([1-9][0-9]*)/";
+//const VALID_FEN_RE: &str = r"/^\s*([rnbqkpRNBQKP1-8]+/){7}([rnbqkpRNBQKP1-8]+)\s[bw]\s(-|K?Q?k?q?)\s(-|[a-h][36])\s(0|[1-9][0-9]*)\s([1-9][0-9]*)/";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FenParseError {
@@ -47,7 +47,7 @@ pub trait BoardFen {
 
 impl BoardFen for Board {
     type Err = FenParseError;
-    fn validate_fen(s: &str) -> bool {
+    fn validate_fen(_s: &str) -> bool {
         // Regex::new(VALID_FEN_RE)
         //     .unwrap()
         //     .is_match(s)
@@ -177,7 +177,7 @@ impl BoardFen for Board {
                 for mov in fen_iter {
                     match board.input_san_move(mov) {
                         Ok(_) => continue,
-                        Err(err) => return Err(FenParseError::InvalidMove),
+                        Err(_) => return Err(FenParseError::InvalidMove),
                     }
                 }
             }
