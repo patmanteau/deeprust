@@ -1,5 +1,5 @@
 use crate::common::*;
-use crate::square::Square;
+use crate::square::{Square, SquarePrimitives};
 
 pub type Bitboard = u64;
 
@@ -89,7 +89,7 @@ macro_rules! mbb_ranks {
 
 macro_rules! mbb_files {
     ($($bb_id:ident,$file:expr),*) => {
-        pub const BB_FILES: [u64; 8] = [
+        pub const BB_FILES: [Bitboard; 8] = [
             $(0x0101_0101_0101_0101u64 << $file),*
         ];
 
@@ -279,6 +279,22 @@ lazy_static! {
         arr
     };
 
+    pub static ref BB_RANK_MASK_EX: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 0..64 {
+            arr[i] = BB_RANKS[(i >> 0x3) as usize] ^ BB_SQUARES[i as usize];
+        }
+        arr
+    };
+
+    pub static ref BB_FILE_MASK_EX: [Bitboard; 64] = {
+        let mut arr: [Bitboard; 64] = [0; 64];
+        for i in 0..64 {
+            arr[i] = BB_FILES[(i & 7) as usize] ^ BB_SQUARES[i as usize];
+        }
+        arr
+    };
+
     pub static ref BB_BISHOP_ATTACKS: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 0..64 {
@@ -374,30 +390,94 @@ lazy_static! {
 }
 
 /// See https://www.chessprogramming.org/Kindergarten_Bitboards
-pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    let diag_mask_ex = BB_DIAG_MASK_EX[square as usize];
-    let north_fill = (diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
-    occupied = north_fill.0 >> 58;
-    diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
-}
+// pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
+//     let diag_mask_ex = BB_DIAG_MASK_EX[square as usize];
+//     let north_fill = (diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+//     occupied = north_fill.0 >> 58;
+//     diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+// }
 
-pub fn anti_diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    let anti_diag_mask_ex = BB_ANTI_DIAG_MASK_EX[square as usize];
-    let north_fill = (anti_diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
-    occupied = north_fill.0 >> 58;
-    anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
-}
+// pub fn anti_diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
+//     let anti_diag_mask_ex = BB_ANTI_DIAG_MASK_EX[square as usize];
+//     let north_fill = (anti_diag_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+//     occupied = north_fill.0 >> 58;
+//     anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+// }
 
 pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
-    let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+    //let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
+    //let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
+    let north_fill = (BB_RANK_MASK_EX[square as usize] & occupied).overflowing_mul(BB_FILE_B);
     occupied = north_fill.0 >> 58;
-    rank_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+    // rank_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+    BB_RANK_MASK_EX[square as usize] & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
 }
 
-pub fn file_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
-    let diag_c7h2: Bitboard = 0x0004_0810_2040_8000;
-    occupied = BB_FILE_A & (occupied >> (square & 0x7));
-    occupied = (diag_c7h2.overflowing_mul(occupied).0) >> 58;
-    BB_A_FILE_ATTACKS[(square >> 0x3) as usize][occupied as usize] << (square & 0x7)
+// pub fn file_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
+//     let diag_c7h2: Bitboard = 0x0004_0810_2040_8000;
+//     occupied = BB_FILE_A & (occupied >> (square & 0x7));
+//     occupied = (diag_c7h2.overflowing_mul(occupied).0) >> 58;
+//     BB_A_FILE_ATTACKS[(square >> 0x3) as usize][occupied as usize] << (square & 0x7)
+// }
+
+// See https://www.chessprogramming.org/Hyperbola_Quintessence
+pub fn diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+    let mut forward = occupied & BB_DIAG_MASK_EX[square as usize];
+    let mut reverse = forward.swap_bytes();
+    forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
+    reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
+    forward ^= reverse.swap_bytes();
+    forward & BB_DIAG_MASK_EX[square as usize]
 }
+
+pub fn anti_diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+    let mut forward = occupied & BB_ANTI_DIAG_MASK_EX[square as usize];
+    let mut reverse = forward.swap_bytes();
+    forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
+    reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
+    forward ^= reverse.swap_bytes();
+    forward & BB_ANTI_DIAG_MASK_EX[square as usize]
+}
+
+pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+    let mut forward = occupied & BB_FILE_MASK_EX[square as usize];
+    let mut reverse = forward.swap_bytes();
+    forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
+    reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
+    forward ^= reverse.swap_bytes();
+    forward & BB_FILE_MASK_EX[square as usize]
+}
+
+// U64 diagonalAttacks(U64 occ, enumSquare sq) {
+//    U64 forward, reverse;
+//    forward = occ & smsk[sq].diagonalMaskEx;
+//    reverse  = _byteswap_uint64(forward);
+//    forward -= smsk[sq].bitMask;
+//    reverse -= _byteswap_uint64(smsk[sq].bitMask);
+//    forward ^= _byteswap_uint64(reverse);
+//    forward &= smsk[sq].diagonalMaskEx;
+//    return forward;
+// }
+
+// U64 antiDiagAttacks(U64 occ, enumSquare sq) {
+//    U64 forward, reverse;
+//    forward  = occ & smsk[sq].antidiagMaskEx;
+//    reverse  = _byteswap_uint64(forward);
+//    forward -= smsk[sq].bitMask;
+//    reverse -= _byteswap_uint64(smsk[sq].bitMask);
+//    forward ^= _byteswap_uint64(reverse);
+//    forward &= smsk[sq].antidiagMaskEx;
+//    return forward;
+// }
+
+// U64 fileAttacks(U64 occ, enumSquare sq) {
+//    U64 forward, reverse;
+//    forward  = occ & smsk[sq].fileMaskEx;
+//    reverse  = _byteswap_uint64(forward);
+//    forward -= smsk[sq].bitMask;
+//    reverse -= _byteswap_uint64(smsk[sq].bitMask);
+//    forward ^= _byteswap_uint64(reverse);
+//    forward &= smsk[sq].fileMaskEx;
+//    return forward;
+// }
+
