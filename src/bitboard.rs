@@ -1,7 +1,27 @@
 use crate::common::*;
 use crate::square::{Square, SquarePrimitives};
 
+use std::iter::Iterator;
+
 pub type Bitboard = u64;
+
+pub struct BitboardWrapped(Bitboard);
+
+impl Iterator for BitboardWrapped {
+    type Item = Square;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        if 0 < self.0 {
+            let p = self.0.scan();
+            self.0.clear(p);
+            Some(p)
+        } else {
+            None
+        }
+    }
+
+}
 
 pub trait BitboardPrimitives<T> {
     fn count(self) -> u32;
@@ -11,33 +31,45 @@ pub trait BitboardPrimitives<T> {
     fn set(&mut self, pos: Square);
     fn clear(&mut self, pos: Square);
 
+    fn iter(&mut self) -> BitboardWrapped;
+
     fn rank_to_debug_string(self, rank: u32) -> String;
     fn to_debug_string(self) -> String;
 }
 
 impl BitboardPrimitives<u64> for Bitboard {
+    #[inline]
     fn count(self) -> u32 {
         self.count_ones()
     }
 
     // TODO: scan and reset LSB
+    #[inline]
     fn scan(self) -> Square {
         self.trailing_zeros() as Square
     }
 
+    #[inline]
     fn test(self, pos: Square) -> bool {
         //self.test_bit(pos as u32)
         self.test_bit(u32::from(pos))
     }
 
+    #[inline]
     fn set(&mut self, pos: Square) {
         *self |= BB_SQUARES[pos as usize]
         //self.set_bit(pos as u32)
     }
 
+    #[inline]
     fn clear(&mut self, pos: Square) {
         //self.clear_bit(pos as u32)
         *self ^= BB_SQUARES[pos as usize]
+    }
+
+    #[inline]
+    fn iter(&mut self) -> BitboardWrapped {
+        BitboardWrapped(*self)
     }
 
     fn rank_to_debug_string(self, rank: u32) -> String {
@@ -481,3 +513,84 @@ pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
 //    return forward;
 // }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::u64;
+    use rand::{thread_rng, Rng};
+    use test::{self, Bencher};
+
+    static TESTSIZE: usize = 5_000;
+
+    lazy_static! {
+        static ref DATA: Vec<Bitboard> = (0..).take(test::black_box(TESTSIZE)).map(|_| thread_rng().gen_range(u64::MIN, u64::MAX) as Bitboard).collect();
+    }
+
+    fn scan_count(mut bb: Bitboard) -> u64 {
+        let mut count = 0_u64;
+        while bb > 0 {
+            let sq = bb.scan();
+            count += u64::from(sq);
+            bb.clear(sq);
+        }
+        count
+    }
+
+    fn iter_count(mut bb: Bitboard) -> u64 {
+        let mut count = 0_u64;
+        for sq in bb.iter() {
+            count += u64::from(sq)
+        }
+        count
+    }
+    
+    #[bench]
+    fn bench_naked_bitboards(b: &mut Bencher) {
+        b.iter(|| {
+            let mut sum = 0_u64;
+            for bb in DATA.clone().iter_mut() {
+                let mut count = 0_u64;
+                while *bb > 0 {
+                    let sq = bb.scan();
+                    count += u64::from(sq);
+                    bb.clear(sq);
+                }
+                sum += count;
+            }
+            sum
+        });
+    }
+
+    #[bench]
+    fn bench_naked_bitboards_v2(b: &mut Bencher) {
+        b.iter(|| {
+            //scan_count(u64::MAX)
+            (u64::MAX-(TESTSIZE as u64)..u64::MAX).fold(0, |acc, el| acc + scan_count(el))
+        });
+    }
+
+    #[bench]
+    fn bench_wrapped_bitboards(b: &mut Bencher) {
+        b.iter(|| {
+            let mut sum = 0_u64;
+            for bb in DATA.clone().iter_mut() {
+                let mut count = 0_u64;
+                for sq in bb.iter() {
+                    count += u64::from(sq);
+                }
+                sum += count;
+            }
+            sum
+        });
+    }
+
+    #[bench]
+    fn bench_wrapped_bitboards_v2(b: &mut Bencher) {
+        b.iter(|| {
+            //iter_count(u64::MAX)
+             (u64::MAX-(TESTSIZE as u64)..u64::MAX).fold(0, |acc, el| acc + iter_count(el))
+        });
+    }
+
+    
+}

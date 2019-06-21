@@ -11,6 +11,7 @@ extern crate log;
 #[macro_use]
 extern crate lazy_static;
 extern crate quanta;
+extern crate rand;
 extern crate regex;
 extern crate test;
 
