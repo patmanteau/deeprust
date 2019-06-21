@@ -92,28 +92,28 @@ impl MoveGenerator for Board {
     fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32) {
         if depth == 0 {
             ctx.nodes += 1;
-            if !self.history().is_empty() {
-                let mov = self.history().last().unwrap();
-                if mov.is_capture() {
-                    ctx.captures += 1;
-                }
-                if mov.is_capture_en_passant() {
-                    ctx.ep += 1;
-                }
-                if mov.is_king_castle() || mov.is_queen_castle() {
-                    ctx.castles += 1;
-                }
-                if mov.is_promotion() {
-                    ctx.promotions += 1;
-                }
-            }
-            let to_move = self.to_move();
-            if self.is_in_check(to_move) {
-                ctx.checks += 1;
-                // if self.is_mate(to_move) {
-                //     ctx.checkmates += 1;
-                // }
-            }
+            // if !self.history().is_empty() {
+            //     let mov = self.history().last().unwrap();
+            //     if mov.is_capture() {
+            //         ctx.captures += 1;
+            //     }
+            //     if mov.is_capture_en_passant() {
+            //         ctx.ep += 1;
+            //     }
+            //     if mov.is_king_castle() || mov.is_queen_castle() {
+            //         ctx.castles += 1;
+            //     }
+            //     if mov.is_promotion() {
+            //         ctx.promotions += 1;
+            //     }
+            // }
+            // let to_move = self.to_move();
+            // if self.is_in_check(to_move) {
+            //     ctx.checks += 1;
+            //     // if self.is_mate(to_move) {
+            //     //     ctx.checkmates += 1;
+            //     // }
+            // }
             return;
         }
 
@@ -484,7 +484,7 @@ impl MoveGenerator for Board {
 
     fn gen_king_moves(&self, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
-        
+
         let from = self.bb_king(color).scan();
         let mut atk = bitboard::BB_KING_ATTACKS[from as usize] & self.bb_empty();
 
@@ -496,7 +496,7 @@ impl MoveGenerator for Board {
 
     fn gen_king_captures(&self, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(16);
-        
+
         let from = self.bb_king(color).scan();
         let mut atk = bitboard::BB_KING_ATTACKS[from as usize] & self.bb_opponent(color);
 
@@ -549,7 +549,7 @@ impl MoveGenerator for Board {
             let mut atk = (bitboard::rank_attacks(from, occupied)
                 | bitboard::file_attacks(from, occupied))
                 & self.bb_empty();
-            
+
             for to in atk.iter() {
                 moves.push(Move::new(from, to, flags::MOV_QUIET));
             }
@@ -566,7 +566,7 @@ impl MoveGenerator for Board {
             let mut atk = (bitboard::rank_attacks(from, occupied)
                 | bitboard::file_attacks(from, occupied))
                 & self.bb_opponent(color);
-            
+
             for to in atk.iter() {
                 moves.push(Move::new(from, to, flags::MOV_CAPTURE));
             }

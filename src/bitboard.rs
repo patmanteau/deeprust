@@ -20,7 +20,6 @@ impl Iterator for BitboardWrapped {
             None
         }
     }
-
 }
 
 pub trait BitboardPrimitives<T> {
@@ -442,7 +441,8 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
     let north_fill = (BB_RANK_MASK_EX[square as usize] & occupied).overflowing_mul(BB_FILE_B);
     occupied = north_fill.0 >> 58;
     // rank_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
-    BB_RANK_MASK_EX[square as usize] & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
+    BB_RANK_MASK_EX[square as usize]
+        & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
 }
 
 // pub fn file_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
@@ -516,14 +516,17 @@ pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::u64;
     use rand::{thread_rng, Rng};
+    use std::u64;
     use test::{self, Bencher};
 
     static TESTSIZE: usize = 5_000;
 
     lazy_static! {
-        static ref DATA: Vec<Bitboard> = (0..).take(test::black_box(TESTSIZE)).map(|_| thread_rng().gen_range(u64::MIN, u64::MAX) as Bitboard).collect();
+        static ref DATA: Vec<Bitboard> = (0..)
+            .take(test::black_box(TESTSIZE))
+            .map(|_| thread_rng().gen_range(u64::MIN, u64::MAX) as Bitboard)
+            .collect();
     }
 
     fn scan_count(mut bb: Bitboard) -> u64 {
@@ -543,7 +546,7 @@ mod tests {
         }
         count
     }
-    
+
     #[bench]
     fn bench_naked_bitboards(b: &mut Bencher) {
         b.iter(|| {
@@ -565,7 +568,7 @@ mod tests {
     fn bench_naked_bitboards_v2(b: &mut Bencher) {
         b.iter(|| {
             //scan_count(u64::MAX)
-            (u64::MAX-(TESTSIZE as u64)..u64::MAX).fold(0, |acc, el| acc + scan_count(el))
+            (u64::MAX - (TESTSIZE as u64)..u64::MAX).fold(0, |acc, el| acc + scan_count(el))
         });
     }
 
@@ -588,9 +591,8 @@ mod tests {
     fn bench_wrapped_bitboards_v2(b: &mut Bencher) {
         b.iter(|| {
             //iter_count(u64::MAX)
-             (u64::MAX-(TESTSIZE as u64)..u64::MAX).fold(0, |acc, el| acc + iter_count(el))
+            (u64::MAX - (TESTSIZE as u64)..u64::MAX).fold(0, |acc, el| acc + iter_count(el))
         });
     }
 
-    
 }

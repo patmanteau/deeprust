@@ -210,7 +210,10 @@ mod tests {
         c.parse(String::from(
             "position fen 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1",
         ));
-        assert_eq!("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1", c.board.to_fen_string());
+        assert_eq!(
+            "8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1",
+            c.board.to_fen_string()
+        );
     }
 
     #[test]
