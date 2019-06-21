@@ -74,8 +74,8 @@ pub trait MoveGenerator {
     fn gen_bishop_captures(&self, color: Color) -> Vec<Move>;
     fn gen_rook_moves(&self, color: Color) -> Vec<Move>;
     fn gen_rook_captures(&self, color: Color) -> Vec<Move>;
-    fn gen_queen_moves(&self, color: Color) -> Vec<Move>;
-    fn gen_queen_captures(&self, color: Color) -> Vec<Move>;
+    // fn gen_queen_moves(&self, color: Color) -> Vec<Move>;
+    // fn gen_queen_captures(&self, color: Color) -> Vec<Move>;
 }
 
 impl MoveGenerator for Board {
@@ -110,9 +110,9 @@ impl MoveGenerator for Board {
             let to_move = self.to_move();
             if self.is_in_check(to_move) {
                 ctx.checks += 1;
-                if self.is_mate(to_move) {
-                    ctx.checkmates += 1;
-                }
+                // if self.is_mate(to_move) {
+                //     ctx.checkmates += 1;
+                // }
             }
             return;
         }
@@ -229,10 +229,10 @@ impl MoveGenerator for Board {
         let rook_moves = self.gen_rook_moves(to_move);
         moves.extend(rook_moves);
 
-        let queen_captures = self.gen_queen_captures(to_move);
-        moves.extend(queen_captures);
-        let queen_moves = self.gen_queen_moves(to_move);
-        moves.extend(queen_moves);
+        // let queen_captures = self.gen_queen_captures(to_move);
+        // moves.extend(queen_captures);
+        // let queen_moves = self.gen_queen_moves(to_move);
+        // moves.extend(queen_moves);
 
         let king_captures = self.gen_king_captures(to_move);
         moves.extend(king_captures);
@@ -508,7 +508,7 @@ impl MoveGenerator for Board {
 
     fn gen_bishop_moves(&self, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
-        let mut bishops = self.bb_bishops(color);
+        let mut bishops = self.bb_bishops(color) | self.bb_queens(color);
         let occupied = self.bb_own(color) | self.bb_opponent(color);
 
         for from in bishops.iter() {
@@ -525,7 +525,7 @@ impl MoveGenerator for Board {
 
     fn gen_bishop_captures(&self, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
-        let mut bishops = self.bb_bishops(color);
+        let mut bishops = self.bb_bishops(color) | self.bb_queens(color);
         let occupied = self.bb_own(color) | self.bb_opponent(color);
 
         for from in bishops.iter() {
@@ -542,7 +542,7 @@ impl MoveGenerator for Board {
 
     fn gen_rook_moves(&self, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
-        let mut rooks = self.bb_rooks(color);
+        let mut rooks = self.bb_rooks(color) | self.bb_queens(color);
         let occupied = self.bb_own(color) | self.bb_opponent(color);
 
         for from in rooks.iter() {
@@ -559,7 +559,7 @@ impl MoveGenerator for Board {
 
     fn gen_rook_captures(&self, color: Color) -> Vec<Move> {
         let mut moves = Vec::with_capacity(64);
-        let mut rooks = self.bb_rooks(color);
+        let mut rooks = self.bb_rooks(color) | self.bb_queens(color);
         let occupied = self.bb_own(color) | self.bb_opponent(color);
 
         for from in rooks.iter() {
@@ -574,41 +574,41 @@ impl MoveGenerator for Board {
         moves
     }
 
-    fn gen_queen_moves(&self, color: Color) -> Vec<Move> {
-        let mut moves = Vec::with_capacity(64);
-        let mut queens = self.bb_queens(color);
-        let occupied = self.bb_own(color) | self.bb_opponent(color);
+    // fn gen_queen_moves(&self, color: Color) -> Vec<Move> {
+    //     let mut moves = Vec::with_capacity(64);
+    //     let mut queens = self.bb_queens(color);
+    //     let occupied = self.bb_own(color) | self.bb_opponent(color);
 
-        for from in queens.iter() {
-            let mut atk = self.bb_empty()
-                & (bitboard::rank_attacks(from, occupied)
-                    | bitboard::file_attacks(from, occupied)
-                    | bitboard::diagonal_attacks(from, occupied)
-                    | bitboard::anti_diagonal_attacks(from, occupied));
-            for to in atk.iter() {
-                moves.push(Move::new(from, to, flags::MOV_QUIET));
-            }
-        }
-        moves
-    }
+    //     for from in queens.iter() {
+    //         let mut atk = self.bb_empty()
+    //             & (bitboard::rank_attacks(from, occupied)
+    //                 | bitboard::file_attacks(from, occupied)
+    //                 | bitboard::diagonal_attacks(from, occupied)
+    //                 | bitboard::anti_diagonal_attacks(from, occupied));
+    //         for to in atk.iter() {
+    //             moves.push(Move::new(from, to, flags::MOV_QUIET));
+    //         }
+    //     }
+    //     moves
+    // }
 
-    fn gen_queen_captures(&self, color: Color) -> Vec<Move> {
-        let mut moves = Vec::with_capacity(64);
-        let mut queens = self.bb_queens(color);
-        let occupied = self.bb_own(color) | self.bb_opponent(color);
+    // fn gen_queen_captures(&self, color: Color) -> Vec<Move> {
+    //     let mut moves = Vec::with_capacity(64);
+    //     let mut queens = self.bb_queens(color);
+    //     let occupied = self.bb_own(color) | self.bb_opponent(color);
 
-        for from in queens.iter() {
-            let mut atk = self.bb_opponent(color)
-                & (bitboard::rank_attacks(from, occupied)
-                    | bitboard::file_attacks(from, occupied)
-                    | bitboard::diagonal_attacks(from, occupied)
-                    | bitboard::anti_diagonal_attacks(from, occupied));
-            for to in atk.iter() {
-                moves.push(Move::new(from, to, flags::MOV_CAPTURE));
-            }
-        }
-        moves
-    }
+    //     for from in queens.iter() {
+    //         let mut atk = self.bb_opponent(color)
+    //             & (bitboard::rank_attacks(from, occupied)
+    //                 | bitboard::file_attacks(from, occupied)
+    //                 | bitboard::diagonal_attacks(from, occupied)
+    //                 | bitboard::anti_diagonal_attacks(from, occupied));
+    //         for to in atk.iter() {
+    //             moves.push(Move::new(from, to, flags::MOV_CAPTURE));
+    //         }
+    //     }
+    //     moves
+    // }
 }
 
 #[cfg(test)]
