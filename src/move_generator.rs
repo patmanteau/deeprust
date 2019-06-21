@@ -92,8 +92,8 @@ impl MoveGenerator for Board {
     fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32) {
         if depth == 0 {
             ctx.nodes += 1;
-            if self.has_moves() {
-                let mov = self.last_move().unwrap();
+            if !self.history().is_empty() {
+                let mov = self.history().last().unwrap();
                 if mov.is_capture() {
                     ctx.captures += 1;
                 }
@@ -108,9 +108,9 @@ impl MoveGenerator for Board {
                 }
             }
             let to_move = self.to_move();
-            if MoveGenerator::is_in_check(self, to_move) {
+            if self.is_in_check(to_move) {
                 ctx.checks += 1;
-                if MoveGenerator::is_mate(self, to_move) {
+                if self.is_mate(to_move) {
                     ctx.checkmates += 1;
                 }
             }
@@ -121,8 +121,8 @@ impl MoveGenerator for Board {
         let moves = self.generate_moves();
         for mov in moves.iter() {
             self.make_move(*mov);
-            if !MoveGenerator::is_in_check(self, 1 ^ self.to_move()) {
-                MoveGenerator::do_perft(self, ctx, depth - 1);
+            if !self.is_in_check(1 ^ self.to_move()) {
+                self.do_perft(ctx, depth - 1);
             }
             self.unmake_move();
         }
@@ -132,7 +132,7 @@ impl MoveGenerator for Board {
         let moves = self.generate_moves();
         for mov in moves.iter() {
             self.make_move(*mov);
-            if !MoveGenerator::is_in_check(self, 1 ^ self.to_move()) {
+            if !self.is_in_check(1 ^ self.to_move()) {
                 self.unmake_move();
                 return false;
             } else {
@@ -144,7 +144,7 @@ impl MoveGenerator for Board {
 
     fn is_in_check(&self, color: Color) -> bool {
         let kingpos = self.bb_king(color).scan();
-        MoveGenerator::is_attacked(self, color, kingpos)
+        self.is_attacked(color, kingpos)
     }
 
     fn is_attacked(&self, color: Color, target: Square) -> bool {
@@ -154,20 +154,11 @@ impl MoveGenerator for Board {
 
         // by black pawns
         if color == color::WHITE {
-            if 0 < ((bitboard::north_west_one(bitboard::BB_SQUARES[target as usize])
-                | bitboard::north_east_one(bitboard::BB_SQUARES[target as usize]))
-                & (self.bb_pawns(color::BLACK)))
-            {
+            if 0 < bitboard::BB_WPAWN_ATTACKS[target as usize] & self.bb_pawns(color::BLACK) {
                 return true;
             }
-        } else {
-            // by white pawns
-            if 0 < ((bitboard::south_west_one(bitboard::BB_SQUARES[target as usize])
-                | bitboard::south_east_one(bitboard::BB_SQUARES[target as usize]))
-                & (self.bb_pawns(color::WHITE)))
-            {
-                return true;
-            }
+        } else if 0 < bitboard::BB_BPAWN_ATTACKS[target as usize] & self.bb_pawns(color::WHITE) {
+            return true;
         }
 
         // by knights

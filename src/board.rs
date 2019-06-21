@@ -18,9 +18,9 @@ pub const PSTACK_SIZE: usize = 64;
 
 #[derive(Clone)]
 pub struct Board {
-    pstack: PositionStack,
+    positions: PositionStack,
     pcursor: usize,
-    move_stack: MoveStack,
+    history: MoveStack,
 }
 
 impl fmt::Debug for Board {
@@ -30,7 +30,7 @@ impl fmt::Debug for Board {
             "Board {{ Position: {:?}, pcursor: {}, move_stack: {:?} }}",
             self.current(),
             self.pcursor,
-            self.move_stack
+            self.history
         )
     }
 }
@@ -39,7 +39,7 @@ impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.current()).unwrap();
         writeln!(f).unwrap();
-        writeln!(f, "fen: {}", self.to_fen()).unwrap();
+        writeln!(f, "fen: {}", self.to_fen_string()).unwrap();
         //writeln!(f, "move_stack: {}", self.move_stack).unwrap();
         writeln!(f, "to_move: {}", self.to_move()).unwrap();
         writeln!(f)
@@ -55,15 +55,15 @@ impl Default for Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            pstack: vec![Position::new(); PSTACK_SIZE],
+            positions: vec![Position::new(); PSTACK_SIZE],
             pcursor: 0,
-            move_stack: MoveStack::with_capacity(1024),
+            history: MoveStack::with_capacity(32),
         }
     }
 
     #[inline]
     pub fn current(&self) -> &Position {
-        &self.pstack[self.pcursor]
+        &self.positions[self.pcursor]
     }
 
     pub fn startpos() -> Board {
@@ -71,207 +71,7 @@ impl Board {
     }
 
     pub fn set_position(&mut self, position: &Position) {
-        self.pstack[self.pcursor] = *position;
-    }
-
-    // pub fn from_fen(fen_string: String) -> Result<Board, &'static str> {
-    //     let mut board = Self::new();
-    //     let mut position = Position::new();
-    //     let mut fen_iter = fen_string.split_whitespace();
-
-    //     // position
-    //     if let Some(piece_list) = fen_iter.next() {
-    //         let ranks: Vec<&str> = piece_list.split('/').collect();
-    //         if ranks.len() != 8 {
-    //             return Err("Not enough ranks in FEN position")
-    //         }
-
-    //         for (rank, rank_string) in ranks.iter().rev().enumerate() {
-    //             let mut file = 0;
-    //             for chr in rank_string.chars() {
-    //                 if chr.is_digit(10) {
-    //                     file += chr.to_digit(10).unwrap();
-    //                 } else {
-    //                     let (piece_code, color) = match chr {
-    //                         'P' => (piece::PAWN, color::WHITE),
-    //                         'N' => (piece::KNIGHT, color::WHITE),
-    //                         'B' => (piece::BISHOP, color::WHITE),
-    //                         'R' => (piece::ROOK, color::WHITE),
-    //                         'Q' => (piece::QUEEN, color::WHITE),
-    //                         'K' => (piece::KING, color::WHITE),
-    //                         'p' => (piece::PAWN, color::BLACK),
-    //                         'n' => (piece::KNIGHT, color::BLACK),
-    //                         'b' => (piece::BISHOP, color::BLACK),
-    //                         'r' => (piece::ROOK, color::BLACK),
-    //                         'q' => (piece::QUEEN, color::BLACK),
-    //                         'k' => (piece::KING, color::BLACK),
-    //                         _ => return Err("Invalid character in FEN position")
-    //                     };
-    //                     position.set_piece(piece_code, color, Square::from_coords(file, rank as u32));
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         return Err(FenParseError::InvalidPosition);
-    //     }
-
-    //     // to move
-    //     if let Some(to_move) = fen_iter.next() {
-    //         match to_move {
-    //             "w" => position.to_move = color::WHITE,
-    //             "b" => position.to_move = color::BLACK,
-    //             _ => return Err("Invalid ToMove char"),
-    //         }
-    //     } else {
-    //         return Err("Invalid FEN string, don't know who moves next");
-    //     }
-
-    //     // Castling rights
-    //     if let Some(castling) = fen_iter.next() {
-    //         for chr in castling.chars() {
-    //             match chr {
-    //                 '-' => position.castling = [0, 0],
-    //                 'K' => position.castling[color::WHITE as usize] |= 0x1,
-    //                 'Q' => position.castling[color::WHITE as usize] |= 0x2,
-    //                 'k' => position.castling[color::BLACK as usize] |= 0x1,
-    //                 'q' => position.castling[color::BLACK as usize] |= 0x2,
-    //                 _ => return Err("Invalid castling char"),
-    //             }
-    //         }
-    //     } else {
-    //         return Err("Invalid FEN string, no castling rights found");
-    //     }
-
-    //     // en passant
-    //     if let Some(en_passant) = fen_iter.next() {
-    //         if en_passant == "-" {
-    //             position.en_passant = None;
-    //         } else {
-    //             //match SAN::square_str_to_index(en_passant) {
-    //             match Square::from_san_string(en_passant) {
-    //                 Ok(eps) => position.en_passant = Some([eps, eps.flipped()]),
-    //                 Err(_) => return Err("Error parsing en passant field"),
-    //             }
-    //         }
-    //     } else {
-    //         return Err("Invalid FEN string, no en passant information");
-    //     }
-
-    //     // Halfmoves
-    //     if let Some(halfmoves) = fen_iter.next() {
-    //         match u32::from_str(halfmoves) {
-    //             Ok(val) => position.halfmoves = val,
-    //             Err(_) => return Err("Error parsing halfmoves"),
-    //         }
-    //     } else {
-    //         return Err("Invalid FEN string, no halfmoves given");
-    //     }
-
-    //     // Fullmoves
-    //     if let Some(fullmoves) = fen_iter.next() {
-    //         match u32::from_str(fullmoves) {
-    //             Ok(val) => position.fullmoves = val,
-    //             Err(_) => return Err("Error parsing fullmoves"),
-    //         }
-    //     } else {
-    //         return Err("Invalid FEN string, no fullmoves given");
-    //     }
-
-    //     board.pstack[0] = position;
-
-    //     if let Some(move_token) = fen_iter.next() {
-    //         if move_token == "moves" {
-    //             for mov in fen_iter {
-    //                 match board.input_san_move(mov) {
-    //                     Ok(_) => continue,
-    //                     Err(err) => return Err(err),
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     Ok(board)
-    // }
-
-    pub fn to_fen(&self) -> String {
-        let mut fen_string = String::new();
-
-        // Position
-        for y in (0..8).rev() {
-            let mut emptycount: u8 = 0;
-            for x in 0..8 {
-                if 0 == self.occupied()[Square::from_coords(x, y) as usize] {
-                    emptycount += 1;
-                } else {
-                    if emptycount > 0 {
-                        fen_string.push_str(&emptycount.to_string());
-                        emptycount = 0;
-                    };
-                    fen_string.push_str(
-                        self.occupied()[Square::from_coords(x, y) as usize].to_san_string(),
-                    );
-                }
-            }
-            if emptycount > 0 {
-                fen_string.push_str(&emptycount.to_string());
-                // emptycount = 0;
-            };
-            if y > 0 {
-                fen_string.push('/');
-            }
-        }
-
-        // To move
-        fen_string.push(' ');
-        let to_move = match self.to_move() {
-            color::WHITE => 'w',
-            color::BLACK => 'b',
-            _ => 'w',
-        };
-        fen_string.push(to_move);
-
-        // Castling rights
-        fen_string.push(' ');
-        if self.castling() == [0, 0] {
-            fen_string.push('-');
-        } else {
-            if 0 != self.castling()[color::WHITE as usize].extract_bits(0, 1) {
-                fen_string.push('K');
-            }
-            if 0 != self.castling()[color::WHITE as usize].extract_bits(1, 1) {
-                fen_string.push('Q');
-            }
-            if 0 != self.castling()[color::BLACK as usize].extract_bits(0, 1) {
-                fen_string.push('k');
-            }
-            if 0 != self.castling()[color::BLACK as usize].extract_bits(1, 1) {
-                fen_string.push('q');
-            }
-        }
-
-        // en passant
-        fen_string.push(' ');
-        if let Some(eps) = self.en_passant() {
-            let san = eps[0].to_san_string();
-            fen_string.push_str(&san)
-        } else {
-            fen_string.push('-')
-        }
-
-        // Halfmoves
-        fen_string.push(' ');
-        fen_string.push_str(&self.halfmoves().to_string());
-
-        // Fullmoves
-        fen_string.push(' ');
-        fen_string.push_str(&self.fullmoves().to_string());
-
-        // if self.has_moves() {
-        //     fen_string.push_str(" moves");
-        //     for mov in &self.move_stack {
-        //         fen_string.push_str(&format!(" {}{}", mov.orig().to_san_string(), mov.dest().to_san_string()));
-        //     }
-        // }
-        fen_string
+        self.positions[self.pcursor] = *position;
     }
 
     pub fn bb(&self) -> &[[Bitboard; 8]; 2] {
@@ -341,16 +141,16 @@ impl Board {
 
     pub fn make_move(&mut self, mov: Move) {
         assert!(self.pcursor + 1 < PSTACK_SIZE);
-        //self.pstack[self.pcursor + 1] = self.current().clone();
-        self.pstack[self.pcursor + 1] = *self.current();
-        self.pstack[self.pcursor + 1].make_move(mov);
-        self.move_stack.push(mov);
+        //self.positions[self.pcursor + 1] = self.current().clone();
+        self.positions[self.pcursor + 1] = *self.current();
+        self.positions[self.pcursor + 1].make_move(mov);
+        self.history.push(mov);
         self.pcursor += 1;
     }
 
     pub fn unmake_move(&mut self) {
         assert!(self.pcursor > 0);
-        self.move_stack.pop();
+        self.history.pop();
         self.pcursor -= 1;
     }
 
@@ -361,11 +161,11 @@ impl Board {
         promote_to: Option<Piece>,
     ) -> Result<bool, &'static str> {
         assert!(self.pcursor + 1 < PSTACK_SIZE);
-        //self.pstack[self.pcursor + 1] = self.current().clone();
-        self.pstack[self.pcursor + 1] = *self.current();
-        match self.pstack[self.pcursor + 1].input_move(orig, dest, promote_to) {
+        //self.positions[self.pcursor + 1] = self.current().clone();
+        self.positions[self.pcursor + 1] = *self.current();
+        match self.positions[self.pcursor + 1].input_move(orig, dest, promote_to) {
             Ok(mov) => {
-                self.move_stack.push(mov);
+                self.history.push(mov);
                 self.pcursor += 1;
                 Ok(true)
             }
@@ -387,17 +187,18 @@ impl Board {
         }
     }
 
-    pub fn has_moves(&self) -> bool {
-        !self.move_stack.is_empty()
+    pub fn history(&self) -> &MoveStack {
+        //!self.move_stack.is_empty()
+        &self.history
     }
 
-    pub fn last_move(&self) -> Option<Move> {
-        if self.move_stack.is_empty() {
-            None
-        } else {
-            Some(self.move_stack[self.move_stack.len() - 1])
-        }
-    }
+    // pub fn last_move(&self) -> Option<Move> {
+    //     if self.move_stack.is_empty() {
+    //         None
+    //     } else {
+    //         Some(self.move_stack[self.move_stack.len() - 1])
+    //     }
+    // }
 }
 
 #[cfg(test)]
@@ -439,7 +240,7 @@ mod tests {
         assert_eq!(0x10, b.bb_king(WHITE));
         assert_eq!(0x10 << (7 * 8), b.bb_king(BLACK));
 
-        assert!(!b.has_moves());
+        assert!(b.history().is_empty());
     }
 
     #[test]
@@ -447,11 +248,11 @@ mod tests {
         let fen_strs = vec!["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"];
 
         let board = Board::startpos();
-        assert!(!board.has_moves());
+        assert!(board.history().is_empty());
 
         for fen_str in fen_strs {
             if let Ok(board) = Board::from_fen_str(fen_str) {
-                assert_eq!(fen_str, board.to_fen());
+                assert_eq!(fen_str, board.to_fen_string());
             } else {
                 panic!("Illegal FEN string");
             }
@@ -478,7 +279,7 @@ mod tests {
             let b = Board::from_fen_str(&position);
             match b {
                 Err(e) => panic!("Error reading {}:{}:{}", pospath.display(), line, e),
-                Ok(board) => assert_eq!(position, board.to_fen()),
+                Ok(board) => assert_eq!(position, board.to_fen_string()),
             }
         }
     }
@@ -506,11 +307,11 @@ mod tests {
         if let Ok(mut board) =
             Board::from_fen_str("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")
         {
-            assert_eq!(0, board.move_stack.len());
+            assert_eq!(0, board.history().len());
             board.input_move(square::D7, square::D6, None).unwrap();
-            assert_eq!(1, board.move_stack.len());
+            assert_eq!(1, board.history().len());
             assert_eq!(None, board.en_passant());
-            let last_move = board.last_move().unwrap();
+            let last_move = board.history().last().unwrap();
             assert_eq!(last_move.orig(), square::D7);
             assert_eq!(last_move.dest(), square::D6);
         }
@@ -550,7 +351,7 @@ mod tests {
                 Board::from_fen_str(&(String::from(one_mover_fen) + &String::from(one_mover_moves)))
             {
                 board.unmake_move();
-                assert_eq!(one_mover_fen, board.to_fen());
+                assert_eq!(one_mover_fen, board.to_fen_string());
             } else {
                 assert!(false);
             }
@@ -562,7 +363,7 @@ mod tests {
             {
                 board.unmake_move();
                 board.unmake_move();
-                assert_eq!(two_mover_fen, board.to_fen());
+                assert_eq!(two_mover_fen, board.to_fen_string());
             } else {
                 assert!(false);
             }
@@ -577,7 +378,7 @@ mod tests {
             );
             let mut board = Board::from_fen_str(&fen.clone()).unwrap();
             let _ctx = MoveGenerator::perft(&mut board, 4);
-            assert_eq!(fen, board.to_fen());
+            assert_eq!(fen, board.to_fen_string());
         }
         {
             let board_orig = Board::startpos();

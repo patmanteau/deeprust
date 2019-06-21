@@ -1,6 +1,7 @@
 use std::io;
 use std::io::Write;
 
+use crate::bitboard::{self as bb, BitboardPrimitives};
 use crate::board::*;
 use crate::fen::BoardFen;
 
@@ -113,8 +114,11 @@ impl UCIInterface {
             MoveGenerator::is_in_check(&self.board, color::WHITE),
             MoveGenerator::is_in_check(&self.board, color::BLACK)
         );
-        if self.board.has_moves() {
-            println!("last_move: {:#?}", self.board.last_move());
+        if !self.board.history().is_empty() {
+            println!("last_move: {:#?}", self.board.history().last());
+        }
+        for bb in bb::BB_FILE_MASK_EX.iter() {
+            println!("{}", bb.to_debug_string());
         }
     }
 
@@ -145,7 +149,7 @@ impl UCIInterface {
                 "position" => self.cmd_position(tokens[1..].to_vec()),
                 "m" | "move" => self.cmd_move(tokens[1..].to_vec()),
                 "u" | "undo" => self.cmd_undo(),
-                "fen" => println!("{}", self.board.to_fen()),
+                "fen" => println!("{}", self.board.to_fen_string()),
                 "b" => self.cmd_b(),
                 "p" | "perft" => self.cmd_perft(tokens[1..].to_vec()),
                 "g" | "generate" => self.cmd_moves(),
@@ -188,7 +192,7 @@ mod tests {
         c.parse(String::from("position startpos"));
         assert_eq!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-            c.board.to_fen()
+            c.board.to_fen_string()
         );
     }
 
@@ -200,13 +204,13 @@ mod tests {
         ));
         assert_eq!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-            c.board.to_fen()
+            c.board.to_fen_string()
         );
 
         c.parse(String::from(
             "position fen 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1",
         ));
-        assert_eq!("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1", c.board.to_fen());
+        assert_eq!("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1", c.board.to_fen_string());
     }
 
     #[test]
@@ -239,7 +243,7 @@ mod tests {
                 Board::from_fen_str(&(String::from(one_mover_fen) + &String::from(one_mover_moves)))
             {
                 board.unmake_move();
-                assert_eq!(one_mover_fen, board.to_fen());
+                assert_eq!(one_mover_fen, board.to_fen_string());
             } else {
                 assert!(false);
             }
@@ -251,7 +255,7 @@ mod tests {
             {
                 board.unmake_move();
                 board.unmake_move();
-                assert_eq!(two_mover_fen, board.to_fen());
+                assert_eq!(two_mover_fen, board.to_fen_string());
             } else {
                 assert!(false);
             }
@@ -274,7 +278,7 @@ mod tests {
 
         for (uci_in, fen_out) in uci_strs {
             c.parse(String::from(uci_in));
-            assert_eq!(fen_out, c.board.to_fen())
+            assert_eq!(fen_out, c.board.to_fen_string())
         }
     }
 }
