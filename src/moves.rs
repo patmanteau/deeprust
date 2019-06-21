@@ -86,6 +86,10 @@ impl Move {
         self.0 |= to & 0x3f;
     }
 
+    pub fn with_flags(self, flags: u16) -> Move {
+        Move((self.0 & 0b1111_1100_0011_1111) | (flags << 6))
+    }
+
     pub fn toggle_special_0(&mut self) {
         self.0.flip_bit(6);
     }
