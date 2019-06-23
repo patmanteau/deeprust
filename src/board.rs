@@ -39,7 +39,12 @@ impl fmt::Display for Board {
         write!(f, "{}", self.current()).unwrap();
         writeln!(f).unwrap();
         writeln!(f, "fen: {}", self.to_fen_string()).unwrap();
-        //writeln!(f, "move_stack: {}", self.move_stack).unwrap();
+        // writeln!(f, "move_stack: {}", self.move_stack).unwrap();
+        write!(f, "moves: ");
+        for mov in &self.history {
+            write!(f, "{} ", mov);
+        }
+        writeln!(f);
         writeln!(f, "to_move: {}", self.to_move()).unwrap();
         writeln!(f)
     }
@@ -186,9 +191,7 @@ impl Board {
         }
     }
 
-    pub fn history(&self) -> &MoveStack {
-        //!self.move_stack.is_empty()
-        &self.history
+        error!("{}", self);
     }
 
     // pub fn last_move(&self) -> Option<Move> {

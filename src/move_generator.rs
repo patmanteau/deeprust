@@ -456,6 +456,15 @@ impl MoveGenerator for Board {
         let mut moves = Vec::with_capacity(16);
 
         let from = self.bb_king(color).scan();
+
+        #[cfg(feature = "sanity_checks")]
+        {
+        if from > 63 {
+            self.panic_dump();
+        }
+        }
+        
+        //assert!(from < 64);
         let mut atk = bitboard::BB_KING_ATTACKS[from as usize] & self.bb_opponent(color);
 
         for to in atk.iter() {
