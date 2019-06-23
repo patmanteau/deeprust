@@ -3,7 +3,6 @@ use crate::move_generator::MoveGenerator;
 
 use quanta::Clock;
 
-use std::cmp::min;
 use std::fmt;
 use std::ops::{Add, AddAssign};
 use std::sync::mpsc::{self, channel};
@@ -229,11 +228,11 @@ impl Search for Board {
             pool.execute(move |tx| {
                 let mut ctx = PerftContext::new();
                 board.do_perft(&mut ctx, depth - 1);
-                tx.send(WorkerMsg::PerftFinished { ctx });
+                tx.send(WorkerMsg::PerftFinished { ctx }).unwrap();
             });
         }
 
-        for i in 0..movecount {
+        for _ in 0..movecount {
             let res = pool.recv().unwrap();
             match res {
                 WorkerMsg::PerftFinished { ctx } => acc_ctx += ctx,

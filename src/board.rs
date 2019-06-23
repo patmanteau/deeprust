@@ -205,7 +205,6 @@ mod tests {
     use super::*;
 
     use crate::color::*;
-    use crate::move_generator::MoveGenerator;
     use crate::search::Search;
     use crate::square;
     use std::error::Error;
