@@ -148,7 +148,6 @@ impl MoveGenerator for Board {
     }
 
     fn generate_moves(&self) -> Vec<Move> {
-        // self.moves = Vec::with_capacity(512);
         let mut moves = Vec::with_capacity(512);
         let to_move = self.to_move();
 
@@ -459,11 +458,11 @@ impl MoveGenerator for Board {
 
         #[cfg(feature = "sanity_checks")]
         {
-        if from > 63 {
-            self.panic_dump();
+            if from > 63 {
+                self.panic_dump();
+            }
         }
-        }
-        
+
         //assert!(from < 64);
         let mut atk = bitboard::BB_KING_ATTACKS[from as usize] & self.bb_opponent(color);
 

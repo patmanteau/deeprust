@@ -82,6 +82,11 @@ impl Board {
         &self.current().bb()
     }
 
+    pub fn history(&self) -> &MoveStack {
+        //!self.move_stack.is_empty()
+        &self.history
+    }
+
     // don't actually return flipped boards for now
     pub fn bb_own(&self, color: Color) -> Bitboard {
         self.current().bb_own(color)
@@ -191,6 +196,7 @@ impl Board {
         }
     }
 
+    pub fn panic_dump(&self) {
         error!("{}", self);
     }
 

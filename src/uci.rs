@@ -1,7 +1,6 @@
 use std::io;
 use std::io::Write;
 
-use crate::bitboard::{self as bb, BitboardPrimitives};
 use crate::board::*;
 use crate::color;
 use crate::fen::BoardFen;
@@ -117,9 +116,9 @@ impl UCIInterface {
         if !self.board.history().is_empty() {
             println!("last_move: {:#?}", self.board.history().last());
         }
-        for bb in bb::BB_FILE_MASK_EX.iter() {
-            println!("{}", bb.to_debug_string());
-        }
+        // for bb in bb::BB_FILE_MASK_EX.iter() {
+        //     println!("{}", bb.to_debug_string());
+        // }
     }
 
     fn cmd_moves(&mut self) {
