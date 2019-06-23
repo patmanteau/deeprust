@@ -196,7 +196,7 @@ pub fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
 lazy_static! {
     pub static ref BB_WPAWN_ATTACKS: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
-        for i in 8..56 {
+        for i in 0..56 {
             let orig_bb = BB_SQUARES[i];
             arr[i] = north_west_one(orig_bb) | north_east_one(orig_bb);
         }
@@ -205,7 +205,7 @@ lazy_static! {
 
     pub static ref BB_BPAWN_ATTACKS: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
-        for i in 8..56 {
+        for i in 8..64 {
             let orig_bb = BB_SQUARES[i];
             arr[i] = south_west_one(orig_bb) | south_east_one(orig_bb);
         }
@@ -479,39 +479,6 @@ pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     forward ^= reverse.swap_bytes();
     forward & BB_FILE_MASK_EX[square as usize]
 }
-
-// U64 diagonalAttacks(U64 occ, enumSquare sq) {
-//    U64 forward, reverse;
-//    forward = occ & smsk[sq].diagonalMaskEx;
-//    reverse  = _byteswap_uint64(forward);
-//    forward -= smsk[sq].bitMask;
-//    reverse -= _byteswap_uint64(smsk[sq].bitMask);
-//    forward ^= _byteswap_uint64(reverse);
-//    forward &= smsk[sq].diagonalMaskEx;
-//    return forward;
-// }
-
-// U64 antiDiagAttacks(U64 occ, enumSquare sq) {
-//    U64 forward, reverse;
-//    forward  = occ & smsk[sq].antidiagMaskEx;
-//    reverse  = _byteswap_uint64(forward);
-//    forward -= smsk[sq].bitMask;
-//    reverse -= _byteswap_uint64(smsk[sq].bitMask);
-//    forward ^= _byteswap_uint64(reverse);
-//    forward &= smsk[sq].antidiagMaskEx;
-//    return forward;
-// }
-
-// U64 fileAttacks(U64 occ, enumSquare sq) {
-//    U64 forward, reverse;
-//    forward  = occ & smsk[sq].fileMaskEx;
-//    reverse  = _byteswap_uint64(forward);
-//    forward -= smsk[sq].bitMask;
-//    reverse -= _byteswap_uint64(smsk[sq].bitMask);
-//    forward ^= _byteswap_uint64(reverse);
-//    forward &= smsk[sq].fileMaskEx;
-//    return forward;
-// }
 
 #[cfg(test)]
 mod tests {
