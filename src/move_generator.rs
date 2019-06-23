@@ -3,58 +3,16 @@ use crate::board::Board;
 use crate::common::*;
 use crate::moves::flags;
 use crate::moves::Move;
-use std::fmt;
 
 use crate::color::{self, Color};
 use crate::square::{self, Square};
-
-use quanta::Clock;
-
-#[derive(Default)]
-pub struct PerftContext {
-    nodes: u128,
-    captures: u128,
-    ep: u128,
-    castles: u128,
-    promotions: u128,
-    checks: u128,
-    disco_checks: u128,
-    double_checks: u128,
-    checkmates: u128,
-    elapsed: u64,
-}
-
-impl PerftContext {
-    pub fn new() -> PerftContext {
-        PerftContext {
-            nodes: 0,
-            captures: 0,
-            ep: 0,
-            castles: 0,
-            promotions: 0,
-            checks: 0,
-            disco_checks: 0,
-            double_checks: 0,
-            checkmates: 0,
-            elapsed: 0,
-        }
-    }
-}
-
-impl fmt::Display for PerftContext {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Elapsed: {}s, Nodes: {}, Captures: {}, EP: {}, Castles: {}, Promos: {}, Checks: {}, Discochecks: {}, Double checks: {}, Checkmates: {}", 
-                (self.elapsed as f64) / 1_000_000_000f64, self.nodes, self.captures, self.ep, self.castles, self.promotions,
-                self.checks, self.disco_checks, self.double_checks, self.checkmates)
-    }
-}
 
 // #[derive(Default)]
 // pub struct MoveGenerator {}
 pub trait MoveGenerator {
     fn generate_moves(&self) -> Vec<Move>;
-    fn perft(&mut self, depth: u32) -> PerftContext;
-    fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32);
+    // fn perft(&mut self, depth: u32) -> PerftContext;
+    // fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32);
     fn is_mate(&mut self, _color: Color) -> bool;
     fn is_in_check(&self, color: Color) -> bool;
     fn is_attacked(&self, color: Color, target: Square) -> bool;
@@ -79,54 +37,54 @@ pub trait MoveGenerator {
 }
 
 impl MoveGenerator for Board {
-    fn perft(&mut self, depth: u32) -> PerftContext {
-        let mut ctx = PerftContext::new();
-        let clock = Clock::new();
-        let start = clock.now();
-        self.do_perft(&mut ctx, depth);
-        let finish = clock.now();
-        ctx.elapsed = finish - start;
-        ctx
-    }
+    // fn perft(&mut self, depth: u32) -> PerftContext {
+    //     let mut ctx = PerftContext::new();
+    //     let clock = Clock::new();
+    //     let start = clock.now();
+    //     self.do_perft(&mut ctx, depth);
+    //     let finish = clock.now();
+    //     ctx.elapsed = finish - start;
+    //     ctx
+    // }
 
-    fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32) {
-        if depth == 0 {
-            ctx.nodes += 1;
-            // if !self.history().is_empty() {
-            //     let mov = self.history().last().unwrap();
-            //     if mov.is_capture() {
-            //         ctx.captures += 1;
-            //     }
-            //     if mov.is_capture_en_passant() {
-            //         ctx.ep += 1;
-            //     }
-            //     if mov.is_king_castle() || mov.is_queen_castle() {
-            //         ctx.castles += 1;
-            //     }
-            //     if mov.is_promotion() {
-            //         ctx.promotions += 1;
-            //     }
-            // }
-            // let to_move = self.to_move();
-            // if self.is_in_check(to_move) {
-            //     ctx.checks += 1;
-            //     // if self.is_mate(to_move) {
-            //     //     ctx.checkmates += 1;
-            //     // }
-            // }
-            return;
-        }
+    // fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32) {
+    //     if depth == 0 {
+    //         ctx.nodes += 1;
+    //         // if !self.history().is_empty() {
+    //         //     let mov = self.history().last().unwrap();
+    //         //     if mov.is_capture() {
+    //         //         ctx.captures += 1;
+    //         //     }
+    //         //     if mov.is_capture_en_passant() {
+    //         //         ctx.ep += 1;
+    //         //     }
+    //         //     if mov.is_king_castle() || mov.is_queen_castle() {
+    //         //         ctx.castles += 1;
+    //         //     }
+    //         //     if mov.is_promotion() {
+    //         //         ctx.promotions += 1;
+    //         //     }
+    //         // }
+    //         // let to_move = self.to_move();
+    //         // if self.is_in_check(to_move) {
+    //         //     ctx.checks += 1;
+    //         //     // if self.is_mate(to_move) {
+    //         //     //     ctx.checkmates += 1;
+    //         //     // }
+    //         // }
+    //         return;
+    //     }
 
-        //let mut nodes = 0u64;
-        let moves = self.generate_moves();
-        for mov in moves.iter() {
-            self.make_move(*mov);
-            if !self.is_in_check(1 ^ self.to_move()) {
-                self.do_perft(ctx, depth - 1);
-            }
-            self.unmake_move();
-        }
-    }
+    //     //let mut nodes = 0u64;
+    //     let moves = self.generate_moves();
+    //     for mov in moves.iter() {
+    //         self.make_move(*mov);
+    //         if !self.is_in_check(1 ^ self.to_move()) {
+    //             self.do_perft(ctx, depth - 1);
+    //         }
+    //         self.unmake_move();
+    //     }
+    // }
 
     fn is_mate(&mut self, _color: Color) -> bool {
         let moves = self.generate_moves();
@@ -166,11 +124,6 @@ impl MoveGenerator for Board {
             return true;
         }
 
-        // by king?!?
-        if 0 < (bitboard::BB_KING_ATTACKS[target as usize] & self.bb_king(1 ^ color)) {
-            return true;
-        }
-
         let all_diag_attacks = bitboard::diagonal_attacks(target, occupied)
             | bitboard::anti_diagonal_attacks(target, occupied);
         let rank_file_attacks =
@@ -183,6 +136,11 @@ impl MoveGenerator for Board {
 
         // by rooks or queens
         if 0 < rank_file_attacks & (self.bb_rooks(1 ^ color) | self.bb_queens(1 ^ color)) {
+            return true;
+        }
+
+        // by king?!?
+        if 0 < (bitboard::BB_KING_ATTACKS[target as usize] & self.bb_king(1 ^ color)) {
             return true;
         }
 

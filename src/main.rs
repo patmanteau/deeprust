@@ -6,10 +6,12 @@
 extern crate clap;
 //extern crate unicode_segmentation;
 //extern crate bitwise;
+#[macro_use]
 extern crate log;
-//extern crate simple_logging;
+extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
+extern crate num_cpus;
 extern crate quanta;
 extern crate rand;
 extern crate regex;
@@ -26,6 +28,7 @@ pub mod move_generator;
 pub mod moves;
 pub mod piece;
 pub mod position;
+pub mod search;
 pub mod square;
 pub mod uci;
 

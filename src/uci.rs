@@ -3,10 +3,10 @@ use std::io::Write;
 
 use crate::bitboard::{self as bb, BitboardPrimitives};
 use crate::board::*;
-use crate::fen::BoardFen;
-
 use crate::color;
+use crate::fen::BoardFen;
 use crate::move_generator::MoveGenerator;
+use crate::search::Search;
 use crate::square::{Square, SquarePrimitives};
 
 pub struct UCIInterface {
@@ -137,7 +137,7 @@ impl UCIInterface {
             3
         };
 
-        let ctx = MoveGenerator::perft(&mut self.board, depth);
+        let ctx = Board::perft(&mut self.board, depth);
         println!("perft result: {}", ctx);
     }
 

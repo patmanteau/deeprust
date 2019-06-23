@@ -205,8 +205,9 @@ mod tests {
     use super::*;
 
     use crate::color::*;
-    use crate::square;
     use crate::move_generator::MoveGenerator;
+    use crate::search::Search;
+    use crate::square;
     use std::error::Error;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
@@ -377,13 +378,13 @@ mod tests {
                 "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1",
             );
             let mut board = Board::from_fen_str(&fen.clone()).unwrap();
-            let _ctx = MoveGenerator::perft(&mut board, 4);
+            let _ctx = Board::perft(&mut board, 4);
             assert_eq!(fen, board.to_fen_string());
         }
         {
             let board_orig = Board::startpos();
             let mut board = board_orig.clone();
-            let _ctx = MoveGenerator::perft(&mut board, 4);
+            let _ctx = Board::perft(&mut board, 4);
         }
     }
 }
