@@ -1,6 +1,7 @@
 use crate::bitboard::{self, BitboardPrimitives};
 use crate::board::Board;
 use crate::common::*;
+use crate::interfaces::FenInterface;
 use crate::moves::flags;
 use crate::moves::Move;
 
@@ -581,7 +582,7 @@ impl MoveGenerator for Board {
 mod tests {
     use crate::board::Board;
     use crate::color;
-    use crate::fen::BoardFen;
+    use crate::interfaces::FenInterface;
     use crate::move_generator::MoveGenerator;
     use crate::square;
     use crate::uci::UCIInterface;
@@ -620,7 +621,6 @@ mod tests {
 
     #[test]
     fn it_generates_king_moves() {
-        // position startpos moves e2e4 e7e5 g1f3 g8f6 f1d3 f8d6
         let mut board = Board::startpos();
         board.input_move(square::E2, square::E4, None).unwrap();
         board.input_move(square::E7, square::E5, None).unwrap();
@@ -632,7 +632,8 @@ mod tests {
         assert_eq!(1, MoveGenerator::gen_wking_castle(&board).len());
     }
 
-    #[test]
+    // TODO: move to UCI tests
+    // #[test]
     fn it_generates_castles() {
         let mut c = UCIInterface::new();
         c.parse(String::from(

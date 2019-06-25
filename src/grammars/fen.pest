@@ -1,0 +1,28 @@
+Fen = _{ 
+	Placement ~ " " ~ ToMove ~ " " ~ Castling ~ " "
+    ~ EpTarget ~ " " ~ Halfmoves ~ " " ~ Fullmoves
+}
+
+Placement = _{ (Rank ~ "/"){7} ~ Rank }
+Rank = { (NumEmpty? ~ Piece ~ (NumEmpty? ~ Piece)* ~ NumEmpty?) | AllEmpty }
+Piece = { WPiece | BPiece }
+NumEmpty = { '1'..'7' }
+AllEmpty = { "8" }
+WPiece = _{ "P"| "N"| "B"| "R"| "Q"| "K" }
+BPiece = _{ "p"| "n"| "b"| "r"| "q"| "k" }
+
+ToMove = { "w" | "b" }
+
+Castling = ${ "-" | ("K"? ~ "Q"? ~ "k"? ~ "q"?){1, 4} }
+
+EpTarget = { "-" | EpSquare }
+EpSquare = { FileLetter ~ EpRank }
+FileLetter = { 'a'..'h' }
+EpRank = { "3" | "6" }
+
+Halfmoves = @{ Digit ~ Digit* }
+
+Fullmoves = @{ Digit19 ~ Digit* }
+// Digit19 = { '1'..'9' }
+Digit19 = { ASCII_NONZERO_DIGIT }
+Digit = { ASCII_DIGIT }

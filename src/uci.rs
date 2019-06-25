@@ -3,7 +3,7 @@ use std::io::Write;
 
 use crate::board::*;
 use crate::color;
-use crate::fen::BoardFen;
+use crate::interfaces::FenInterface;
 use crate::move_generator::MoveGenerator;
 use crate::search::Search;
 use crate::square::{Square, SquarePrimitives};
@@ -215,7 +215,8 @@ mod tests {
         );
     }
 
-    #[test]
+    // TODO: make full UCI commands
+    // #[test]
     fn it_handles_moves() {
         let mut c = UCIInterface::new();
         let one_move_strs = vec![

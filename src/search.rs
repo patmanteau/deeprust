@@ -305,14 +305,14 @@ impl Search for Board {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fen::BoardFen;
+    use crate::interfaces::FenInterface;
     use std::error::Error;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
     use std::path::Path;
     use std::str::FromStr;
 
-    //#[cfg(feature = "perft_testing")]
+    #[cfg(feature = "perft_testing")]
     #[test]
     fn it_finds_correct_perft_results() {
         let path = Path::new("tests/perft-positions.txt");

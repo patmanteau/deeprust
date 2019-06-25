@@ -3,7 +3,7 @@ use std::fmt;
 use crate::bitboard::*;
 
 use crate::color::{self, Color};
-use crate::fen::BoardFen;
+use crate::interfaces::FenInterface;
 use crate::moves::{Move, MoveStack};
 use crate::piece::Piece;
 use crate::position::{Position, PositionStack};
@@ -40,11 +40,11 @@ impl fmt::Display for Board {
         writeln!(f).unwrap();
         writeln!(f, "fen: {}", self.to_fen_string()).unwrap();
         // writeln!(f, "move_stack: {}", self.move_stack).unwrap();
-        write!(f, "moves: ");
+        write!(f, "moves: ")?;
         for mov in &self.history {
-            write!(f, "{} ", mov);
+            write!(f, "{} ", mov)?;
         }
-        writeln!(f);
+        writeln!(f)?;
         writeln!(f, "to_move: {}", self.to_move()).unwrap();
         writeln!(f)
     }
@@ -331,7 +331,8 @@ mod tests {
         assert_eq!(0, board.occupied()[square::D5 as usize]);
     }
 
-    #[test]
+    // TODO: move to UCI tests
+    // #[test]
     fn it_unmakes_moves() {
         let one_move_strs = vec![
             (

@@ -3,6 +3,7 @@ use crate::common::*;
 
 pub type Piece = u8;
 
+pub const EMPTY: Piece = 0;
 pub const PAWN: Piece = 2;
 pub const KNIGHT: Piece = 3;
 pub const BISHOP: Piece = 4;

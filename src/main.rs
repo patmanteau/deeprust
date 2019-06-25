@@ -2,19 +2,16 @@
 #![feature(test)]
 #![feature(simd_x86_bittest)]
 
-//extern crate indoc;
 extern crate clap;
-//extern crate unicode_segmentation;
-//extern crate bitwise;
 #[macro_use]
 extern crate log;
 extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
+extern crate nom;
 extern crate num_cpus;
 extern crate quanta;
 extern crate rand;
-extern crate regex;
 extern crate test;
 
 pub mod bitboard;
@@ -22,10 +19,9 @@ pub mod board;
 pub mod cli;
 pub mod color;
 pub mod common;
-pub mod fen;
 pub mod move_generator;
-//pub mod move_stack;
 pub mod moves;
+pub mod interfaces;
 pub mod piece;
 pub mod position;
 pub mod search;
