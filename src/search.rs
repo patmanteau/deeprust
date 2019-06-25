@@ -2,24 +2,26 @@ use crate::board::Board;
 use crate::move_generator::MoveGenerator;
 
 use quanta::Clock;
+use rayon::prelude::*;
 
 use std::fmt;
+use std::iter::Sum;
 use std::ops::{Add, AddAssign};
 use std::sync::mpsc::{self, channel};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-#[derive(Default)]
+#[derive(Default, Copy, Clone)]
 pub struct PerftContext {
-    nodes: u128,
-    captures: u128,
-    ep: u128,
-    castles: u128,
-    promotions: u128,
-    checks: u128,
-    disco_checks: u128,
-    double_checks: u128,
-    checkmates: u128,
+    nodes: u64,
+    captures: u64,
+    ep: u64,
+    castles: u64,
+    promotions: u64,
+    checks: u64,
+    disco_checks: u64,
+    double_checks: u64,
+    checkmates: u64,
     elapsed: u64,
 }
 
@@ -37,6 +39,12 @@ impl PerftContext {
             checkmates: 0,
             elapsed: 0,
         }
+    }
+}
+
+impl Sum for PerftContext {
+    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+        iter.fold(PerftContext::new(), |a, b| a + b)
     }
 }
 
@@ -88,177 +96,189 @@ pub trait Search {
     fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32);
 }
 
-enum ThreadPoolMsg {
-    NewJob(Job),
-    Terminate,
-}
+// enum ThreadPoolMsg {
+//     NewJob(Job),
+//     Terminate,
+// }
 
-enum WorkerMsg {
-    PerftFinished { ctx: PerftContext },
-}
+// enum WorkerMsg {
+//     PerftFinished { ctx: PerftContext },
+// }
 
-trait FnBox {
-    fn call_box(self: Box<Self>, tx: mpsc::Sender<WorkerMsg>);
-}
+// trait FnBox {
+//     fn call_box(self: Box<Self>, tx: mpsc::Sender<WorkerMsg>);
+// }
 
-impl<F: FnOnce(mpsc::Sender<WorkerMsg>)> FnBox for F {
-    fn call_box(self: Box<F>, tx: mpsc::Sender<WorkerMsg>) {
-        (*self)(tx);
-    }
-}
+// impl<F: FnOnce(mpsc::Sender<WorkerMsg>)> FnBox for F {
+//     fn call_box(self: Box<F>, tx: mpsc::Sender<WorkerMsg>) {
+//         (*self)(tx);
+//     }
+// }
 
-type Job = Box<dyn FnBox + Send + 'static>;
+// type Job = Box<dyn FnBox + Send + 'static>;
 
-struct ThreadPool {
-    workers: Vec<Worker>,
-    tx: mpsc::Sender<ThreadPoolMsg>,
-    rx: mpsc::Receiver<WorkerMsg>,
-}
+// struct ThreadPool {
+//     workers: Vec<Worker>,
+//     tx: mpsc::Sender<ThreadPoolMsg>,
+//     rx: mpsc::Receiver<WorkerMsg>,
+// }
 
-impl ThreadPool {
-    pub fn new(size: usize) -> ThreadPool {
-        assert!(size > 0);
+// impl ThreadPool {
+//     pub fn new(size: usize) -> ThreadPool {
+//         assert!(size > 0);
 
-        debug!("Creating new thread pool with {} workers", size);
-        let mut workers = Vec::with_capacity(size);
-        let (thr_pool_tx, thr_pool_rx) = channel();
-        let (worker_tx, worker_rx) = channel();
-        let thr_pool_rx = Arc::new(Mutex::new(thr_pool_rx));
+//         debug!("Creating new thread pool with {} workers", size);
+//         let mut workers = Vec::with_capacity(size);
+//         let (thr_pool_tx, thr_pool_rx) = channel();
+//         let (worker_tx, worker_rx) = channel();
+//         let thr_pool_rx = Arc::new(Mutex::new(thr_pool_rx));
 
-        for id in 0..size {
-            workers.push(Worker::new(
-                id,
-                mpsc::Sender::clone(&worker_tx),
-                Arc::clone(&thr_pool_rx),
-            ));
-        }
-        debug!("Created new thread pool");
-        ThreadPool {
-            workers,
-            tx: thr_pool_tx,
-            rx: worker_rx,
-        }
-    }
+//         for id in 0..size {
+//             workers.push(Worker::new(
+//                 id,
+//                 mpsc::Sender::clone(&worker_tx),
+//                 Arc::clone(&thr_pool_rx),
+//             ));
+//         }
+//         debug!("Created new thread pool");
+//         ThreadPool {
+//             workers,
+//             tx: thr_pool_tx,
+//             rx: worker_rx,
+//         }
+//     }
 
-    pub fn execute<F>(&self, f: F)
-    where
-        F: FnOnce(mpsc::Sender<WorkerMsg>) + Send + 'static,
-    {
-        let job = Box::new(f);
-        debug!("Sending new job to workers");
-        self.tx.send(ThreadPoolMsg::NewJob(job)).unwrap();
-    }
+//     pub fn execute<F>(&self, f: F)
+//     where
+//         F: FnOnce(mpsc::Sender<WorkerMsg>) + Send + 'static,
+//     {
+//         let job = Box::new(f);
+//         debug!("Sending new job to workers");
+//         self.tx.send(ThreadPoolMsg::NewJob(job)).unwrap();
+//     }
 
-    pub fn recv(&mut self) -> Result<WorkerMsg, mpsc::RecvError> {
-        self.rx.recv()
-    }
-}
+//     pub fn recv(&mut self) -> Result<WorkerMsg, mpsc::RecvError> {
+//         self.rx.recv()
+//     }
+// }
 
-impl Drop for ThreadPool {
-    fn drop(&mut self) {
-        debug!("Sending terminate message to workers");
+// impl Drop for ThreadPool {
+//     fn drop(&mut self) {
+//         debug!("Sending terminate message to workers");
 
-        for _ in &mut self.workers {
-            self.tx.send(ThreadPoolMsg::Terminate).unwrap();
-        }
+//         for _ in &mut self.workers {
+//             self.tx.send(ThreadPoolMsg::Terminate).unwrap();
+//         }
 
-        debug!("Shutting down workers");
-        for worker in &mut self.workers {
-            debug!("Shutting down worker {}", worker.id);
-            if let Some(thread) = worker.thread.take() {
-                thread.join().unwrap();
-            }
-        }
-    }
-}
+//         debug!("Shutting down workers");
+//         for worker in &mut self.workers {
+//             debug!("Shutting down worker {}", worker.id);
+//             if let Some(thread) = worker.thread.take() {
+//                 thread.join().unwrap();
+//             }
+//         }
+//     }
+// }
 
-struct Worker {
-    id: usize,
-    thread: Option<thread::JoinHandle<()>>,
-}
+// struct Worker {
+//     id: usize,
+//     thread: Option<thread::JoinHandle<()>>,
+// }
 
-impl Worker {
-    fn new(
-        id: usize,
-        tx: mpsc::Sender<WorkerMsg>,
-        rx: Arc<Mutex<mpsc::Receiver<ThreadPoolMsg>>>,
-    ) -> Worker {
-        let thread = thread::spawn(move || {
-            debug!("Worker thread {} started", id);
-            loop {
-                debug!("Worker thread {} waiting", id);
-                let msg = rx.lock().unwrap().recv().unwrap();
+// impl Worker {
+//     fn new(
+//         id: usize,
+//         tx: mpsc::Sender<WorkerMsg>,
+//         rx: Arc<Mutex<mpsc::Receiver<ThreadPoolMsg>>>,
+//     ) -> Worker {
+//         let thread = thread::spawn(move || {
+//             debug!("Worker thread {} started", id);
+//             loop {
+//                 debug!("Worker thread {} waiting", id);
+//                 let msg = rx.lock().unwrap().recv().unwrap();
 
-                match msg {
-                    ThreadPoolMsg::NewJob(job) => {
-                        debug!("Worker thread {} executing job", id);
-                        job.call_box(mpsc::Sender::clone(&tx));
-                    }
-                    ThreadPoolMsg::Terminate => {
-                        debug!("Worker thread {} terminating", id);
-                        break;
-                    }
-                }
-            }
-        });
-        Worker {
-            id,
-            thread: Some(thread),
-        }
-    }
-}
+//                 match msg {
+//                     ThreadPoolMsg::NewJob(job) => {
+//                         debug!("Worker thread {} executing job", id);
+//                         job.call_box(mpsc::Sender::clone(&tx));
+//                     }
+//                     ThreadPoolMsg::Terminate => {
+//                         debug!("Worker thread {} terminating", id);
+//                         break;
+//                     }
+//                 }
+//             }
+//         });
+//         Worker {
+//             id,
+//             thread: Some(thread),
+//         }
+//     }
+// }
 
 impl Search for Board {
     fn perft(&mut self, depth: u32) -> PerftContext {
-        let mut acc_ctx = PerftContext::new();
+        // let mut acc_ctx = PerftContext::new();
 
-        let thread_count = num_cpus::get();
-        // let thread_count = 1;
-        let mut pool = ThreadPool::new(thread_count);
+        // let thread_count = num_cpus::get();
+        // // let thread_count = 1;
+        // let mut pool = ThreadPool::new(thread_count);
+
+        // let clock = Clock::new();
+        // let start = clock.now();
+
+        // let moves = self.generate_moves();
+        // let mut movecount = 0;
+
+        // for mov in moves {
+        //     self.make_move(mov);
+        //     if self.is_in_check(1 ^ self.to_move()) {
+        //         self.unmake_move();
+        //     } else {
+        //         let mut board = self.clone();
+        //         self.unmake_move();
+        //         movecount += 1;
+        //         pool.execute(move |tx| {
+        //             let mut ctx = PerftContext::new();
+        //             board.do_perft(&mut ctx, depth - 1);
+        //             tx.send(WorkerMsg::PerftFinished { ctx }).unwrap();
+        //         });
+        //     }
+        // }
+
+        // for _ in 0..movecount {
+        //     let res = pool.recv().unwrap();
+        //     match res {
+        //         WorkerMsg::PerftFinished { ctx } => acc_ctx += ctx,
+        //     }
+        // }
+
+        // let finish = clock.now();
+        // acc_ctx.elapsed = finish - start;
+        // acc_ctx
+
+
 
         let clock = Clock::new();
         let start = clock.now();
 
         let moves = self.generate_moves();
-        let mut movecount = 0;
-
-        for mov in moves {
-            self.make_move(mov);
-            if self.is_in_check(1 ^ self.to_move()) {
-                self.unmake_move();
+        
+        let mut ctx = moves.par_iter().map(|mov| {
+            let mut board = self.clone();
+            let mut ctx = PerftContext::new();
+            board.make_move(*mov);
+            if board.is_in_check(1 ^ board.to_move()) {
+                board.unmake_move();
             } else {
-                let mut board = self.clone();
-                self.unmake_move();
-                movecount += 1;
-                pool.execute(move |tx| {
-                    let mut ctx = PerftContext::new();
-                    board.do_perft(&mut ctx, depth - 1);
-                    tx.send(WorkerMsg::PerftFinished { ctx }).unwrap();
-                });
+                board.do_perft(&mut ctx, depth - 1);
             }
-        }
-
-        for _ in 0..movecount {
-            let res = pool.recv().unwrap();
-            match res {
-                WorkerMsg::PerftFinished { ctx } => acc_ctx += ctx,
-            }
-        }
-
-        // loop {
-        //     let msg = rx.recv().unwrap();
-        //     match msg {
-        //         WorkerMsg::PerftFinished{id, ctx} => {
-        //             workers[id].join();
-        //         }
-        //     }
-        // }
-
-        // self.do_perft(&mut ctx, depth);
+            ctx
+        }).sum::<PerftContext>();
 
         let finish = clock.now();
-        acc_ctx.elapsed = finish - start;
-        acc_ctx
+        ctx.elapsed = finish - start;
+        ctx
     }
 
     fn do_perft(&mut self, ctx: &mut PerftContext, depth: u32) {

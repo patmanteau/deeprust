@@ -9,9 +9,9 @@ extern crate simple_logging;
 #[macro_use]
 extern crate lazy_static;
 extern crate nom;
-extern crate num_cpus;
 extern crate quanta;
 extern crate rand;
+extern crate rayon;
 extern crate test;
 
 pub mod bitboard;
