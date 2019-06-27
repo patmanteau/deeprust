@@ -3,11 +3,9 @@
 #![feature(simd_x86_bittest)]
 
 extern crate clap;
-#[macro_use]
-extern crate log;
+#[macro_use] extern crate log;
 extern crate simple_logging;
-#[macro_use]
-extern crate lazy_static;
+#[macro_use] extern crate lazy_static;
 extern crate nom;
 extern crate quanta;
 extern crate rand;

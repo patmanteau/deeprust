@@ -12,15 +12,40 @@ pub const QUEEN: Piece = 6;
 pub const KING: Piece = 7;
 
 pub trait PiecePrimitives {
-    fn new(piece: u8, color: u8) -> Piece;
+    fn new(piece: u8, color: u8) -> Self;
+    fn empty() -> Self;
+    fn from_char(c: char) -> Self;
     fn to_san_string(self) -> &'static str;
     fn code(self) -> Piece;
     fn color(self) -> color::Color;
 }
 
 impl PiecePrimitives for Piece {
-    fn new(piece: u8, color: u8) -> Piece {
+    fn new(piece: u8, color: u8) -> Self {
         ((color & 0x1) << 3) | (piece & 0x7)
+    }
+
+    fn empty() -> Self {
+        Self::new(EMPTY, color::WHITE)
+    }
+
+    fn from_char(c: char) -> Self {
+        let (piece_code, color) = match c {
+            'P' => (PAWN, color::WHITE),
+            'N' => (KNIGHT, color::WHITE),
+            'B' => (BISHOP, color::WHITE),
+            'R' => (ROOK, color::WHITE),
+            'Q' => (QUEEN, color::WHITE),
+            'K' => (KING, color::WHITE),
+            'p' => (PAWN, color::BLACK),
+            'n' => (KNIGHT, color::BLACK),
+            'b' => (BISHOP, color::BLACK),
+            'r' => (ROOK, color::BLACK),
+            'q' => (QUEEN, color::BLACK),
+            'k' => (KING, color::BLACK),
+            _ => unreachable!("Internal error: unknown piece code {}", c),
+        };
+        Self::new(piece_code, color)
     }
 
     fn to_san_string(self) -> &'static str {

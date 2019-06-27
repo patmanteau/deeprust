@@ -1,11 +1,10 @@
-use crate::color::{self, Color};
+use crate::color::{self, Color, ColorPrimitives};
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{Square, SquarePrimitives};
 
 use crate::board::Board;
 use crate::color::*;
 use crate::common::BitTwiddling;
-use crate::piece::*;
 use crate::position::Position;
 
 //use regex::Regex;
@@ -18,6 +17,7 @@ use std::string::String;
 
 use nom::{
     IResult,
+    dbg_dmp,
     error::{ErrorKind, ParseError, VerboseError, convert_error},
 };
 
@@ -34,7 +34,11 @@ use nom::{
     combinator::{
         map, map_res, opt, peek, verify,
     },
-    multi::count,
+    multi::{
+        count,
+        many1,
+        separated_nonempty_list,
+    },
     sequence::{
         preceded, terminated, tuple,
     },
@@ -67,7 +71,7 @@ pub struct ParsedFen {
     pub fullmoves: u32,
 }
 
-fn fen(input: &str) -> IResult <&str, ParsedFen> {
+pub fn fen(input: &str) -> IResult <&str, ParsedFen> {
     let result = tuple((
         placement,
         multispace1,
@@ -81,7 +85,7 @@ fn fen(input: &str) -> IResult <&str, ParsedFen> {
         multispace1,
         fullmoves,
     ))(input);
-    
+
     match result {
         Ok(tup) => {
             let (
@@ -94,6 +98,9 @@ fn fen(input: &str) -> IResult <&str, ParsedFen> {
                     _, fullmoves
                 )
             ) = tup;
+            if placement.len() != 64 {
+                panic!("Invalid FEN string, found {} squares where there should be 64", placement.len());
+            }
             Ok((rest, ParsedFen {
                 placement,
                 to_move, 
@@ -108,71 +115,49 @@ fn fen(input: &str) -> IResult <&str, ParsedFen> {
 }
 
 fn placement(input: &str) -> IResult <&str, Vec<u8>> {
-    let res = count(rank, 8)(input);
-    match res {
-        Ok((rest, vect)) => { 
-            Ok((
-                rest, 
-                vect.into_iter()
-                    .rev()
-                    .flatten()
-                    .collect::<Vec<u8>>()
-            )) 
-        },
-        Err(e) => Err(e),
-    }
-}
-
-fn rank_str_to_piece_vec(line: &str) -> Result<Vec<Piece>, &'static str> {
-    let mut res: Vec<u8> = vec![piece::EMPTY; 8];
-    let mut cursor = 0_usize;
-    for c in line.chars() {
-        if cursor > 8 {
-            break;
-        }
-        if c.is_digit(10) {
-            let skip = c.to_digit(10).unwrap() as usize;
-            cursor += skip;
-        } else {
-            let (piece_code, color) = match c {
-                'P' => (piece::PAWN, color::WHITE),
-                'N' => (piece::KNIGHT, color::WHITE),
-                'B' => (piece::BISHOP, color::WHITE),
-                'R' => (piece::ROOK, color::WHITE),
-                'Q' => (piece::QUEEN, color::WHITE),
-                'K' => (piece::KING, color::WHITE),
-                'p' => (piece::PAWN, color::BLACK),
-                'n' => (piece::KNIGHT, color::BLACK),
-                'b' => (piece::BISHOP, color::BLACK),
-                'r' => (piece::ROOK, color::BLACK),
-                'q' => (piece::QUEEN, color::BLACK),
-                'k' => (piece::KING, color::BLACK),
-                _ => unreachable!("Something has gone very wrong with the FEN parser"),
-            };
-            res[cursor] = Piece::new(piece_code, color);
-            cursor += 1;
-        }
-    }
-    Ok(res)
-}
-
-fn rank(input: &str) -> IResult<&str, Vec<u8>> {
-    map_res(
-        terminated(
-            is_a("12345678KkQqRrBbNnPp"),
-            opt(tag("/")),
+    map(
+        separated_nonempty_list(
+            tag("/"),
+            rank,
         ),
-        rank_str_to_piece_vec,
+        |l| l.into_iter().rev().flatten().collect::<Vec<u8>>(),
     )(input)
 }
 
+fn rank(input: &str) -> IResult<&str, Vec<u8>> {
+    map(
+        many1(
+            alt((
+                empty_square,
+                occupied_square,
+            ))
+        ),
+        |l| l.into_iter().flatten().collect(),
+    )(input)
+}
+
+fn occupied_square(input: &str) -> IResult<&str, Vec<Piece>> {
+    many1(
+        map(
+            one_of("KkQqRrBbNnPp"),
+            PiecePrimitives::from_char
+        )
+    )(input)
+}
+
+fn empty_square(input: &str) -> IResult<&str, Vec<Piece>> {
+    map(
+        one_of("12345678"),
+        |n| vec![Piece::empty(); n.to_digit(10).unwrap() as usize],
+    )
+    (input)
+}
+
 fn to_move(input: &str) -> IResult<&str, Color> {
-    let (rest, c) = one_of("bw")(input)?;
-    match c {
-        'b' => Ok((rest, color::BLACK)),
-        'w' => Ok((rest, color::WHITE)),
-        _ => unreachable!("Internal parser error: to_move")
-    }
+    map(
+        one_of("bw"),
+        ColorPrimitives::from_char,
+    )(input)
 }
 
 fn castling(input: &str) -> IResult<&str, [u32; 2]> {
