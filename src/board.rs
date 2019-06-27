@@ -325,7 +325,7 @@ mod tests {
             assert_eq!(last_move.dest(), square::D6);
         }
 
-        let mut board = Board::from_fen_str("8/3p4/8/4P/8/8/8/8 b - - 0 1").unwrap();
+        let mut board = Board::from_fen_str("8/3p4/8/4P3/8/8/8/8 b - - 0 1").unwrap();
         board.input_move(square::D7, square::D5, None).unwrap();
         board.input_move(square::E5, square::D6, None).unwrap();
         assert_eq!(0, board.occupied()[square::D5 as usize]);

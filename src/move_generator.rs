@@ -612,7 +612,7 @@ mod tests {
         assert_eq!(4, MoveGenerator::gen_white_pawn_pushes(&board).len());
         // assert_eq!(11, MoveGenerator::from_board(&board).len());
 
-        board = Board::from_fen_str("1k6/3p4/8/4P/8/8/8/6K1 b - - 0 1").unwrap();
+        board = Board::from_fen_str("1k6/3p4/8/4P3/8/8/8/6K1 b - - 0 1").unwrap();
         board.input_move(square::D7, square::D5, None).unwrap();
         assert_eq!(1, MoveGenerator::gen_white_pawn_captures(&board).len());
         assert_eq!(1, MoveGenerator::gen_white_pawn_pushes(&board).len());
