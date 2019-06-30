@@ -160,42 +160,34 @@ impl Position {
 
     // don't actually return flipped boards for now
     pub fn bb_own(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][self.to_move as usize]
         self.bb[0][color as usize]
     }
 
     pub fn bb_opponent(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][1 ^ self.to_move as usize]
         self.bb[0][(1 ^ color) as usize]
     }
 
     pub fn bb_pawns(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::PAWN as usize] & self.bb_own(color)
     }
 
     pub fn bb_knights(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
     }
 
     pub fn bb_bishops(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
     }
 
     pub fn bb_rooks(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::ROOK as usize] & self.bb_own(color)
     }
 
     pub fn bb_queens(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
     }
 
     pub fn bb_king(&self, color: Color) -> Bitboard {
-        // self.bb[self.to_move as usize][piece::PAWN as usize]
         self.bb[0][piece::KING as usize] & self.bb_own(color)
     }
 
@@ -365,18 +357,18 @@ impl Position {
 
         // clear castling rights on rook move
         if piece::ROOK == orig_piece {
-            if 0 < BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_A {
+            if BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_A > 0 {
                 self.castling[self.to_move as usize].clear_bit(1);
-            } else if 0 < BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_H {
+            } else if BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_H > 0 {
                 self.castling[self.to_move as usize].clear_bit(0);
             }
         }
 
         // clear castling rights on rook capture at home square
         if dest_piece == piece::ROOK {
-            if 0 < BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_A {
+            if BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_A > 0 {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
-            } else if 0 < BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_H {
+            } else if BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_H > 0{
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
             }
         }
@@ -484,15 +476,15 @@ mod tests {
                 for piece in 2..8 {
                     position.set_piece(piece, color, square);
                     assert!(position.check_piece(piece, color, square));
-                    assert!(0 != position.bb[0][color as usize] & bb::BB_SQUARES[square as usize]);
-                    assert!(0 != position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
+                    assert!(position.bb[0][color as usize] & bb::BB_SQUARES[square as usize] != 0);
+                    assert!(position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize] != 0);
                     assert!(
-                        0 != position.bb[1][color as usize]
-                            & bb::BB_SQUARES[(square ^ 56) as usize]
+                        position.bb[1][color as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize] != 0
                     );
                     assert!(
-                        0 != position.bb[1][piece as usize]
-                            & bb::BB_SQUARES[(square ^ 56) as usize]
+                        position.bb[1][piece as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize] != 0
                     );
                     assert_eq!(piece, position.occupied[square as usize].code());
                     assert_eq!(color, position.occupied[square as usize].color());
@@ -519,15 +511,15 @@ mod tests {
                     let mut position = Position::new();
                     position.set_piece(piece, color, square);
                     assert!(position.check_piece(piece, color, square));
-                    assert!(0 != position.bb[0][color as usize] & bb::BB_SQUARES[square as usize]);
-                    assert!(0 != position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize]);
+                    assert!(position.bb[0][color as usize] & bb::BB_SQUARES[square as usize] != 0);
+                    assert!(position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize] != 0);
                     assert!(
-                        0 != position.bb[1][color as usize]
-                            & bb::BB_SQUARES[(square ^ 56) as usize]
+                        position.bb[1][color as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize] != 0
                     );
                     assert!(
-                        0 != position.bb[1][piece as usize]
-                            & bb::BB_SQUARES[(square ^ 56) as usize]
+                        position.bb[1][piece as usize]
+                            & bb::BB_SQUARES[(square ^ 56) as usize] != 0
                     );
                     assert_eq!(piece, position.occupied[square as usize].code());
                     assert_eq!(color, position.occupied[square as usize].color());

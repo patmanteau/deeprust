@@ -103,6 +103,7 @@ impl Uci {
                 "quit" | "q" => self.run = false,
                 unknown => eprintln!("Unknown command: {}", unknown),
             }
+            io::stdout().flush().unwrap();
         }
     }
 

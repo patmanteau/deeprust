@@ -38,14 +38,13 @@ impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.current()).unwrap();
         writeln!(f).unwrap();
-        writeln!(f, "fen: {}", self.to_fen_string()).unwrap();
-        // writeln!(f, "move_stack: {}", self.move_stack).unwrap();
+        writeln!(f, "fen: {}", self.current().to_fen_string()).unwrap();
         write!(f, "moves: ")?;
         for mov in &self.history {
             write!(f, "{} ", mov)?;
         }
         writeln!(f)?;
-        writeln!(f, "to_move: {}", self.to_move()).unwrap();
+        writeln!(f, "to_move: {}", self.current().to_move()).unwrap();
         writeln!(f)
     }
 }
@@ -71,7 +70,10 @@ impl Board {
     }
 
     pub fn startpos() -> Board {
-        Self::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
+        let mut b = Self::new();
+        b.set_position(&Position::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap());
+        b
+        // Self::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
     }
 
     pub fn set_position(&mut self, position: &Position) {
@@ -83,69 +85,7 @@ impl Board {
     }
 
     pub fn history(&self) -> &MoveStack {
-        //!self.move_stack.is_empty()
         &self.history
-    }
-
-    // don't actually return flipped boards for now
-    pub fn bb_own(&self, color: Color) -> Bitboard {
-        self.current().bb_own(color)
-    }
-
-    pub fn bb_opponent(&self, color: Color) -> Bitboard {
-        self.current().bb_opponent(color)
-    }
-
-    pub fn bb_pawns(&self, color: Color) -> Bitboard {
-        self.current().bb_pawns(color)
-    }
-
-    pub fn bb_knights(&self, color: Color) -> Bitboard {
-        self.current().bb_knights(color)
-    }
-
-    pub fn bb_bishops(&self, color: Color) -> Bitboard {
-        self.current().bb_bishops(color)
-    }
-
-    pub fn bb_rooks(&self, color: Color) -> Bitboard {
-        self.current().bb_rooks(color)
-    }
-
-    pub fn bb_queens(&self, color: Color) -> Bitboard {
-        self.current().bb_queens(color)
-    }
-
-    pub fn bb_king(&self, color: Color) -> Bitboard {
-        self.current().bb_king(color)
-    }
-
-    pub fn bb_empty(&self) -> Bitboard {
-        !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE))
-    }
-
-    pub fn to_move(&self) -> Color {
-        self.current().to_move()
-    }
-
-    pub fn castling(&self) -> [u32; 2] {
-        self.current().castling()
-    }
-
-    pub fn en_passant(&self) -> Option<[Square; 2]> {
-        self.current().en_passant()
-    }
-
-    pub fn occupied(&self) -> &[Piece; 64] {
-        &self.current().occupied()
-    }
-
-    pub fn halfmoves(&self) -> u32 {
-        self.current().halfmoves()
-    }
-
-    pub fn fullmoves(&self) -> u32 {
-        self.current().fullmoves()
     }
 
     pub fn make_move(&mut self, mov: Move) {
@@ -199,14 +139,6 @@ impl Board {
     pub fn panic_dump(&self) {
         error!("{}", self);
     }
-
-    // pub fn last_move(&self) -> Option<Move> {
-    //     if self.move_stack.is_empty() {
-    //         None
-    //     } else {
-    //         Some(self.move_stack[self.move_stack.len() - 1])
-    //     }
-    // }
 }
 
 #[cfg(test)]
@@ -224,30 +156,31 @@ mod tests {
     #[test]
     fn it_sets_correct_startpos() {
         let b = Board::startpos();
+        let pos = b.current();
 
         // color boards
-        assert_eq!(0xffff, b.bb_own(WHITE));
-        assert_eq!(0xffff << (6 * 8), b.bb_opponent(WHITE));
+        assert_eq!(pos.bb_own(WHITE), 0xffff_u64);
+        assert_eq!(pos.bb_opponent(WHITE), 0xffff << (6 * 8));
 
         // pawn boards
-        assert_eq!(0xff << 8, b.bb_pawns(WHITE));
-        assert_eq!(0xff << (6 * 8), b.bb_pawns(BLACK));
+        assert_eq!(pos.bb_pawns(WHITE), 0xff << 8);
+        assert_eq!(pos.bb_pawns(BLACK), 0xff << (6 * 8));
 
         // rook boards
-        assert_eq!(0x81, b.bb_rooks(WHITE));
-        assert_eq!(0x81 << (7 * 8), b.bb_rooks(BLACK));
+        assert_eq!(pos.bb_rooks(WHITE), 0x81);
+        assert_eq!(pos.bb_rooks(BLACK), 0x81 << (7 * 8));
 
         // bishop boards
-        assert_eq!(0x24, b.bb_bishops(WHITE));
-        assert_eq!(0x24 << (7 * 8), b.bb_bishops(BLACK));
+        assert_eq!(pos.bb_bishops(WHITE), 0x24);
+        assert_eq!(pos.bb_bishops(BLACK), 0x24 << (7 * 8));
 
         // queen boards
-        assert_eq!(0x8, b.bb_queens(WHITE));
-        assert_eq!(0x8 << (7 * 8), b.bb_queens(BLACK));
+        assert_eq!(pos.bb_queens(WHITE), 0x8);
+        assert_eq!(pos.bb_queens(BLACK), 0x8 << (7 * 8));
 
         // king boards
-        assert_eq!(0x10, b.bb_king(WHITE));
-        assert_eq!(0x10 << (7 * 8), b.bb_king(BLACK));
+        assert_eq!(pos.bb_king(WHITE), 0x10);
+        assert_eq!(pos.bb_king(BLACK), 0x10 << (7 * 8));
 
         assert!(b.history().is_empty());
     }
@@ -319,7 +252,7 @@ mod tests {
             assert_eq!(0, board.history().len());
             board.input_move(square::D7, square::D6, None).unwrap();
             assert_eq!(1, board.history().len());
-            assert_eq!(None, board.en_passant());
+            assert_eq!(None, board.current().en_passant());
             let last_move = board.history().last().unwrap();
             assert_eq!(last_move.orig(), square::D7);
             assert_eq!(last_move.dest(), square::D6);
@@ -328,7 +261,7 @@ mod tests {
         let mut board = Board::from_fen_str("8/3p4/8/4P3/8/8/8/8 b - - 0 1").unwrap();
         board.input_move(square::D7, square::D5, None).unwrap();
         board.input_move(square::E5, square::D6, None).unwrap();
-        assert_eq!(0, board.occupied()[square::D5 as usize]);
+        assert_eq!(0, board.current().occupied()[square::D5 as usize]);
     }
 
     // TODO: move to UCI tests

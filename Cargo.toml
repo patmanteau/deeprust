@@ -8,9 +8,6 @@ edition = "2018"
 name = "deeprust"
 path = "src/main.rs"
 
-[dev-dependencies]
-criterion = "0.2.11"
-
 [dependencies]
 log = "0.4.6"
 simple-logging = "2"

@@ -268,7 +268,7 @@ impl Search for Board {
             let mut board = self.clone();
             let mut ctx = PerftContext::new();
             board.make_move(*mov);
-            if board.is_in_check(1 ^ board.to_move()) {
+            if board.is_in_check(1 ^ board.current().to_move()) {
                 board.unmake_move();
             } else {
                 board.do_perft(&mut ctx, depth - 1);
@@ -313,7 +313,7 @@ impl Search for Board {
         let moves = self.generate_moves();
         for mov in moves.iter() {
             self.make_move(*mov);
-            if !self.is_in_check(1 ^ self.to_move()) {
+            if !self.is_in_check(1 ^ self.current().to_move()) {
                 self.do_perft(ctx, depth - 1);
             }
             self.unmake_move();
@@ -357,7 +357,7 @@ mod tests {
                 let fen_str = parts[0];
                 let perft_parts: Vec<&str> = parts[1].split_whitespace().collect();
                 let perft_depth= u32::from_str(perft_parts[0]).unwrap();
-                let perft_nodes = u128::from_str(perft_parts[1]).unwrap();
+                let perft_nodes = u64::from_str(perft_parts[1]).unwrap();
                 let mut b = Board::from_fen_str(&fen_str).unwrap();
 
                 eprintln!("Running perft {} on '{}'", perft_depth, fen_str);

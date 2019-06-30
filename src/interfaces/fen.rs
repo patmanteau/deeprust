@@ -2,6 +2,7 @@ use crate::color::{self, Color, ColorPrimitives};
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{Square, SquarePrimitives};
 
+use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::color::*;
 use crate::common::BitTwiddling;
@@ -46,21 +47,6 @@ use nom::{
 
 use std::io::{self, Write};
 
-//type IResult<I, O, E = (I, ErrorKind)> = Result<(I, O), Err<E>>;
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Needed {
-  Unknown,
-  Size(u32)
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Err<E> {
-    //Incomplete(Needed),
-    Error(E),
-    Failure(E)
-}
-
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ParsedFen {
     pub placement: Vec<Piece>,
@@ -99,7 +85,7 @@ pub fn fen(input: &str) -> IResult <&str, ParsedFen> {
                 )
             ) = tup;
             if placement.len() != 64 {
-                panic!("Invalid FEN string, found {} squares where there should be 64", placement.len());
+                panic!("Invalid FEN string, found {} squares when there should be 64", placement.len());
             }
             Ok((rest, ParsedFen {
                 placement,
@@ -203,8 +189,7 @@ fn ep_target(input: &str) -> IResult<&str, Option<Square>> {
     if ep == "-" {
         Ok((rest, None))
     } else {
-        let sq_res = Square::from_san_string(ep);
-        match sq_res {
+        match Square::from_san_string(ep) {
             Ok(sq) => Ok((rest, Some(sq))),
             Err(e) => unreachable!("Error parsing EP square"),
         }
@@ -229,17 +214,13 @@ pub fn parse(input: &str) -> IResult<&str, ParsedFen> {
     fen(input)
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+type NomError<I> = (I, nom::error::ErrorKind);
+
+#[derive(Debug, Clone)]
 pub enum FenParseError {
     Empty,
     Invalid,
-    InvalidPlacement,
-    InvalidToMove,
-    InvalidCastling,
-    InvalidEnPassant,
-    InvalidHalfmoves,
-    InvalidFullmoves,
-    InvalidMove,
+    // ParserError(Box<nom::error::ParseError>),
 }
 
 impl fmt::Display for FenParseError {
@@ -248,7 +229,22 @@ impl fmt::Display for FenParseError {
     }
 }
 
-impl Error for FenParseError {}
+// impl From<NomError<&str>> for FenParseError<NomError<&str>> {
+//     fn from (err: NomError<&str>) -> FenParseError<NomError<&str>> {
+//         FenParseError::ParserError{ err }
+//     }
+// }
+
+// // }
+
+// // impl<T> From<NomError<T>> for FenParseError<T> {
+// //     fn from (err: NomError<T>) -> FenParseError<NomError<T>> {
+// //         FenParseError::ParserError{ err }
+// //     }
+
+// // }
+
+// impl Error for FenParseError {}
 
 pub trait FenInterface<T=Self> { 
     type Err;
@@ -259,7 +255,7 @@ pub trait FenInterface<T=Self> {
 impl FenInterface for Position {
     type Err = FenParseError;
 
-    fn from_fen_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_fen_str(s: &str) -> Result<Self, FenParseError> {
         if s.is_empty() {
             return Err(FenParseError::Empty);
         }
@@ -275,7 +271,7 @@ impl FenInterface for Position {
 
         // position
         let mut position = Self {
-            bb: [[0_u64; 8]; 2],
+            bb: [[Bitboard::from(0_u64); 8]; 2],
             occupied: [piece::EMPTY; 64],
             to_move: result.to_move, //color::WHITE,
             castling: result.castling, //[0_u32; 2],
@@ -295,20 +291,6 @@ impl FenInterface for Position {
         }
 
         Ok(position)
-
-        // board.set_position(&position);
-
-        // if let Some(move_token) = fen_iter.next() {
-        //     if move_token == "moves" {
-        //         for mov in fen_iter {
-        //             match board.input_san_move(mov) {
-        //                 Ok(_) => continue,
-        //                 Err(_) => return Err(FenParseError::InvalidMove),
-        //             }
-        //         }
-        //     }
-        // }
-        // Ok(board)
     }
 
     fn to_fen_string(&self) -> String {
@@ -391,7 +373,13 @@ impl FenInterface for Position {
 impl FenInterface for Board {
     type Err = FenParseError;
 
-    // fn from_fen_str(s: &str) -> Result<Board, Self::Err> {
+    // fn from_fen_str(s: &str) -> Result<Self, Self::Err> {
+    //     Position::from_fen_str(s).and_then(|pos| {
+    //         let b = Board::new();
+    //         b.set_position(&pos);
+    //         Ok(b)
+    //     }).or_else(|err| Err(err));
+    // }
     //     if s.is_empty() {
     //         return Err(FenParseError::Empty);
     //     }
@@ -540,7 +528,7 @@ impl FenInterface for Board {
         for y in (0..8).rev() {
             let mut emptycount: u8 = 0;
             for x in 0..8 {
-                if 0 == self.occupied()[Square::from_coords(x, y) as usize] {
+                if 0 == self.current().occupied()[Square::from_coords(x, y) as usize] {
                     emptycount += 1;
                 } else {
                     if emptycount > 0 {
@@ -548,7 +536,7 @@ impl FenInterface for Board {
                         emptycount = 0;
                     };
                     fen_string.push_str(
-                        self.occupied()[Square::from_coords(x, y) as usize].to_san_string(),
+                        self.current().occupied()[Square::from_coords(x, y) as usize].to_san_string(),
                     );
                 }
             }
@@ -563,7 +551,7 @@ impl FenInterface for Board {
 
         // To move
         fen_string.push(' ');
-        let to_move = match self.to_move() {
+        let to_move = match self.current().to_move() {
             WHITE => 'w',
             BLACK => 'b',
             _ => 'w',
@@ -572,26 +560,26 @@ impl FenInterface for Board {
 
         // Castling rights
         fen_string.push(' ');
-        if self.castling() == [0, 0] {
+        if self.current().castling() == [0, 0] {
             fen_string.push('-');
         } else {
-            if 0 != self.castling()[WHITE as usize].extract_bits(0, 1) {
+            if 0 != self.current().castling()[WHITE as usize].extract_bits(0, 1) {
                 fen_string.push('K');
             }
-            if 0 != self.castling()[WHITE as usize].extract_bits(1, 1) {
+            if 0 != self.current().castling()[WHITE as usize].extract_bits(1, 1) {
                 fen_string.push('Q');
             }
-            if 0 != self.castling()[BLACK as usize].extract_bits(0, 1) {
+            if 0 != self.current().castling()[BLACK as usize].extract_bits(0, 1) {
                 fen_string.push('k');
             }
-            if 0 != self.castling()[BLACK as usize].extract_bits(1, 1) {
+            if 0 != self.current().castling()[BLACK as usize].extract_bits(1, 1) {
                 fen_string.push('q');
             }
         }
 
         // en passant
         fen_string.push(' ');
-        if let Some(eps) = self.en_passant() {
+        if let Some(eps) = self.current().en_passant() {
             let san = eps[0].to_san_string();
             fen_string.push_str(&san)
         } else {
@@ -600,11 +588,11 @@ impl FenInterface for Board {
 
         // Halfmoves
         fen_string.push(' ');
-        fen_string.push_str(&self.halfmoves().to_string());
+        fen_string.push_str(&self.current().halfmoves().to_string());
 
         // Fullmoves
         fen_string.push(' ');
-        fen_string.push_str(&self.fullmoves().to_string());
+        fen_string.push_str(&self.current().fullmoves().to_string());
 
         fen_string
     }
