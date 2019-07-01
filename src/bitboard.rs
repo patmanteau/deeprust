@@ -169,14 +169,14 @@ pub const BB_NOT_RANK_12: Bitboard = !BB_RANK_2 & !BB_RANK_1;
 pub const BB_NOT_RANK_78: Bitboard = !BB_RANK_7 & !BB_RANK_8;
 
 // TODO: Pawn attack and push tables
-#[rustfmt::skip] pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
-#[rustfmt::skip] pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
-#[rustfmt::skip] pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
-#[rustfmt::skip] pub fn south_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) >> 7 }
-#[rustfmt::skip] pub fn south_one(bb: Bitboard) -> Bitboard        { bb >> 8 }
-#[rustfmt::skip] pub fn south_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) >> 9 }
-#[rustfmt::skip] pub fn west_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_A) >> 1 }
-#[rustfmt::skip] pub fn north_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) << 7 }
+#[rustfmt::skip] #[inline] pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
+#[rustfmt::skip] #[inline] pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
+#[rustfmt::skip] #[inline] pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
+#[rustfmt::skip] #[inline] pub fn south_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) >> 7 }
+#[rustfmt::skip] #[inline] pub fn south_one(bb: Bitboard) -> Bitboard        { bb >> 8 }
+#[rustfmt::skip] #[inline] pub fn south_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) >> 9 }
+#[rustfmt::skip] #[inline] pub fn west_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_A) >> 1 }
+#[rustfmt::skip] #[inline] pub fn north_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) << 7 }
 
 /// see https://chessprogramming.org/Flipping_Mirroring_and_Rotating
 pub fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
@@ -435,6 +435,7 @@ lazy_static! {
 //     anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
 // }
 
+#[inline]
 pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
     //let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
     //let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
@@ -453,6 +454,7 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 // }
 
 // See https://www.chessprogramming.org/Hyperbola_Quintessence
+#[inline]
 pub fn diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     let mut forward = occupied & BB_DIAG_MASK_EX[square as usize];
     let mut reverse = forward.swap_bytes();
@@ -462,6 +464,7 @@ pub fn diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     forward & BB_DIAG_MASK_EX[square as usize]
 }
 
+#[inline]
 pub fn anti_diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     let mut forward = occupied & BB_ANTI_DIAG_MASK_EX[square as usize];
     let mut reverse = forward.swap_bytes();
@@ -471,6 +474,7 @@ pub fn anti_diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     forward & BB_ANTI_DIAG_MASK_EX[square as usize]
 }
 
+#[inline]
 pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     let mut forward = occupied & BB_FILE_MASK_EX[square as usize];
     let mut reverse = forward.swap_bytes();

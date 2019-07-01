@@ -14,32 +14,39 @@ pub trait BitTwiddling<T> {
 macro_rules! twiddle_impl {
     ($T:ty, $ARRIDENT:ident) => {
         impl BitTwiddling<$T> for $T {
+            #[inline]
             fn bit_at(pos: u32) -> $T {
                 //1 << pos
                 $ARRIDENT[pos as usize]
             }
 
+            #[inline]
             fn test_bit(&self, pos: u32) -> bool {
                 //self & Self::bit_at(pos) > 0
                 unsafe { return 0 < _bittest64(&(*self as i64), pos as i64) }
             }
 
+            #[inline]
             fn set_bit(&mut self, pos: u32) {
                 *self |= Self::bit_at(pos);
             }
 
+            #[inline]
             fn flip_bit(&mut self, pos: u32) {
                 *self ^= Self::bit_at(pos);
             }
 
+            #[inline]
             fn clear_bit(&mut self, pos: u32) {
                 *self &= !Self::bit_at(pos);
             }
 
+            #[inline]
             fn extract_bits(&self, pos: u32, len: u32) -> Self {
                 unsafe { _bextr_u64(*self as u64, pos, len) as Self }
             }
 
+            #[inline]
             fn clear_lsb(&mut self) {
                 unsafe {
                     *self = _blsr_u64(*self as u64) as Self;

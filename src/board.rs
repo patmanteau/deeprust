@@ -78,18 +78,22 @@ impl Board {
         // Self::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
     }
 
+    #[inline]
     pub fn set_position(&mut self, position: &Position) {
         self.positions[self.pcursor] = *position;
     }
 
+    #[inline]
     pub fn bb(&self) -> &[[Bitboard; 8]; 2] {
         &self.current().bb()
     }
 
+    #[inline]
     pub fn history(&self) -> &MoveStack {
         &self.history
     }
 
+    #[inline]
     pub fn make_move(&mut self, mov: Move) {
         debug_assert!(self.pcursor + 1 < PSTACK_SIZE);
         //self.positions[self.pcursor + 1] = self.current().clone();
@@ -99,6 +103,7 @@ impl Board {
         self.pcursor += 1;
     }
 
+    #[inline]
     pub fn unmake_move(&mut self) {
         debug_assert!(self.pcursor > 0);
         self.history.pop();

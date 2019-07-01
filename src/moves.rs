@@ -60,10 +60,12 @@ pub mod flags {
 
 impl Move {
     /// Constructs a new Move
+    #[inline]
     pub fn new(orig: Square, dest: Square, flags: u16) -> Self {
         Move((((orig as u16) & 0x3f) << 10) | ((dest as u16) & 0x3f) | ((flags & 0xf) << 6))
     }
 
+    #[inline]
     pub fn make_flags(
         is_capture: bool,
         is_promotion: bool,
@@ -86,6 +88,7 @@ impl Move {
         self.0 |= to & 0x3f;
     }
 
+    #[inline]
     pub fn with_flags(self, flags: u16) -> Move {
         Move((self.0 & 0b1111_1100_0011_1111) | (flags << 6))
     }
@@ -126,30 +129,37 @@ impl Move {
         self.0.test_bit(7)
     }
 
+    #[inline]
     pub fn is_quiet(self) -> bool {
         flags::MOV_QUIET == self.0.extract_bits(6, 4)
     }
 
+    #[inline]
     pub fn is_capture(self) -> bool {
         self.0.test_bit(8)
     }
 
+    #[inline]
     pub fn is_capture_en_passant(self) -> bool {
         flags::MOV_CAPTURE_EP == self.0.extract_bits(6, 4)
     }
 
+    #[inline]
     pub fn is_double_pawn_push(self) -> bool {
         flags::MOV_DPP == self.0.extract_bits(6, 4)
     }
 
+    #[inline]
     pub fn is_promotion(self) -> bool {
         self.0.test_bit(9)
     }
 
+    #[inline]
     pub fn is_king_castle(self) -> bool {
         flags::MOV_K_CASTLE == self.0.extract_bits(6, 4)
     }
 
+    #[inline]
     pub fn is_queen_castle(self) -> bool {
         flags::MOV_Q_CASTLE == self.0.extract_bits(6, 4)
     }

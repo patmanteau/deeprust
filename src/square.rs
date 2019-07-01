@@ -13,6 +13,7 @@ pub trait SquarePrimitives<T> {
 }
 
 impl SquarePrimitives<Square> for Square {
+    #[inline]
     fn from_coords(x: u32, y: u32) -> Square {
         ((y << 3) + x) as Square
     }
@@ -55,6 +56,7 @@ impl SquarePrimitives<Square> for Square {
         san
     }
 
+    #[inline]
     fn flipped(self) -> Square {
         self ^ 56
     }

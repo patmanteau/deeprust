@@ -154,71 +154,88 @@ impl Position {
         true
     }
 
+    #[inline]
     pub fn bb(&self) -> &[[Bitboard; 8]; 2] {
         &self.bb
     }
 
     // don't actually return flipped boards for now
+    #[inline]
     pub fn bb_own(&self, color: Color) -> Bitboard {
         self.bb[0][color as usize]
     }
 
+    #[inline]
     pub fn bb_opponent(&self, color: Color) -> Bitboard {
         self.bb[0][(1 ^ color) as usize]
     }
 
+    #[inline]
     pub fn bb_pawns(&self, color: Color) -> Bitboard {
         self.bb[0][piece::PAWN as usize] & self.bb_own(color)
     }
 
+    #[inline]
     pub fn bb_knights(&self, color: Color) -> Bitboard {
         self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
     }
 
+    #[inline]
     pub fn bb_bishops(&self, color: Color) -> Bitboard {
         self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
     }
 
+    #[inline]
     pub fn bb_rooks(&self, color: Color) -> Bitboard {
         self.bb[0][piece::ROOK as usize] & self.bb_own(color)
     }
 
+    #[inline]
     pub fn bb_queens(&self, color: Color) -> Bitboard {
         self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
     }
 
+    #[inline]
     pub fn bb_king(&self, color: Color) -> Bitboard {
         self.bb[0][piece::KING as usize] & self.bb_own(color)
     }
 
+    #[inline]
     pub fn bb_empty(&self) -> Bitboard {
         !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE))
     }
 
+    #[inline]
     pub fn to_move(&self) -> Color {
         self.to_move
     }
 
+    #[inline]
     pub fn castling(&self) -> [u32; 2] {
         self.castling
     }
 
+    #[inline]
     pub fn en_passant(&self) -> Option<[Square; 2]> {
         self.en_passant
     }
 
+    #[inline]
     pub fn occupied(&self) -> &[Piece; 64] {
         &self.occupied
     }
 
+    #[inline]
     pub fn halfmoves(&self) -> u32 {
         self.halfmoves
     }
 
+    #[inline]
     pub fn fullmoves(&self) -> u32 {
         self.fullmoves
     }
 
+    #[inline]
     pub fn get_piece_and_color(&self, square: Square) -> (Piece, Color) {
         (
             self.occupied[square as usize].code(),
@@ -226,36 +243,40 @@ impl Position {
         )
     }
 
+    #[inline]
     pub fn check_piece(&self, piece: Piece, color: Color, square: Square) -> bool {
         (piece, color) == self.get_piece_and_color(square)
     }
 
+    #[inline]
     pub fn set_piece(&mut self, piece: Piece, color: Color, to: Square) {
         // update unflipped bb
         self.bb[0][color as usize].set(to);
         self.bb[0][piece as usize].set(to);
 
         // update flipped bb
-        self.bb[1][color as usize].set(to ^ 56);
-        self.bb[1][piece as usize].set(to ^ 56);
+        // self.bb[1][color as usize].set(to ^ 56);
+        // self.bb[1][piece as usize].set(to ^ 56);
 
         // update occupancy array
         self.occupied[to as usize] = Piece::new(piece, color);
     }
 
+    #[inline]
     pub fn remove_piece(&mut self, piece: Piece, color: Color, from: Square) {
         // update unflipped bb
         self.bb[0][color as usize].clear(from);
         self.bb[0][piece as usize].clear(from);
 
         // update flipped bb
-        self.bb[1][color as usize].clear(from ^ 56);
-        self.bb[1][piece as usize].clear(from ^ 56);
+        // self.bb[1][color as usize].clear(from ^ 56);
+        // self.bb[1][piece as usize].clear(from ^ 56);
 
         // update occupancy array
         self.occupied[from as usize] = 0;
     }
 
+    #[inline]
     pub fn replace_piece(
         &mut self,
         old_piece: Piece,
@@ -269,30 +290,19 @@ impl Position {
         self.bb[0][old_piece as usize].clear(square);
 
         // remove from flipped bb
-        self.bb[1][old_color as usize].clear(square ^ 56);
-        self.bb[1][old_piece as usize].clear(square ^ 56);
+        // self.bb[1][old_color as usize].clear(square ^ 56);
+        // self.bb[1][old_piece as usize].clear(square ^ 56);
 
         self.set_piece(new_piece, new_color, square);
     }
 
     pub fn make_move(&mut self, mov: Move) {
-        // fail if no piece at origin square
-        // debug_assert!(self.check_piece(mov.piece(), mov.color(), mov.from()));
-
         let orig_square = mov.orig();
         let dest_square = mov.dest();
         let (orig_piece, orig_color) = self.get_piece_and_color(orig_square);
         let (mut dest_piece, mut dest_color) = self.get_piece_and_color(dest_square);
-        // let is_capture = 0 != dest_piece;
         let is_capture = mov.is_capture();
 
-        // let _ep_allowed = self.en_passant != None;
-        // let _ep_square = match self.en_passant {
-        //     Some(sq) => sq[0],
-        //     None => 64,
-        // };
-
-        // debug_assert_eq!(orig_color, self.to_move);
         if orig_color != self.to_move {
             eprintln!("orig_color != self.to_move");
             eprintln!("offending move: {:?}", mov);

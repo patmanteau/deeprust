@@ -49,6 +49,7 @@ impl MoveGenerator for Board {
         true
     }
 
+    #[inline]
     fn is_in_check(&self, color: Color) -> bool {
         let kingpos = self.current().bb_king(color).scan();
         self.is_attacked(color, kingpos)
@@ -60,12 +61,19 @@ impl MoveGenerator for Board {
 
         debug_assert!(target < 64);
 
-        // by black pawns
-        if color == color::WHITE {
-            if bitboard::BB_WPAWN_ATTACKS[target as usize] & pos.bb_pawns(color::BLACK) > 0 {
+        if (bitboard::diagonal_attacks(target, occupied)
+            | bitboard::anti_diagonal_attacks(target, occupied))
+            & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
+            > 0
+        {
                 return true;
             }
-        } else if bitboard::BB_BPAWN_ATTACKS[target as usize] & pos.bb_pawns(color::WHITE) > 0 {
+
+        // by rooks or queens
+        if (bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied))
+            & (pos.bb_rooks(1 ^ color) | pos.bb_queens(1 ^ color))
+            > 0
+        {
             return true;
         }
 
@@ -74,20 +82,24 @@ impl MoveGenerator for Board {
             return true;
         }
 
-        let all_diag_attacks = bitboard::diagonal_attacks(target, occupied)
-            | bitboard::anti_diagonal_attacks(target, occupied);
-        let rank_file_attacks =
-            bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied);
+        // by pawns
+        if color == color::WHITE {
+            if bitboard::BB_WPAWN_ATTACKS[target as usize] & pos.bb_pawns(color::BLACK) > 0 {
+            return true;
+        }
+        } else if bitboard::BB_BPAWN_ATTACKS[target as usize] & pos.bb_pawns(color::WHITE) > 0 {
+            return true;
+        }
+
+        // let all_diag_attacks = bitboard::diagonal_attacks(target, occupied)
+        //     | bitboard::anti_diagonal_attacks(target, occupied);
+        // let rank_file_attacks =
+        //     bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied);
 
         // by bishops or queens
-        if all_diag_attacks & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color)) > 0 {
-            return true;
-        }
-
-        // by rooks or queens
-        if rank_file_attacks & (pos.bb_rooks(1 ^ color) | pos.bb_queens(1 ^ color)) > 0 {
-            return true;
-        }
+        // if all_diag_attacks & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color)) > 0 {
+        //     return true;
+        // }
 
         // by king?!?
         if (bitboard::BB_KING_ATTACKS[target as usize] & pos.bb_king(1 ^ color)) > 0 {
@@ -194,13 +206,17 @@ impl MoveGenerator for Board {
     fn gen_white_pawn_captures(&self, moves: &mut Vec<Move>) {
         let pos = self.current();
         let pawns = pos.bb_pawns(color::WHITE);
-        let mut ep_bb = bitboard::BB_EMPTY;
-        let mut ep_square = 0;
 
-        if let Some(ep_squares) = pos.en_passant() {
-            ep_square = ep_squares[0];
-            ep_bb = bitboard::BB_SQUARES[ep_square as usize];
-        }
+        // let mut ep_bb = bitboard::BB_EMPTY;
+        // let mut ep_square = 0;
+        // if let Some(ep_squares) = pos.en_passant() {
+        //     ep_square = ep_squares[0];
+        //     ep_bb = bitboard::BB_SQUARES[ep_square as usize];
+        // }
+        let (ep_square, ep_bb) = match pos.en_passant() {
+            Some(sq) => (sq[0], bitboard::BB_SQUARES[sq[0] as usize]),
+            None => (0, bitboard::BB_EMPTY),
+        };
 
         let mut norm_pawns = pawns & bitboard::BB_NOT_RANK_78;
         let mut prom_pawns = pawns & bitboard::BB_RANK_7;
@@ -234,13 +250,16 @@ impl MoveGenerator for Board {
     fn gen_black_pawn_captures(&self, moves: &mut Vec<Move>) {
         let pos = self.current();
         let pawns = pos.bb_pawns(color::BLACK);
-        let mut ep_bb = bitboard::BB_EMPTY;
-        let mut ep_square = 0;
-
-        if let Some(ep_squares) = pos.en_passant() {
-            ep_square = ep_squares[0];
-            ep_bb = bitboard::BB_SQUARES[ep_square as usize];
-        }
+        // let mut ep_bb = bitboard::BB_EMPTY;
+        // let mut ep_square = 0;
+        // if let Some(ep_squares) = pos.en_passant() {
+        //     ep_square = ep_squares[0];
+        //     ep_bb = bitboard::BB_SQUARES[ep_square as usize];
+        // }
+        let (ep_square, ep_bb) = match pos.en_passant() {
+            Some(sq) => (sq[0], bitboard::BB_SQUARES[sq[0] as usize]),
+            None => (0, bitboard::BB_EMPTY),
+        };
 
         let mut norm_pawns = pawns & bitboard::BB_NOT_RANK_12;
         let mut prom_pawns = pawns & bitboard::BB_RANK_2;
@@ -350,6 +369,14 @@ impl MoveGenerator for Board {
         let pos = self.current();
 
         let from = pos.bb_king(color).scan();
+        
+        #[cfg(feature = "sanity_checks")]
+        {
+            if from > 63 {
+                self.panic_dump();
+            }
+        }
+
         let mut atk = bitboard::BB_KING_ATTACKS[from as usize] & pos.bb_empty();
 
         for to in atk.iter() {
