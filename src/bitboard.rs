@@ -72,7 +72,7 @@ impl BitboardPrimitives<u64> for Bitboard {
     }
 
     fn rank_to_debug_string(self, rank: u32) -> String {
-        assert!(rank < 8);
+        debug_assert!(rank < 8);
         //format!("{:08b}", (self.extract_bits(rank * 8, 8) as u8).reverse_bits())
 
         let mut b = self.extract_bits(rank * 8, 8) as u8;

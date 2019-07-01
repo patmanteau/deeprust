@@ -59,7 +59,7 @@ impl MoveGenerator for Board {
         let pos = self.current();
         let occupied = pos.bb_own(color) | pos.bb_opponent(color);
 
-        assert!(target < 64);
+        debug_assert!(target < 64);
 
         // by black pawns
         if color == color::WHITE {
@@ -94,7 +94,7 @@ impl MoveGenerator for Board {
         if (bitboard::BB_KING_ATTACKS[target as usize] & pos.bb_king(1 ^ color)) > 0 {
             return true;
         }
-
+        
         false
     }
 
@@ -506,7 +506,6 @@ mod tests {
         assert_eq!(1, moves.len());
         moves.clear();
         
-        board.input_move(square::D7, square::D5, None).unwrap();
         MoveGenerator::gen_white_pawn_pushes(&board, &mut moves);
         assert_eq!(1, moves.len());
         moves.clear();

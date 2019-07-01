@@ -89,7 +89,7 @@ impl Board {
     }
 
     pub fn make_move(&mut self, mov: Move) {
-        assert!(self.pcursor + 1 < PSTACK_SIZE);
+        debug_assert!(self.pcursor + 1 < PSTACK_SIZE);
         //self.positions[self.pcursor + 1] = self.current().clone();
         self.positions[self.pcursor + 1] = *self.current();
         self.positions[self.pcursor + 1].make_move(mov);
@@ -98,7 +98,7 @@ impl Board {
     }
 
     pub fn unmake_move(&mut self) {
-        assert!(self.pcursor > 0);
+        debug_assert!(self.pcursor > 0);
         self.history.pop();
         self.pcursor -= 1;
     }
@@ -109,7 +109,7 @@ impl Board {
         dest: Square,
         promote_to: Option<Piece>,
     ) -> Result<bool, &'static str> {
-        assert!(self.pcursor + 1 < PSTACK_SIZE);
+        debug_assert!(self.pcursor + 1 < PSTACK_SIZE);
         //self.positions[self.pcursor + 1] = self.current().clone();
         self.positions[self.pcursor + 1] = *self.current();
         match self.positions[self.pcursor + 1].input_move(orig, dest, promote_to) {
