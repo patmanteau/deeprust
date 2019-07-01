@@ -2,7 +2,6 @@ use crate::color::{self, Color, ColorPrimitives};
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{Square, SquarePrimitives};
 
-use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::color::*;
 use crate::common::BitTwiddling;
@@ -11,41 +10,21 @@ use crate::position::Position;
 //use regex::Regex;
 // use pest::Parser;
 
-use std::error::Error;
 use std::fmt;
 use std::str::FromStr;
 use std::string::String;
 
-use nom::{
-    IResult,
-    dbg_dmp,
-    error::{ErrorKind, ParseError, VerboseError, convert_error},
-};
+use nom::IResult;
 
 use nom::{
     branch::alt,
-    bytes::complete::{
-        is_a,
-        tag,
-        take, take_while, take_while1, take_while_m_n,
-    },
-    character::complete::{
-        digit0, digit1, multispace0, multispace1, one_of,
-    },
-    combinator::{
-        map, map_res, opt, peek, verify,
-    },
-    multi::{
-        count,
-        many1,
-        separated_nonempty_list,
-    },
-    sequence::{
-        preceded, terminated, tuple,
-    },
+    bytes::complete::{is_a, tag, take},
+    character::complete::{digit1, multispace1, one_of},
+    combinator::{map, map_res, peek},
+    multi::{many1, separated_nonempty_list},
+    sequence::{preceded, tuple},
 };
 
-use std::io::{self, Write};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct ParsedFen {
@@ -57,7 +36,7 @@ pub struct ParsedFen {
     pub fullmoves: u32,
 }
 
-pub fn fen(input: &str) -> IResult <&str, ParsedFen> {
+pub fn fen(input: &str) -> IResult<&str, ParsedFen> {
     let result = tuple((
         placement,
         multispace1,
@@ -75,82 +54,59 @@ pub fn fen(input: &str) -> IResult <&str, ParsedFen> {
     match result {
         Ok(tup) => {
             let (
-                rest, (
-                    placement,
-                    _, to_move,
-                    _, castling,
-                    _, ep_target,
-                    _, halfmoves,
-                    _, fullmoves
-                )
+                rest,
+                (placement, _, to_move, _, castling, _, ep_target, _, halfmoves, _, fullmoves),
             ) = tup;
             if placement.len() != 64 {
-                panic!("Invalid FEN string, found {} squares when there should be 64", placement.len());
+                panic!(
+                    "Invalid FEN string, found {} squares when there should be 64",
+                    placement.len()
+                );
             }
-            Ok((rest, ParsedFen {
-                placement,
-                to_move, 
-                castling,
-                ep_target,
-                halfmoves,
-                fullmoves
-            }))
-        },
+            Ok((
+                rest,
+                ParsedFen {
+                    placement,
+                    to_move,
+                    castling,
+                    ep_target,
+                    halfmoves,
+                    fullmoves,
+                },
+            ))
+        }
         Err(e) => Err(e),
     }
 }
 
-fn placement(input: &str) -> IResult <&str, Vec<u8>> {
-    map(
-        separated_nonempty_list(
-            tag("/"),
-            rank,
-        ),
-        |l| l.into_iter().rev().flatten().collect::<Vec<u8>>(),
-    )(input)
+fn placement(input: &str) -> IResult<&str, Vec<u8>> {
+    map(separated_nonempty_list(tag("/"), rank), |l| {
+        l.into_iter().rev().flatten().collect::<Vec<u8>>()
+    })(input)
 }
 
 fn rank(input: &str) -> IResult<&str, Vec<u8>> {
-    map(
-        many1(
-            alt((
-                empty_square,
-                occupied_square,
-            ))
-        ),
-        |l| l.into_iter().flatten().collect(),
-    )(input)
+    map(many1(alt((empty_square, occupied_square))), |l| {
+        l.into_iter().flatten().collect()
+    })(input)
 }
 
 fn occupied_square(input: &str) -> IResult<&str, Vec<Piece>> {
-    many1(
-        map(
-            one_of("KkQqRrBbNnPp"),
-            PiecePrimitives::from_char
-        )
-    )(input)
+    many1(map(one_of("KkQqRrBbNnPp"), PiecePrimitives::from_char))(input)
 }
 
 fn empty_square(input: &str) -> IResult<&str, Vec<Piece>> {
-    map(
-        one_of("12345678"),
-        |n| vec![Piece::empty(); n.to_digit(10).unwrap() as usize],
-    )
-    (input)
+    map(one_of("12345678"), |n| {
+        vec![Piece::empty(); n.to_digit(10).unwrap() as usize]
+    })(input)
 }
 
 fn to_move(input: &str) -> IResult<&str, Color> {
-    map(
-        one_of("bw"),
-        ColorPrimitives::from_char,
-    )(input)
+    map(one_of("bw"), ColorPrimitives::from_char)(input)
 }
 
 fn castling(input: &str) -> IResult<&str, [u32; 2]> {
-    let (rest, c) = alt((
-        tag("-"),
-        is_a("KQkq")
-    ))(input)?;
+    let (rest, c) = alt((tag("-"), is_a("KQkq")))(input)?;
 
     let mut cast = [0_u32; 2];
 
@@ -170,51 +126,35 @@ fn castling(input: &str) -> IResult<&str, [u32; 2]> {
 
 fn ep_square(input: &str) -> IResult<&str, &str> {
     preceded(
-        peek(
-            tuple((
-                one_of("abcdefgh"),
-                one_of("36"))
-            )
-        ),
-        take(2_usize)
+        peek(tuple((one_of("abcdefgh"), one_of("36")))),
+        take(2_usize),
     )(input)
 }
 
 fn ep_target(input: &str) -> IResult<&str, Option<Square>> {
-    let (rest, ep) = alt((
-        tag("-"),
-        ep_square
-    ))(input)?;
-    
+    let (rest, ep) = alt((tag("-"), ep_square))(input)?;
+
     if ep == "-" {
         Ok((rest, None))
     } else {
         match Square::from_san_string(ep) {
             Ok(sq) => Ok((rest, Some(sq))),
-            Err(e) => unreachable!("Error parsing EP square"),
+            Err(_e) => unreachable!("Error parsing EP square"),
         }
     }
 }
 
 fn halfmoves(input: &str) -> IResult<&str, u32> {
-    map_res(
-        digit1, 
-        u32::from_str
-    )(input)
+    map_res(digit1, u32::from_str)(input)
 }
 
 fn fullmoves(input: &str) -> IResult<&str, u32> {
-    preceded(
-        peek(one_of("123456789")),
-        halfmoves
-    )(input)
+    preceded(peek(one_of("123456789")), halfmoves)(input)
 }
 
 pub fn parse(input: &str) -> IResult<&str, ParsedFen> {
     fen(input)
 }
-
-type NomError<I> = (I, nom::error::ErrorKind);
 
 #[derive(Debug, Clone)]
 pub enum FenParseError {
@@ -229,24 +169,7 @@ impl fmt::Display for FenParseError {
     }
 }
 
-// impl From<NomError<&str>> for FenParseError<NomError<&str>> {
-//     fn from (err: NomError<&str>) -> FenParseError<NomError<&str>> {
-//         FenParseError::ParserError{ err }
-//     }
-// }
-
-// // }
-
-// // impl<T> From<NomError<T>> for FenParseError<T> {
-// //     fn from (err: NomError<T>) -> FenParseError<NomError<T>> {
-// //         FenParseError::ParserError{ err }
-// //     }
-
-// // }
-
-// impl Error for FenParseError {}
-
-pub trait FenInterface<T=Self> { 
+pub trait FenInterface<T = Self> {
     type Err;
     fn from_fen_str(s: &str) -> Result<T, Self::Err>;
     fn to_fen_string(&self) -> String;
@@ -262,18 +185,18 @@ impl FenInterface for Position {
 
         // let mut board = Self::new();
         // let mut position = Self::new();
-        
+
         let parser = fen(s);
         let result = match parser {
             Ok((_, res)) => res,
-            Err(e) => return Err(FenParseError::Invalid),
+            Err(_e) => return Err(FenParseError::Invalid),
         };
 
         // position
         let mut position = Self {
-            bb: [[Bitboard::from(0_u64); 8]; 2],
+            bb: [[0_u64; 8]; 2],
             occupied: [piece::EMPTY; 64],
-            to_move: result.to_move, //color::WHITE,
+            to_move: result.to_move,   //color::WHITE,
             castling: result.castling, //[0_u32; 2],
             en_passant: match result.ep_target {
                 Some(eps) => Some([eps, eps.flipped()]),
@@ -516,8 +439,8 @@ impl FenInterface for Board {
             Ok(p) => {
                 board.set_position(&p);
                 Ok(board)
-            },
-            Err(e) => Err(FenParseError::Invalid)
+            }
+            Err(_e) => Err(FenParseError::Invalid),
         }
     }
 
@@ -536,7 +459,8 @@ impl FenInterface for Board {
                         emptycount = 0;
                     };
                     fen_string.push_str(
-                        self.current().occupied()[Square::from_coords(x, y) as usize].to_san_string(),
+                        self.current().occupied()[Square::from_coords(x, y) as usize]
+                            .to_san_string(),
                     );
                 }
             }

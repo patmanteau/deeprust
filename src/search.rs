@@ -43,7 +43,7 @@ impl PerftContext {
 }
 
 impl Sum for PerftContext {
-    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(PerftContext::new(), |a, b| a + b)
     }
 }
@@ -257,24 +257,25 @@ impl Search for Board {
         // acc_ctx.elapsed = finish - start;
         // acc_ctx
 
-
-
         let clock = Clock::new();
         let start = clock.now();
 
         let moves = self.generate_moves();
-        
-        let mut ctx = moves.par_iter().map(|mov| {
-            let mut board = self.clone();
-            let mut ctx = PerftContext::new();
-            board.make_move(*mov);
-            if board.is_in_check(1 ^ board.current().to_move()) {
-                board.unmake_move();
-            } else {
-                board.do_perft(&mut ctx, depth - 1);
-            }
-            ctx
-        }).sum::<PerftContext>();
+
+        let mut ctx = moves
+            .par_iter()
+            .map(|mov| {
+                let mut board = self.clone();
+                let mut ctx = PerftContext::new();
+                board.make_move(*mov);
+                if board.is_in_check(1 ^ board.current().to_move()) {
+                    board.unmake_move();
+                } else {
+                    board.do_perft(&mut ctx, depth - 1);
+                }
+                ctx
+            })
+            .sum::<PerftContext>();
 
         let finish = clock.now();
         ctx.elapsed = finish - start;
@@ -321,7 +322,6 @@ impl Search for Board {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -337,37 +337,28 @@ mod tests {
     fn it_finds_correct_perft_results() {
         let path = Path::new("tests/perft-positions.txt");
         let file = match File::open(&path) {
-            Err(why) => panic!(
-                "Could not open {}: {}",
-                path.display(),
-                why.description()
-            ),
+            Err(why) => panic!("Could not open {}: {}", path.display(), why.description()),
             Ok(file) => file,
         };
 
-        for (line, position) in BufReader::new(file)
-            .lines()
-            .map(|l| l.unwrap())
-            .enumerate()
-        {
+        for (line, position) in BufReader::new(file).lines().map(|l| l.unwrap()).enumerate() {
             if position.trim().is_empty() || position.trim().starts_with('#') {
                 continue;
             } else {
                 let parts: Vec<&str> = position.split("; perft ").collect();
                 let fen_str = parts[0];
                 let perft_parts: Vec<&str> = parts[1].split_whitespace().collect();
-                let perft_depth= u32::from_str(perft_parts[0]).unwrap();
+                let perft_depth = u32::from_str(perft_parts[0]).unwrap();
                 let perft_nodes = u64::from_str(perft_parts[1]).unwrap();
                 let mut b = Board::from_fen_str(&fen_str).unwrap();
 
                 eprintln!("Running perft {} on '{}'", perft_depth, fen_str);
 
                 assert!(true);
-                
+
                 let res = b.perft(perft_depth);
                 assert_eq!(res.nodes, perft_nodes);
             }
         }
     }
 }
-

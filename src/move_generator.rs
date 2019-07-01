@@ -1,7 +1,6 @@
 use crate::bitboard::{self, BitboardPrimitives};
 use crate::board::Board;
 use crate::common::*;
-use crate::interfaces::FenInterface;
 use crate::moves::flags;
 use crate::moves::Move;
 
@@ -94,7 +93,7 @@ impl MoveGenerator for Board {
         if (bitboard::BB_KING_ATTACKS[target as usize] & pos.bb_king(1 ^ color)) > 0 {
             return true;
         }
-        
+
         false
     }
 
@@ -208,8 +207,7 @@ impl MoveGenerator for Board {
 
         for from in prom_pawns.iter() {
             // let from = prom_pawns.scan();
-            let mut atk =
-                bitboard::BB_WPAWN_ATTACKS[from as usize] & pos.bb_opponent(color::WHITE);
+            let mut atk = bitboard::BB_WPAWN_ATTACKS[from as usize] & pos.bb_opponent(color::WHITE);
             for to in atk.iter() {
                 // promotion
                 let mov = Move::new(from, to, flags::MOV_QUIET);
@@ -221,8 +219,8 @@ impl MoveGenerator for Board {
         }
 
         for from in norm_pawns.iter() {
-            let mut atk = bitboard::BB_WPAWN_ATTACKS[from as usize]
-                & (pos.bb_opponent(color::WHITE) | ep_bb);
+            let mut atk =
+                bitboard::BB_WPAWN_ATTACKS[from as usize] & (pos.bb_opponent(color::WHITE) | ep_bb);
             for to in atk.iter() {
                 moves.push(Move::new(
                     from,
@@ -248,8 +246,7 @@ impl MoveGenerator for Board {
         let mut prom_pawns = pawns & bitboard::BB_RANK_2;
 
         for from in prom_pawns.iter() {
-            let mut atk =
-                bitboard::BB_BPAWN_ATTACKS[from as usize] & pos.bb_opponent(color::BLACK);
+            let mut atk = bitboard::BB_BPAWN_ATTACKS[from as usize] & pos.bb_opponent(color::BLACK);
             for to in atk.iter() {
                 // promotion
                 let mov = Move::new(from, to, flags::MOV_QUIET);
@@ -261,8 +258,8 @@ impl MoveGenerator for Board {
         }
 
         for from in norm_pawns.iter() {
-            let mut atk = bitboard::BB_BPAWN_ATTACKS[from as usize]
-                & (pos.bb_opponent(color::BLACK) | ep_bb);
+            let mut atk =
+                bitboard::BB_BPAWN_ATTACKS[from as usize] & (pos.bb_opponent(color::BLACK) | ep_bb);
             for to in atk.iter() {
                 moves.push(Move::new(
                     from,
@@ -458,7 +455,7 @@ mod tests {
     fn it_generates_pawn_moves() {
         let mut board = Board::startpos();
         let mut moves = Vec::with_capacity(512);
-        
+
         MoveGenerator::gen_white_pawn_pushes(&board, &mut moves);
         assert_eq!(16, moves.len());
         moves.clear();
@@ -467,7 +464,6 @@ mod tests {
         MoveGenerator::gen_black_pawn_pushes(&board, &mut moves);
         assert_eq!(16, moves.len());
         moves.clear();
-
 
         board = Board::from_fen_str("8/PPPPPPPP/8/8/8/8/8/8 w - - 0 1").unwrap();
         MoveGenerator::gen_white_pawn_pushes(&board, &mut moves);
@@ -495,7 +491,7 @@ mod tests {
         MoveGenerator::gen_white_pawn_captures(&board, &mut moves);
         assert_eq!(7, moves.len());
         moves.clear();
-        
+
         MoveGenerator::gen_white_pawn_pushes(&board, &mut moves);
         assert_eq!(4, moves.len());
         moves.clear();
@@ -505,7 +501,7 @@ mod tests {
         MoveGenerator::gen_white_pawn_captures(&board, &mut moves);
         assert_eq!(1, moves.len());
         moves.clear();
-        
+
         MoveGenerator::gen_white_pawn_pushes(&board, &mut moves);
         assert_eq!(1, moves.len());
         moves.clear();

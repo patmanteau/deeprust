@@ -3,8 +3,10 @@
 #![feature(simd_x86_bittest)]
 
 extern crate clap;
-#[macro_use] extern crate lazy_static;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate log;
 extern crate nom;
 extern crate quanta;
 extern crate rand;
@@ -17,9 +19,9 @@ pub mod board;
 pub mod cli;
 pub mod color;
 pub mod common;
+pub mod interfaces;
 pub mod move_generator;
 pub mod moves;
-pub mod interfaces;
 pub mod piece;
 pub mod position;
 pub mod search;

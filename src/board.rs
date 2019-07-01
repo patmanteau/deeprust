@@ -2,7 +2,6 @@ use std::fmt;
 
 use crate::bitboard::*;
 
-use crate::color::{self, Color};
 use crate::interfaces::FenInterface;
 use crate::moves::{Move, MoveStack};
 use crate::piece::Piece;
@@ -71,7 +70,10 @@ impl Board {
 
     pub fn startpos() -> Board {
         let mut b = Self::new();
-        b.set_position(&Position::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap());
+        b.set_position(
+            &Position::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+                .unwrap(),
+        );
         b
         // Self::from_fen_str("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap()
     }

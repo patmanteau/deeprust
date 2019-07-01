@@ -13,7 +13,7 @@ impl ColorPrimitives for Color {
         match c {
             'b' => BLACK,
             'w' => WHITE,
-            _ => unreachable!("Internal error: unknown color code {}", c)
+            _ => unreachable!("Internal error: unknown color code {}", c),
         }
     }
 
@@ -21,7 +21,7 @@ impl ColorPrimitives for Color {
         match self {
             BLACK => 'b',
             WHITE => 'w',
-            _ => unreachable!("Internal error: invalid color code {}", self)
+            _ => unreachable!("Internal error: invalid color code {}", self),
         }
     }
 }
