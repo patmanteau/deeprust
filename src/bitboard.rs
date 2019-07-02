@@ -168,6 +168,8 @@ pub const BB_NOT_RANK_2: Bitboard = !BB_RANK_8;
 pub const BB_NOT_RANK_12: Bitboard = !BB_RANK_2 & !BB_RANK_1;
 pub const BB_NOT_RANK_78: Bitboard = !BB_RANK_7 & !BB_RANK_8;
 
+pub const BB_ROOK_HOMES: [Bitboard; 2] = [BB_A1 | BB_H1, BB_A8 | BB_H8];
+
 // TODO: Pawn attack and push tables
 #[rustfmt::skip] #[inline] pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
 #[rustfmt::skip] #[inline] pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
