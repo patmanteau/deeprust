@@ -13,16 +13,16 @@ use std::thread;
 
 #[derive(Default, Copy, Clone)]
 pub struct PerftContext {
-    nodes: u64,
-    captures: u64,
-    ep: u64,
-    castles: u64,
-    promotions: u64,
-    checks: u64,
-    disco_checks: u64,
-    double_checks: u64,
-    checkmates: u64,
-    elapsed: u64,
+    pub nodes: u64,
+    pub captures: u64,
+    pub ep: u64,
+    pub castles: u64,
+    pub promotions: u64,
+    pub checks: u64,
+    pub disco_checks: u64,
+    pub double_checks: u64,
+    pub checkmates: u64,
+    pub elapsed: u64,
 }
 
 impl PerftContext {
