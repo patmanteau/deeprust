@@ -503,28 +503,28 @@ mod tests {
                     assert!(position.check_piece(piece, color, square));
                     assert!(position.bb[0][color as usize] & bb::BB_SQUARES[square as usize] != 0);
                     assert!(position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize] != 0);
-                    assert!(
-                        position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
-                            != 0
-                    );
-                    assert!(
-                        position.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
-                            != 0
-                    );
+                    // assert!(
+                    //     position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    //         != 0
+                    // );
+                    // assert!(
+                    //     position.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    //         != 0
+                    // );
                     assert_eq!(piece, position.occupied[square as usize].code());
                     assert_eq!(color, position.occupied[square as usize].color());
 
                     //assert_eq!(position.bb[1][color as usize], bits::swap_bytes(position.bb[0][color as usize]));
                     //assert_eq!(position.bb[1][piece as usize], bits::swap_bytes(position.bb[0][piece as usize]));
 
-                    assert_eq!(
-                        position.bb[1][color as usize],
-                        position.bb[0][color as usize].swap_bytes()
-                    );
-                    assert_eq!(
-                        position.bb[1][piece as usize],
-                        position.bb[0][piece as usize].swap_bytes()
-                    );
+                    // assert_eq!(
+                    //     position.bb[1][color as usize],
+                    //     position.bb[0][color as usize].swap_bytes()
+                    // );
+                    // assert_eq!(
+                    //     position.bb[1][piece as usize],
+                    //     position.bb[0][piece as usize].swap_bytes()
+                    // );
                 }
             }
         }
@@ -538,25 +538,25 @@ mod tests {
                     assert!(position.check_piece(piece, color, square));
                     assert!(position.bb[0][color as usize] & bb::BB_SQUARES[square as usize] != 0);
                     assert!(position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize] != 0);
-                    assert!(
-                        position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
-                            != 0
-                    );
-                    assert!(
-                        position.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
-                            != 0
-                    );
+                    // assert!(
+                    //     position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    //         != 0
+                    // );
+                    // assert!(
+                    //     position.bb[1][piece as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
+                    //         != 0
+                    // );
                     assert_eq!(piece, position.occupied[square as usize].code());
                     assert_eq!(color, position.occupied[square as usize].color());
 
-                    assert_eq!(
-                        position.bb[1][color as usize],
-                        position.bb[0][color as usize].swap_bytes()
-                    );
-                    assert_eq!(
-                        position.bb[1][piece as usize],
-                        position.bb[0][piece as usize].swap_bytes()
-                    );
+                    // assert_eq!(
+                    //     position.bb[1][color as usize],
+                    //     position.bb[0][color as usize].swap_bytes()
+                    // );
+                    // assert_eq!(
+                    //     position.bb[1][piece as usize],
+                    //     position.bb[0][piece as usize].swap_bytes()
+                    // );
                 }
             }
         }
