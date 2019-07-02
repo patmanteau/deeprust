@@ -421,8 +421,62 @@ lazy_static! {
         }
         arr
     };
-
 }
+
+// SSSE3 specifics
+// #[cfg(target_arch = "x86_64")]
+// use std::arch::x86_64::*;
+// #[cfg(
+//     all(
+//         any(target_arch = "x86", target_arch = "x86_64"),
+//         target_feature = "avx2"
+//     )
+// )]
+use std::arch::x86_64::*;
+lazy_static! {
+    pub static ref BB_SSSE3_DIAG_MASK_EX: [__m128i; 64] = {
+        unsafe {
+            let zero = _mm_setzero_si128();//_mm_set_epi64x(0, 0);
+            let mut arr: [__m128i; 64] = [zero; 64];
+
+            for i in 0..64 {
+                arr[i] = _mm_set_epi64x(
+                    std::mem::transmute::<u64, i64>(BB_ANTI_DIAG_MASK_EX[i]),
+                    std::mem::transmute::<u64, i64>(BB_DIAG_MASK_EX[i])
+                );
+            }
+            arr
+        }
+    };
+
+    pub static ref BB_SSSE3_SQUARE: [__m128i; 64] = {
+        unsafe {
+            let zero = _mm_setzero_si128();//_mm_set_epi64x(0, 0);
+            let mut arr: [__m128i; 64] = [zero; 64];
+
+            for i in 0..64 {
+                arr[i] = _mm_set_epi64x(
+                    1 << i,
+                    1 << i,
+                );
+            }
+            arr
+        }
+    };
+
+    pub static ref BB_SSSE3_SWAP_MASK: __m128i = {
+        unsafe {
+            _mm_set_epi8(
+                8,  9, 10, 11,
+                12, 13, 14, 15,
+                0,  1,  2,  3,
+                4,  5,  6,  7
+            )
+        }
+    };
+}
+
+
 
 /// See https://www.chessprogramming.org/Kindergarten_Bitboards
 // pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
@@ -458,25 +512,25 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 // }
 
 // See https://www.chessprogramming.org/Hyperbola_Quintessence
-#[inline]
-pub fn diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
-    let mut forward = occupied & BB_DIAG_MASK_EX[square as usize];
-    let mut reverse = forward.swap_bytes();
-    forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
-    reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
-    forward ^= reverse.swap_bytes();
-    forward & BB_DIAG_MASK_EX[square as usize]
-}
+// #[inline]
+// pub fn diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+//     let mut forward = occupied & BB_DIAG_MASK_EX[square as usize];
+//     let mut reverse = forward.swap_bytes();
+//     forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
+//     reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
+//     forward ^= reverse.swap_bytes();
+//     forward & BB_DIAG_MASK_EX[square as usize]
+// }
 
-#[inline]
-pub fn anti_diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
-    let mut forward = occupied & BB_ANTI_DIAG_MASK_EX[square as usize];
-    let mut reverse = forward.swap_bytes();
-    forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
-    reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
-    forward ^= reverse.swap_bytes();
-    forward & BB_ANTI_DIAG_MASK_EX[square as usize]
-}
+// #[inline]
+// pub fn anti_diagonal_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+//     let mut forward = occupied & BB_ANTI_DIAG_MASK_EX[square as usize];
+//     let mut reverse = forward.swap_bytes();
+//     forward = forward.wrapping_sub(BB_SQUARES[square as usize]);
+//     reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
+//     forward ^= reverse.swap_bytes();
+//     forward & BB_ANTI_DIAG_MASK_EX[square as usize]
+// }
 
 #[inline]
 pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
@@ -486,6 +540,41 @@ pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     reverse = reverse.wrapping_sub(BB_SQUARES[square as usize].swap_bytes());
     forward ^= reverse.swap_bytes();
     forward & BB_FILE_MASK_EX[square as usize]
+}
+
+// see https://www.chessprogramming.org/SSSE3#SSSE3Version
+// #[cfg(
+//     all(
+//         any(target_arch = "x86", target_arch = "x86_64"),
+//         target_feature = "avx2"
+//     )
+// )]
+#[inline]
+pub fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
+    #[cfg(target_arch = "x86_64")]
+    use std::arch::x86_64::*;
+    unsafe {
+        // o: __m128i;
+        // r: __m128i;
+        // m: __m128i;
+        // b: __m128i;
+        let s = *BB_SSSE3_SWAP_MASK;
+        let m = BB_SSSE3_DIAG_MASK_EX[square as usize];
+        let b = BB_SSSE3_SQUARE[square as usize];
+        let mut o = _mm_cvtsi64x_si128  (std::mem::transmute::<u64, i64>(occupied)); // general purpose 64 bit to xmm low qword
+        o = _mm_unpacklo_epi64  (o, o); // occ : occ
+        o = _mm_and_si128       (o, m); // o (antidiag : diagonal)
+        let mut r = _mm_shuffle_epi8    (o, s); // o'(antidiag : diagonal)
+        o = _mm_sub_epi64       (o, b); // o - bishop
+        let b = _mm_shuffle_epi8    (b, s); // bishop', one may also use singleBitsXMM [sq^56]
+        r = _mm_sub_epi64       (r, b); // o'- bishop'
+        r = _mm_shuffle_epi8    (r, s); // re-reverse
+        o = _mm_xor_si128       (o, r); // attacks
+        o = _mm_and_si128       (o, m); // antidiag : diagonal
+        r = _mm_unpackhi_epi64  (o, o); // antidiag : antidiag
+        o = _mm_add_epi64       (o, r); // diagonal + antidiag
+        std::mem::transmute::<i64, u64>(_mm_cvtsi128_si64(o))    // convert xmm to general purpose 64 bit
+    }
 }
 
 #[cfg(test)]

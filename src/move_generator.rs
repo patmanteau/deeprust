@@ -66,13 +66,20 @@ impl MoveGenerator for Board {
 
         debug_assert!(target < 64);
 
-        if (bitboard::diagonal_attacks(target, occupied)
-            | bitboard::anti_diagonal_attacks(target, occupied))
-            & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
+        // if (bitboard::diagonal_attacks(target, occupied)
+        //     | bitboard::anti_diagonal_attacks(target, occupied))
+        //     & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
+        //     > 0
+        // {
+        //     return true;
+        // }
+
+        if bitboard::bishop_attacks(target, occupied)
+           & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
             > 0
         {
-                return true;
-            }
+            return true;
+        }
 
         // by rooks or queens
         if (bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied))
@@ -470,8 +477,10 @@ impl MoveGenerator for Board {
         let occupied = pos.bb_own(color) | pos.bb_opponent(color);
 
         for from in bishops.iter() {
-            let rays = bitboard::diagonal_attacks(from, occupied)
-                | bitboard::anti_diagonal_attacks(from, occupied);
+            // let rays = bitboard::diagonal_attacks(from, occupied)
+            //     | bitboard::anti_diagonal_attacks(from, occupied);
+            let rays = bitboard::bishop_attacks(from, occupied);
+
             // captures
             let mut atk = rays & pos.bb_opponent(color);
 
