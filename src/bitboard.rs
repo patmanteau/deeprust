@@ -56,14 +56,16 @@ impl BitboardPrimitives<u64> for Bitboard {
 
     #[inline]
     fn set(&mut self, pos: Square) {
-        *self |= BB_SQUARES[pos as usize]
+        *self |= 1_u64 << pos;
+        // *self |= BB_SQUARES[pos as usize]
         //self.set_bit(pos as u32)
     }
 
     #[inline]
     fn clear(&mut self, pos: Square) {
         //self.clear_bit(pos as u32)
-        *self ^= BB_SQUARES[pos as usize]
+        // *self ^= BB_SQUARES[pos as usize]
+        *self ^= 1_u64 << pos;
     }
 
     #[inline]

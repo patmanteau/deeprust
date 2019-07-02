@@ -16,8 +16,8 @@ macro_rules! twiddle_impl {
         impl BitTwiddling<$T> for $T {
             #[inline]
             fn bit_at(pos: u32) -> $T {
-                //1 << pos
-                $ARRIDENT[pos as usize]
+                1 << pos
+                // $ARRIDENT[pos as usize]
             }
 
             #[inline]
