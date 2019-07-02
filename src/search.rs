@@ -7,9 +7,9 @@ use rayon::prelude::*;
 use std::fmt;
 use std::iter::Sum;
 use std::ops::{Add, AddAssign};
-use std::sync::mpsc::{self, channel};
-use std::sync::{Arc, Mutex};
-use std::thread;
+// use std::sync::mpsc::{self, channel};
+// use std::sync::{Arc, Mutex};
+// use std::thread;
 
 #[derive(Default, Copy, Clone)]
 pub struct PerftContext {

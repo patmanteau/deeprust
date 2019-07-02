@@ -61,9 +61,9 @@ impl UCIInterface {
                     Ok(_) => {},
                     Err(e) => println!("{:?}", e),
                 }
-                    }
-                }
             }
+        }
+    }
 
     fn cmd_move(&mut self, cmd: Vec<&str>) {
         if cmd.is_empty() {
