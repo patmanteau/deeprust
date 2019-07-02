@@ -184,9 +184,9 @@ impl fmt::Display for Move {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}{}{}",
+            "{}{}",
             self.orig().to_san_string(),
-            if self.is_capture() { "x" } else { "-" },
+            // if self.is_capture() { "x" } else { "-" },
             self.dest().to_san_string()
         )
     }
