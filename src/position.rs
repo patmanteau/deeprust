@@ -318,10 +318,13 @@ impl Position {
         let (mut dest_piece, mut dest_color) = self.get_piece_and_color(dest_square);
         let is_capture = mov.is_capture();
 
-        if orig_color != self.to_move {
-            eprintln!("orig_color != self.to_move");
-            eprintln!("offending move: {:?}", mov);
-            self.panic_helper();
+        #[cfg(feature = "sanity_checks")]
+        {
+            if orig_color != self.to_move {
+                eprintln!("orig_color != self.to_move");
+                eprintln!("offending move: {:?}", mov);
+                self.panic_helper();
+            }
         }
 
         // reset en passant
