@@ -322,7 +322,7 @@ impl MoveGenerator for Board {
         if self.is_attacked(color::WHITE, square::E1) {
             return;
         }
-
+        
         let qlear = pos.castling()[color::WHITE as usize].test_bit(1)
             && occ.extract_bits(u32::from(square::B1), 3) == 0
             && !self.is_attacked(color::WHITE, square::C1)
