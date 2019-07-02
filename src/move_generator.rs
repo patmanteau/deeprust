@@ -323,14 +323,14 @@ impl MoveGenerator for Board {
             return;
         }
 
-        let qlear = occ.extract_bits(u32::from(square::B1), 3) == 0
+        let qlear = pos.castling()[color::WHITE as usize].test_bit(1)
+            && occ.extract_bits(u32::from(square::B1), 3) == 0
             && !self.is_attacked(color::WHITE, square::C1)
-            && !self.is_attacked(color::WHITE, square::D1)
-            && pos.castling()[color::WHITE as usize].test_bit(1);
+            && !self.is_attacked(color::WHITE, square::D1);
 
-        let klear = occ.extract_bits(u32::from(square::F1), 2) == 0
-            && !self.is_attacked(color::WHITE, square::F1)
-            && pos.castling()[color::WHITE as usize].test_bit(0);
+        let klear = pos.castling()[color::WHITE as usize].test_bit(0)
+            && occ.extract_bits(u32::from(square::F1), 2) == 0
+            && !self.is_attacked(color::WHITE, square::F1);
 
         if qlear {
             moves.push(Move::new(square::E1, square::C1, flags::MOV_Q_CASTLE));
@@ -348,14 +348,14 @@ impl MoveGenerator for Board {
             return;
         }
 
-        let qlear = occ.extract_bits(u32::from(square::B8), 3) == 0
+        let qlear = pos.castling()[color::BLACK as usize].test_bit(1)
+            && occ.extract_bits(u32::from(square::B8), 3) == 0
             && !self.is_attacked(color::BLACK, square::C8)
-            && !self.is_attacked(color::BLACK, square::D8)
-            && pos.castling()[color::BLACK as usize].test_bit(1);
+            && !self.is_attacked(color::BLACK, square::D8);
 
-        let klear = occ.extract_bits(u32::from(square::F8), 2) == 0
-            && !self.is_attacked(color::BLACK, square::F8)
-            && pos.castling()[color::BLACK as usize].test_bit(0);
+        let klear = pos.castling()[color::BLACK as usize].test_bit(0)
+            && occ.extract_bits(u32::from(square::F8), 2) == 0
+            && !self.is_attacked(color::BLACK, square::F8);
 
         if qlear {
             moves.push(Move::new(square::E8, square::C8, flags::MOV_Q_CASTLE));
