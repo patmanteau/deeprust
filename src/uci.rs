@@ -140,6 +140,30 @@ impl UCIInterface {
         println!("perft result: {}", ctx);
     }
 
+    fn cmd_divide(&mut self, cmd: Vec<&str>) {
+        let depth = if !cmd.is_empty() {
+            cmd[0].parse::<u32>().unwrap()
+        } else {
+            3
+        };
+
+        let moves = self.board.generate_moves();
+        let mut nodes = 0;
+        for mov in &moves {
+            self.board.make_move(*mov);
+            if self.board.is_in_check(1 ^ self.board.current().to_move()) {
+                self.board.unmake_move();
+            } else {
+                let res = self.board.perft(depth - 1);
+                self.board.unmake_move();
+                println!("{} {}", mov, res.nodes);
+                nodes += res.nodes;
+            }
+        }
+        println!();
+        println!("{} moves, {} nodes", moves.len(), nodes);
+    }
+
     pub fn parse(&mut self, cmd: String) {
         let tokens: Vec<&str> = cmd.trim().split_whitespace().collect();
 
@@ -151,6 +175,7 @@ impl UCIInterface {
                 "fen" => println!("{}", self.board.to_fen_string()),
                 "b" => self.cmd_b(),
                 "p" | "perft" => self.cmd_perft(tokens[1..].to_vec()),
+                "d" | "divide" => self.cmd_divide(tokens[1..].to_vec()),
                 "g" | "generate" => self.cmd_moves(),
                 "uci" => {
                     println!("id name deeprust v{}", env!("CARGO_PKG_VERSION"));
