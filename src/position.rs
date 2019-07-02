@@ -381,7 +381,7 @@ impl Position {
         }
 
         // clear castling rights on rook move
-        if piece::ROOK == orig_piece {
+        if orig_piece == piece::ROOK && (BB_SQUARES[orig_square as usize] & BB_ROOK_HOMES[self.to_move as usize] > 0) {
             if BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_A > 0 {
                 self.castling[self.to_move as usize].clear_bit(1);
             } else if BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_H > 0 {
