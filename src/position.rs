@@ -137,20 +137,35 @@ impl Position {
 
     #[cfg(feature = "sanity_checks")]
     fn sanity_check(&self) -> bool {
-        if 0 < self.bb_own(color::WHITE) & self.bb_opponent(color::WHITE) {
+        // disjoint color bbs?
+        if self.bb_own(color::WHITE) & self.bb_opponent(color::WHITE) > 0 {
             self.panic_helper()
         }
 
+
         for i in 2..8 {
-            if 0 < !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE)) & self.bb[0][i] {
+            // piece bbs not in color bbs?
+            if !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE)) & self.bb[0][i] > 0 {
                 self.panic_helper()
             }
+            // same bit set in multiple color bbs?
             for j in i + 1..8 {
-                if 0 < self.bb[0][i] & self.bb[0][j] {
+                if self.bb[0][i] & self.bb[0][j] > 0 {
                     self.panic_helper()
                 }
             }
         }
+
+        // wrong number of kings?
+        if self.bb_king(color::WHITE).count() != 1 || self.bb_king(color::BLACK).count() != 1 {
+            self.panic_helper()
+        }
+
+        // too many pawns?
+        if self.bb_pawns(color::WHITE).count() > 8 || self.bb_pawns(color::BLACK).count() > 8 {
+            self.panic_helper()
+        }
+
         true
     }
 
