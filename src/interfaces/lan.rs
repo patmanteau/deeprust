@@ -16,6 +16,13 @@ use std::str::FromStr;
 
 //type IResult<I, O, E = (I, ErrorKind)> = Result<(I, O), Err<E>>;
 
+#[derive(Debug, Clone)]
+pub enum LanParseError {
+    Empty,
+    Invalid,
+    // ParserError(Box<nom::error::ParseError>),
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Needed {
     Unknown,
@@ -36,15 +43,15 @@ pub struct ParsedMove {
     pub prom: Option<Piece>,
 }
 
-fn lan(input: &str) -> IResult<&str, ParsedMove> {
+pub fn lan(input: &str) -> Result<ParsedMove, LanParseError> {
     let result = tuple((square, square, opt(prom)))(input);
 
     match result {
         Ok(tup) => {
             let (rest, (from, to, prom)) = tup;
-            Ok((rest, ParsedMove { from, to, prom }))
+            Ok(ParsedMove { from, to, prom })
         }
-        Err(e) => Err(e),
+        Err(e) => Err(LanParseError::Invalid),
     }
 }
 
@@ -61,10 +68,10 @@ fn square(input: &str) -> IResult<&str, Square> {
 fn str_to_piececode(input: char) -> Piece {
     Piece::new(
         match input {
-            'N' => piece::KNIGHT,
-            'B' => piece::BISHOP,
-            'R' => piece::ROOK,
-            'Q' => piece::QUEEN,
+            'N' | 'n' => piece::KNIGHT,
+            'B' | 'b' => piece::BISHOP,
+            'R' | 'r' => piece::ROOK,
+            'Q' | 'q' => piece::QUEEN,
             _ => unreachable!("LAN parser error: Invalid promotion character"),
         },
         color::WHITE,
@@ -72,7 +79,7 @@ fn str_to_piececode(input: char) -> Piece {
 }
 
 fn prom(input: &str) -> IResult<&str, Piece> {
-    map(one_of("QRBN"), str_to_piececode)(input)
+    map(one_of("QqRrBbNn"), str_to_piececode)(input)
 }
 
 fn from_san_string(square: &str) -> Square {
@@ -106,6 +113,6 @@ fn from_san_string(square: &str) -> Square {
     (y << 3) + *x
 }
 
-pub fn parse(input: &str) -> IResult<&str, ParsedMove> {
-    lan(input)
-}
+// pub fn parse(input: &str) -> IResult<&str, ParsedMove> {
+//     lan(input)
+// }

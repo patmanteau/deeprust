@@ -3,6 +3,8 @@ use std::fmt;
 use crate::bitboard::*;
 
 use crate::interfaces::FenInterface;
+use crate::interfaces::lan;
+use crate::interfaces::lan::LanParseError;
 use crate::moves::{Move, MoveStack};
 use crate::piece::Piece;
 use crate::position::{Position, PositionStack};
@@ -117,7 +119,6 @@ impl Board {
         promote_to: Option<Piece>,
     ) -> Result<bool, &'static str> {
         debug_assert!(self.pcursor + 1 < PSTACK_SIZE);
-        //self.positions[self.pcursor + 1] = self.current().clone();
         self.positions[self.pcursor + 1] = *self.current();
         match self.positions[self.pcursor + 1].input_move(orig, dest, promote_to) {
             Ok(mov) => {
@@ -129,18 +130,10 @@ impl Board {
         }
     }
 
-    pub fn input_san_move(&mut self, san_move: &str) -> Result<bool, &'static str> {
-        if san_move.len() < 4 {
-            return Err("error: incomplete move");
-        }
-        if let (Ok(from), Ok(to)) = (
-            Square::from_san_string(&san_move[0..2]),
-            Square::from_san_string(&san_move[2..4]),
-        ) {
-            return self.input_move(from, to, None);
-        } else {
-            return Err("error: invalid move");
-        }
+    pub fn input_san_move(&mut self, san_move: &str) -> Result<(), LanParseError> {
+        let lan_mov = lan(san_move)?;
+        self.input_move(lan_mov.from, lan_mov.to, lan_mov.prom).unwrap();
+        Ok(())
     }
 
     pub fn panic_dump(&self) {

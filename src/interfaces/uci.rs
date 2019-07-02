@@ -167,22 +167,23 @@ impl Uci {
         }
 
         for mov in cmd.iter() {
-            if mov.len() < 4 {
-                eprintln!("error: incomplete move");
-                return;
-            }
-            if let (Ok(from), Ok(to)) = (
-                Square::from_san_string(&mov[0..2]),
-                Square::from_san_string(&mov[2..4]),
-            ) {
-                match self.board.input_move(from, to, None) {
-                    Ok(_) => (),
-                    Err(e) => eprintln!("error: could not make move: {}", e),
-                }
-            } else {
-                eprintln!("error: invalid move");
-                return;
-            }
+            self.board.input_san_move(mov);
+            // if mov.len() < 4 {
+            //     eprintln!("error: incomplete move");
+            //     return;
+            // }
+            // if let (Ok(from), Ok(to)) = (
+            //     Square::from_san_string(&mov[0..2]),
+            //     Square::from_san_string(&mov[2..4]),
+            // ) {
+            //     match self.board.input_move(from, to, None) {
+            //         Ok(_) => (),
+            //         Err(e) => eprintln!("error: could not make move: {}", e),
+            //     }
+            // } else {
+            //     eprintln!("error: invalid move");
+            //     return;
+            // }
         }
     }
 

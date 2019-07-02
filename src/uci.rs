@@ -57,25 +57,13 @@ impl UCIInterface {
 
         if tokens.next().is_some() {
             for mov in tokens {
-                if mov.len() < 4 {
-                    eprintln!("error: incomplete move");
-                    return;
+                match self.board.input_san_move(mov) {
+                    Ok(_) => {},
+                    Err(e) => println!("{:?}", e),
                 }
-                if let (Ok(from), Ok(to)) = (
-                    Square::from_san_string(&mov[0..2]),
-                    Square::from_san_string(&mov[2..4]),
-                ) {
-                    match self.board.input_move(from, to, None) {
-                        Ok(_) => (),
-                        Err(e) => eprintln!("error: could not make move: {}", e),
                     }
-                } else {
-                    eprintln!("error: invalid move");
-                    return;
                 }
             }
-        }
-    }
 
     fn cmd_move(&mut self, cmd: Vec<&str>) {
         if cmd.is_empty() {
@@ -83,21 +71,9 @@ impl UCIInterface {
         }
 
         for mov in cmd.iter() {
-            if mov.len() < 4 {
-                eprintln!("error: incomplete move");
-                return;
-            }
-            if let (Ok(from), Ok(to)) = (
-                Square::from_san_string(&mov[0..2]),
-                Square::from_san_string(&mov[2..4]),
-            ) {
-                match self.board.input_move(from, to, None) {
-                    Ok(_) => (),
-                    Err(e) => eprintln!("error: could not make move: {}", e),
-                }
-            } else {
-                eprintln!("error: invalid move");
-                return;
+            match self.board.input_san_move(mov) {
+                Ok(_) => {},
+                Err(e) => println!("{:?}", e),
             }
         }
     }
