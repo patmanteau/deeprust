@@ -123,8 +123,10 @@ fn main() {
     //             .takes_value(true),
     //     )
     //     .get_matches();
-    let _enabled = ansi_term::enable_ansi_support();
-
+    if cfg!(windows) {
+        let _enabled = ansi_term::enable_ansi_support();
+    }
+    
     let matches = clap_app!(deeprust =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
