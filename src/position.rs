@@ -292,6 +292,45 @@ impl Position {
     }
 
     #[inline]
+    pub fn quiet_move_piece(&mut self, piece: Piece, color: Color, from: Square, to: Square) {
+        // see https://www.chessprogramming.org/General_Setwise_Operations
+        let from_bb = u64::bit_at(u32::from(from));
+        let to_bb = u64::bit_at(u32::from(to));
+        let from_to_bb = from_bb ^ to_bb;
+
+        self.bb[0][color as usize] ^= from_to_bb;
+        self.bb[0][piece as usize] ^= from_to_bb;
+
+        self.occupied[to as usize] = self.occupied[from as usize];
+        self.occupied[from as usize] = 0;
+    }
+
+    #[inline]
+    pub fn capture_move_piece(
+        &mut self,
+        piece: Piece,
+        color: Color,
+        captured_piece: Piece,
+        from: Square,
+        to: Square,
+    ) {
+        // see https://www.chessprogramming.org/General_Setwise_Operations
+        let captured_color = 1 ^ color;
+        let from_bb = u64::bit_at(u32::from(from));
+        let to_bb = u64::bit_at(u32::from(to));
+        let from_to_bb = from_bb ^ to_bb;
+
+        self.bb[0][color as usize] ^= from_to_bb;
+        self.bb[0][piece as usize] ^= from_to_bb;
+
+        self.bb[0][captured_color as usize] ^= to_bb;
+        self.bb[0][captured_piece as usize] ^= to_bb;
+
+        self.occupied[to as usize] = self.occupied[from as usize];
+        self.occupied[from as usize] = 0;
+    }
+
+    #[inline]
     pub fn replace_piece(
         &mut self,
         old_piece: Piece,
@@ -340,8 +379,7 @@ impl Position {
                 self.set_piece(prom_piece, orig_color, dest_square);
             }
         } else if mov.is_quiet() {
-            self.remove_piece(orig_piece, orig_color, orig_square);
-            self.set_piece(orig_piece, orig_color, dest_square);
+            self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
         } else if mov.is_capture_en_passant() {
             self.remove_piece(orig_piece, orig_color, orig_square);
             dest_piece = piece::PAWN;
@@ -353,50 +391,44 @@ impl Position {
             );
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if is_capture {
-            self.remove_piece(orig_piece, orig_color, orig_square);
-            self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
+            self.capture_move_piece(orig_piece, orig_color, dest_piece, orig_square, dest_square);
+        // self.remove_piece(orig_piece, orig_color, orig_square);
+        // self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
         } else if mov.is_double_pawn_push() {
-            self.remove_piece(orig_piece, orig_color, orig_square);
             let new_ep_square =
                 (i32::from(dest_square) - [8i32, -8i32][orig_color as usize]) as Square;
             self.en_passant = Some([new_ep_square, new_ep_square.flipped()]);
-            self.set_piece(orig_piece, orig_color, dest_square);
+            self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
         } else if mov.is_king_castle() {
-            self.remove_piece(orig_piece, orig_color, orig_square);
-            self.set_piece(orig_piece, orig_color, dest_square);
-            // move rook
-            self.remove_piece(piece::ROOK, orig_color, dest_square + 1);
-            self.set_piece(piece::ROOK, orig_color, dest_square - 1);
+            self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
+            self.quiet_move_piece(piece::ROOK, orig_color, dest_square + 1, dest_square - 1);
         } else if mov.is_queen_castle() {
-            self.remove_piece(orig_piece, orig_color, orig_square);
-            self.set_piece(orig_piece, orig_color, dest_square);
-            // move rook
-            self.remove_piece(piece::ROOK, orig_color, dest_square - 2);
-            self.set_piece(piece::ROOK, orig_color, dest_square + 1);
+            self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
+            self.quiet_move_piece(piece::ROOK, orig_color, dest_square - 2, dest_square + 1);
         } else {
             panic!("shouldn't come here")
         }
 
-        // clear castling rights on king move
+        // clear castling rights on king or rook move
+        let orig_bb = BB_SQUARES[orig_square as usize];
         if piece::KING == orig_piece {
             self.castling[self.to_move as usize].clear_bit(0);
             self.castling[self.to_move as usize].clear_bit(1);
-        }
-
-        // clear castling rights on rook move
-        if orig_piece == piece::ROOK && (BB_SQUARES[orig_square as usize] & BB_ROOK_HOMES[self.to_move as usize] > 0) {
-            if BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_A > 0 {
+        } else if orig_piece == piece::ROOK && (orig_bb & BB_ROOK_HOMES[self.to_move as usize] > 0)
+        {
+            if orig_bb & BB_FILE_A > 0 {
                 self.castling[self.to_move as usize].clear_bit(1);
-            } else if BB_SQUARES[orig_square as usize] & BB_CORNERS & BB_FILE_H > 0 {
+            } else {
                 self.castling[self.to_move as usize].clear_bit(0);
             }
         }
 
         // clear castling rights on rook capture at home square
-        if dest_piece == piece::ROOK && (BB_SQUARES[dest_square as usize] & BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
-            if BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_A > 0 {
+        let dest_bb = BB_SQUARES[dest_square as usize];
+        if dest_piece == piece::ROOK && (dest_bb & BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
+            if dest_bb & BB_FILE_A > 0 {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
-            } else if BB_SQUARES[dest_square as usize] & BB_CORNERS & BB_FILE_H > 0 {
+            } else {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
             }
         }
