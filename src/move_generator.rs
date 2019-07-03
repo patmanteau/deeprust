@@ -66,14 +66,23 @@ impl MoveGenerator for Board {
 
         debug_assert!(target < 64);
 
-        // if (bitboard::diagonal_attacks(target, occupied)
-        //     | bitboard::anti_diagonal_attacks(target, occupied))
-        //     & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
-        //     > 0
-        // {
-        //     return true;
-        // }
+        // by knights
+        if (bitboard::BB_KNIGHT_ATTACKS[target as usize] & pos.bb_knights(1 ^ color)) > 0 {
+            return true;
+        }
 
+        // by pawns
+        if bitboard::BB_PAWN_ATTACKS[color as usize][target as usize] & pos.bb_pawns(1 ^ color) > 0
+        {
+            return true;
+        }
+
+        // by king?!?
+        if (bitboard::BB_KING_ATTACKS[target as usize] & pos.bb_king(1 ^ color)) > 0 {
+            return true;
+        }
+
+        // by bishops or queens
         if bitboard::bishop_attacks(target, occupied)
            & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
             > 0

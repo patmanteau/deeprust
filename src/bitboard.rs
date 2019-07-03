@@ -216,6 +216,13 @@ lazy_static! {
         arr
     };
 
+    pub static ref BB_PAWN_ATTACKS: [[Bitboard; 64]; 2] = {
+        let mut arr: [[Bitboard; 64]; 2] = [[0; 64]; 2];
+        arr[0] = *BB_WPAWN_ATTACKS;
+        arr[1] = *BB_BPAWN_ATTACKS;
+        arr
+    };
+
     pub static ref BB_WPAWN_PUSHES: [Bitboard; 64] = {
         let mut arr: [Bitboard; 64] = [0; 64];
         for i in 8..16 {
@@ -241,6 +248,13 @@ lazy_static! {
             arr[i] = south_one(orig_bb);
             arr[i] |= south_one(arr[i]);
         }
+        arr
+    };
+
+    pub static ref BB_PAWN_PUSHES: [[Bitboard; 64]; 2] = {
+        let mut arr: [[Bitboard; 64]; 2] = [[0; 64]; 2];
+        arr[0] = *BB_WPAWN_PUSHES;
+        arr[1] = *BB_BPAWN_PUSHES;
         arr
     };
 
