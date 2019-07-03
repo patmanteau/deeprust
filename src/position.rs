@@ -142,7 +142,6 @@ impl Position {
             self.panic_helper()
         }
 
-
         for i in 2..8 {
             // piece bbs not in color bbs?
             if !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE)) & self.bb[0][i] > 0 {

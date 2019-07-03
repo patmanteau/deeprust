@@ -34,7 +34,7 @@ use board::Board;
 use interfaces::FenInterface;
 use search::Search;
 
-use ansi_term::Colour::{Red, Green, Cyan};
+use ansi_term::Colour::{Cyan, Green, Red};
 use log::LevelFilter;
 use std::error::Error;
 use std::fs::File;
@@ -59,7 +59,7 @@ fn batchperft(f: &str) {
             continue;
         } else {
             let parts: Vec<&str> = line.split(';').map(|l| l.trim()).collect();
-            
+
             let fen_str = parts[0];
             let mut b = Board::from_fen_str(&fen_str).unwrap();
 
@@ -67,8 +67,7 @@ fn batchperft(f: &str) {
 
             print!("perft '{}' ", fen_str);
             for depth_def in &parts[1..] {
-                let depth_def_parts: Vec<u64> = 
-                    depth_def
+                let depth_def_parts: Vec<u64> = depth_def
                     .split_whitespace()
                     .map(|d| u64::from_str_radix(d, 10).unwrap())
                     .collect();
@@ -82,7 +81,13 @@ fn batchperft(f: &str) {
                 } else {
                     ok = false;
                     // println!("Line {} failed at depth {}: got {} instead of {} nodes", num + 1, depth, res.nodes, nodes);
-                    debug!("Line {} failed at depth {}: got {} instead of {} nodes", num + 1, depth, res.nodes, nodes);
+                    debug!(
+                        "Line {} failed at depth {}: got {} instead of {} nodes",
+                        num + 1,
+                        depth,
+                        res.nodes,
+                        nodes
+                    );
                 }
             }
 
@@ -97,8 +102,14 @@ fn batchperft(f: &str) {
         }
     }
 
-    println!("Finished batch perft: {} passed, {} failed.", num_ok, num_error);
-    debug!("Finished batch perft: {} passed, {} failed.", num_ok, num_error);
+    println!(
+        "Finished batch perft: {} passed, {} failed.",
+        num_ok, num_error
+    );
+    debug!(
+        "Finished batch perft: {} passed, {} failed.",
+        num_ok, num_error
+    );
 }
 
 fn main() {
@@ -126,7 +137,7 @@ fn main() {
     if cfg!(windows) {
         let _enabled = ansi_term::enable_ansi_support();
     }
-    
+
     let matches = clap_app!(deeprust =>
         (version: env!("CARGO_PKG_VERSION"))
         (author: env!("CARGO_PKG_AUTHORS"))
@@ -134,14 +145,17 @@ fn main() {
         (@arg cli: -c --cli "Starts in CLI mode")
         (@arg FENFILE: -b --batch +takes_value "Runs perfts from a FEN file")
         (@arg debug: -d ... "Sets the level of debugging information")
-    ).get_matches();
+    )
+    .get_matches();
 
     if matches.is_present("cli") {
         cli::run();
     } else if matches.is_present("FENFILE") {
-        let config = matches.value_of("FENFILE").unwrap_or("tests/perftsuite.epd");
+        let config = matches
+            .value_of("FENFILE")
+            .unwrap_or("tests/perftsuite.epd");
         batchperft(config);
-    }else {
+    } else {
         let mut c = uci::UCIInterface::new();
         c.run();
     }

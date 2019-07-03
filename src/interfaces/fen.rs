@@ -116,8 +116,7 @@ fn castling(input: &str) -> IResult<&str, [u32; 2]> {
             'Q' => cast[color::WHITE as usize] |= 0x2,
             'k' => cast[color::BLACK as usize] |= 0x1,
             'q' => cast[color::BLACK as usize] |= 0x2,
-            _ => unreachable!("Internal parser error: castling")
-            // _ => return Err(Error),
+            _ => unreachable!("Internal parser error: castling"), // _ => return Err(Error),
         }
     }
     Ok((rest, cast))

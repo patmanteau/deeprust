@@ -490,8 +490,6 @@ lazy_static! {
     };
 }
 
-
-
 /// See https://www.chessprogramming.org/Kindergarten_Bitboards
 // pub fn diagonal_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 //     let diag_mask_ex = BB_DIAG_MASK_EX[square as usize];
@@ -507,7 +505,7 @@ lazy_static! {
 //     anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
 // }
 
-#[inline]
+// #[inline]
 pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
     //let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
     //let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
@@ -546,7 +544,7 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 //     forward & BB_ANTI_DIAG_MASK_EX[square as usize]
 // }
 
-#[inline]
+// #[inline]
 pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     let mut forward = occupied & BB_FILE_MASK_EX[square as usize];
     let mut reverse = forward.swap_bytes();
@@ -563,7 +561,7 @@ pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
 //         target_feature = "avx2"
 //     )
 // )]
-#[inline]
+// #[inline]
 pub fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     #[cfg(target_arch = "x86_64")]
     use std::arch::x86_64::*;
@@ -575,19 +573,19 @@ pub fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
         let s = *BB_SSSE3_SWAP_MASK;
         let m = BB_SSSE3_DIAG_MASK_EX[square as usize];
         let b = BB_SSSE3_SQUARE[square as usize];
-        let mut o = _mm_cvtsi64x_si128  (std::mem::transmute::<u64, i64>(occupied)); // general purpose 64 bit to xmm low qword
-        o = _mm_unpacklo_epi64  (o, o); // occ : occ
-        o = _mm_and_si128       (o, m); // o (antidiag : diagonal)
-        let mut r = _mm_shuffle_epi8    (o, s); // o'(antidiag : diagonal)
-        o = _mm_sub_epi64       (o, b); // o - bishop
-        let b = _mm_shuffle_epi8    (b, s); // bishop', one may also use singleBitsXMM [sq^56]
-        r = _mm_sub_epi64       (r, b); // o'- bishop'
-        r = _mm_shuffle_epi8    (r, s); // re-reverse
-        o = _mm_xor_si128       (o, r); // attacks
-        o = _mm_and_si128       (o, m); // antidiag : diagonal
-        r = _mm_unpackhi_epi64  (o, o); // antidiag : antidiag
-        o = _mm_add_epi64       (o, r); // diagonal + antidiag
-        std::mem::transmute::<i64, u64>(_mm_cvtsi128_si64(o))    // convert xmm to general purpose 64 bit
+        let mut o = _mm_cvtsi64x_si128(std::mem::transmute::<u64, i64>(occupied)); // general purpose 64 bit to xmm low qword
+        o = _mm_unpacklo_epi64(o, o); // occ : occ
+        o = _mm_and_si128(o, m); // o (antidiag : diagonal)
+        let mut r = _mm_shuffle_epi8(o, s); // o'(antidiag : diagonal)
+        o = _mm_sub_epi64(o, b); // o - bishop
+        let b = _mm_shuffle_epi8(b, s); // bishop', one may also use singleBitsXMM [sq^56]
+        r = _mm_sub_epi64(r, b); // o'- bishop'
+        r = _mm_shuffle_epi8(r, s); // re-reverse
+        o = _mm_xor_si128(o, r); // attacks
+        o = _mm_and_si128(o, m); // antidiag : diagonal
+        r = _mm_unpackhi_epi64(o, o); // antidiag : antidiag
+        o = _mm_add_epi64(o, r); // diagonal + antidiag
+        std::mem::transmute::<i64, u64>(_mm_cvtsi128_si64(o)) // convert xmm to general purpose 64 bit
     }
 }
 

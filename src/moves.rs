@@ -109,14 +109,17 @@ impl Move {
         self.0.flip_bit(9);
     }
 
+    #[inline]
     pub fn orig(self) -> Square {
         self.0.extract_bits(10, 6) as Square
     }
 
+    #[inline]
     pub fn dest(self) -> Square {
         (self.0 & 0x3f) as Square
     }
 
+    #[inline]
     pub fn special(self) -> u16 {
         self.0.extract_bits(6, 2)
     }

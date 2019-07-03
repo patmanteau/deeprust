@@ -58,7 +58,7 @@ impl UCIInterface {
         if tokens.next().is_some() {
             for mov in tokens {
                 match self.board.input_san_move(mov) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => println!("{:?}", e),
                 }
             }
@@ -72,7 +72,7 @@ impl UCIInterface {
 
         for mov in cmd.iter() {
             match self.board.input_san_move(mov) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => println!("{:?}", e),
             }
         }
