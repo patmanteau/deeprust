@@ -1,38 +1,33 @@
-#![warn(clippy::all)]
-#![feature(test)]
-#![feature(simd_x86_bittest)]
+// #![warn(clippy::all)]
+// #![feature(test)]
+// #![feature(simd_x86_bittest)]
 
 #[macro_use]
 extern crate clap;
 #[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate log;
-extern crate nom;
-extern crate quanta;
-extern crate rand;
-extern crate rayon;
 extern crate simple_logging;
-extern crate test;
 
-pub mod bitboard;
-pub mod board;
-pub mod cli;
-pub mod color;
-pub mod common;
-pub mod interfaces;
-pub mod move_generator;
-pub mod moves;
-pub mod piece;
-pub mod position;
-pub mod search;
-pub mod square;
-pub mod uci;
+extern crate deeprust;
+
+// pub mod bitboard;
+// pub mod board;
+// pub mod cli;
+// pub mod color;
+// pub mod common;
+// pub mod interfaces;
+// pub mod move_generator;
+// pub mod moves;
+// pub mod piece;
+// pub mod position;
+// pub mod search;
+// pub mod square;
+// pub mod uci;
 
 // use clap::{App, Arg};
-use board::Board;
-use interfaces::FenInterface;
-use search::Search;
+use deeprust::board::Board;
+use deeprust::interfaces::FenInterface;
+use deeprust::search::Search;
 
 use ansi_term::Colour::{Cyan, Green, Red};
 use log::LevelFilter;
@@ -149,14 +144,14 @@ fn main() {
     .get_matches();
 
     if matches.is_present("cli") {
-        cli::run();
+        deeprust::cli::run();
     } else if matches.is_present("FENFILE") {
         let config = matches
             .value_of("FENFILE")
             .unwrap_or("tests/perftsuite.epd");
         batchperft(config);
     } else {
-        let mut c = uci::UCIInterface::new();
+        let mut c = deeprust::uci::UCIInterface::new();
         c.run();
     }
 }

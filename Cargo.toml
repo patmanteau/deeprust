@@ -3,10 +3,7 @@ name = "deeprust"
 version = "0.1.0"
 authors = ["Patrick Haas <patmanteau@posteo.de>"]
 edition = "2018"
-
-[[bin]]
-name = "deeprust"
-path = "src/main.rs"
+default-run = "deeprust"
 
 [dependencies]
 log = "0.4.6"
