@@ -141,11 +141,11 @@ mbb_squares!(BB_A1, 0, BB_B1, 1, BB_C1, 2, BB_D1, 3, BB_E1, 4, BB_F1, 5, BB_G1, 
              BB_A8,56, BB_B8,57, BB_C8,58, BB_D8,59, BB_E8,60, BB_F8,61, BB_G8,62, BB_H8,63);
 
 #[rustfmt::skip]
-mbb_ranks!  (BB_RANK_1, 0, BB_RANK_2, 1, BB_RANK_3, 2, BB_RANK_4, 3, 
+mbb_ranks!  (BB_RANK_1, 0, BB_RANK_2, 1, BB_RANK_3, 2, BB_RANK_4, 3,
              BB_RANK_5, 4, BB_RANK_6, 5, BB_RANK_7, 6, BB_RANK_8, 7);
 
 #[rustfmt::skip]
-mbb_files!  (BB_FILE_A, 0, BB_FILE_B, 1, BB_FILE_C, 2, BB_FILE_D, 3, 
+mbb_files!  (BB_FILE_A, 0, BB_FILE_B, 1, BB_FILE_C, 2, BB_FILE_D, 3,
              BB_FILE_E, 4, BB_FILE_F, 5, BB_FILE_G, 6, BB_FILE_H, 7);
 
 pub const BB_DIAG_A1H8: Bitboard = 0x8040_2010_0804_0201;
@@ -173,17 +173,17 @@ pub const BB_NOT_RANK_78: Bitboard = !BB_RANK_7 & !BB_RANK_8;
 pub const BB_ROOK_HOMES: [Bitboard; 2] = [BB_A1 | BB_H1, BB_A8 | BB_H8];
 
 // TODO: Pawn attack and push tables
-#[rustfmt::skip] #[inline] pub fn north_one(bb: Bitboard) -> Bitboard        { bb << 8 }
-#[rustfmt::skip] #[inline] pub fn north_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) << 9 }
-#[rustfmt::skip] #[inline] pub fn east_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_H) << 1 }
-#[rustfmt::skip] #[inline] pub fn south_east_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_H) >> 7 }
-#[rustfmt::skip] #[inline] pub fn south_one(bb: Bitboard) -> Bitboard        { bb >> 8 }
-#[rustfmt::skip] #[inline] pub fn south_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) >> 9 }
-#[rustfmt::skip] #[inline] pub fn west_one(bb: Bitboard) -> Bitboard         { (bb & BB_NOT_FILE_A) >> 1 }
-#[rustfmt::skip] #[inline] pub fn north_west_one(bb: Bitboard) -> Bitboard   { (bb & BB_NOT_FILE_A) << 7 }
+#[rustfmt::skip] #[inline] pub const fn north_one(bb: Bitboard) -> Bitboard      { bb << 8 }
+#[rustfmt::skip] #[inline] pub const fn north_east_one(bb: Bitboard) -> Bitboard { (bb & BB_NOT_FILE_H) << 9 }
+#[rustfmt::skip] #[inline] pub const fn east_one(bb: Bitboard) -> Bitboard       { (bb & BB_NOT_FILE_H) << 1 }
+#[rustfmt::skip] #[inline] pub const fn south_east_one(bb: Bitboard) -> Bitboard { (bb & BB_NOT_FILE_H) >> 7 }
+#[rustfmt::skip] #[inline] pub const fn south_one(bb: Bitboard) -> Bitboard      { bb >> 8 }
+#[rustfmt::skip] #[inline] pub const fn south_west_one(bb: Bitboard) -> Bitboard { (bb & BB_NOT_FILE_A) >> 9 }
+#[rustfmt::skip] #[inline] pub const fn west_one(bb: Bitboard) -> Bitboard       { (bb & BB_NOT_FILE_A) >> 1 }
+#[rustfmt::skip] #[inline] pub const fn north_west_one(bb: Bitboard) -> Bitboard { (bb & BB_NOT_FILE_A) << 7 }
 
 /// see https://chessprogramming.org/Flipping_Mirroring_and_Rotating
-pub fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
+pub const fn flip_diag_a1h8(mut bb: Bitboard) -> Bitboard {
     let k1 = 0x5500_5500_5500_5500;
     let k2 = 0x3333_0000_3333_0000;
     let k4 = 0x0f0f_0f0f_0000_0000;
@@ -566,26 +566,22 @@ pub fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     #[cfg(target_arch = "x86_64")]
     use std::arch::x86_64::*;
     unsafe {
-        // o: __m128i;
-        // r: __m128i;
-        // m: __m128i;
-        // b: __m128i;
-        let s = *BB_SSSE3_SWAP_MASK;
-        let m = BB_SSSE3_DIAG_MASK_EX[square as usize];
-        let b = BB_SSSE3_SQUARE[square as usize];
-        let mut o = _mm_cvtsi64x_si128(std::mem::transmute::<u64, i64>(occupied)); // general purpose 64 bit to xmm low qword
-        o = _mm_unpacklo_epi64(o, o); // occ : occ
-        o = _mm_and_si128(o, m); // o (antidiag : diagonal)
-        let mut r = _mm_shuffle_epi8(o, s); // o'(antidiag : diagonal)
-        o = _mm_sub_epi64(o, b); // o - bishop
-        let b = _mm_shuffle_epi8(b, s); // bishop', one may also use singleBitsXMM [sq^56]
-        r = _mm_sub_epi64(r, b); // o'- bishop'
-        r = _mm_shuffle_epi8(r, s); // re-reverse
-        o = _mm_xor_si128(o, r); // attacks
-        o = _mm_and_si128(o, m); // antidiag : diagonal
-        r = _mm_unpackhi_epi64(o, o); // antidiag : antidiag
-        o = _mm_add_epi64(o, r); // diagonal + antidiag
-        std::mem::transmute::<i64, u64>(_mm_cvtsi128_si64(o)) // convert xmm to general purpose 64 bit
+        let swap_mask = *BB_SSSE3_SWAP_MASK;
+        let diag_mask_ex = BB_SSSE3_DIAG_MASK_EX[square as usize];
+        let sq_mask = BB_SSSE3_SQUARE[square as usize];
+        let mut occ_mask = _mm_cvtsi64x_si128(std::mem::transmute::<u64, i64>(occupied)); // general purpose 64 bit to xmm low qword
+        occ_mask = _mm_unpacklo_epi64(occ_mask, occ_mask); // occ : occ
+        occ_mask = _mm_and_si128(occ_mask, diag_mask_ex); // occ_mask (antidiag : diagonal)
+        let mut rev_occ_mask = _mm_shuffle_epi8(occ_mask, swap_mask); // occ_mask'(antidiag : diagonal)
+        occ_mask = _mm_sub_epi64(occ_mask, sq_mask); // occ_mask - bishop
+        let sq_mask = _mm_shuffle_epi8(sq_mask, swap_mask); // bishop', one may also use singleBitsXMM [sq^56]
+        rev_occ_mask = _mm_sub_epi64(rev_occ_mask, sq_mask); // occ_mask'- bishop'
+        rev_occ_mask = _mm_shuffle_epi8(rev_occ_mask, swap_mask); // re-reverse
+        occ_mask = _mm_xor_si128(occ_mask, rev_occ_mask); // attacks
+        occ_mask = _mm_and_si128(occ_mask, diag_mask_ex); // antidiag : diagonal
+        rev_occ_mask = _mm_unpackhi_epi64(occ_mask, occ_mask); // antidiag : antidiag
+        occ_mask = _mm_add_epi64(occ_mask, rev_occ_mask); // diagonal + antidiag
+        std::mem::transmute::<i64, u64>(_mm_cvtsi128_si64(occ_mask)) // convert xmm to general purpose 64 bit
     }
 }
 
