@@ -370,7 +370,7 @@ impl Position {
 
         // promotions change pieces
         if mov.is_promotion() {
-            let prom_piece = mov.special() as Piece + 3;
+            let prom_piece = mov.prom_piece_code();
             self.remove_piece(orig_piece, orig_color, orig_square);
             if is_capture {
                 self.replace_piece(dest_piece, dest_color, prom_piece, orig_color, dest_square);
@@ -395,7 +395,7 @@ impl Position {
         // self.replace_piece(dest_piece, dest_color, orig_piece, orig_color, dest_square);
         } else if mov.is_double_pawn_push() {
             let new_ep_square =
-                (i32::from(dest_square) - [8i32, -8i32][orig_color as usize]) as Square;
+                (i64::from(dest_square) - [8i64, -8i64][orig_color as usize]) as Square;
             self.en_passant = Some([new_ep_square, new_ep_square.flipped()]);
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
         } else if mov.is_king_castle() {
@@ -410,6 +410,7 @@ impl Position {
 
         // clear castling rights on king or rook move
         let orig_bb = BB_SQUARES[orig_square as usize];
+        // let orig_bb = Bitboard::bit_at(u32::from(orig_square));
         if piece::KING == orig_piece {
             self.castling[self.to_move as usize].clear_bit(0);
             self.castling[self.to_move as usize].clear_bit(1);
@@ -424,6 +425,7 @@ impl Position {
 
         // clear castling rights on rook capture at home square
         let dest_bb = BB_SQUARES[dest_square as usize];
+        // let dest_bb = Bitboard::bit_at(u32::from(dest_square));
         if dest_piece == piece::ROOK && (dest_bb & BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
             if dest_bb & BB_FILE_A > 0 {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(1);

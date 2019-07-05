@@ -60,7 +60,7 @@ fn batchperft(f: &str) {
 
             let mut ok = true;
 
-            print!("perft '{}' ", fen_str);
+            print!("perft({}) ", fen_str);
             for depth_def in &parts[1..] {
                 let depth_def_parts: Vec<u64> = depth_def
                     .split_whitespace()
@@ -68,8 +68,8 @@ fn batchperft(f: &str) {
                     .collect();
                 let (depth, nodes) = (depth_def_parts[0], depth_def_parts[1]);
                 // print!("Running perft {} on '{}' expecting {} nodes...", depth, fen_str, nodes);
-                print!("{} ", depth);
-                io::stdout().flush().unwrap();
+                // print!("{}..", depth);
+                // io::stdout().flush().unwrap();
                 let res = b.perft(depth as u32);
                 if res.nodes == nodes {
                     // println!("OK");
@@ -90,13 +90,13 @@ fn batchperft(f: &str) {
                 println!("{}", Green.bold().paint("[OK]"));
                 num_ok += 1;
             } else {
-                println!("{}", Red.bold().paint("[Error]"));
+                println!("{}", Red.bold().paint("[FAIL]"));
                 num_error += 1;
             }
             io::stdout().flush().unwrap();
         }
     }
-
+    println!();
     println!(
         "Finished batch perft: {} passed, {} failed.",
         num_ok, num_error

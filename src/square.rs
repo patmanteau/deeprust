@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::string::String;
 
-pub type Square = u16;
+pub type Square = u32;
 
 pub trait SquarePrimitives<T> {
     fn from_coords(x: u32, y: u32) -> Square;
@@ -41,7 +41,7 @@ impl SquarePrimitives<Square> for Square {
             Some(val) => val,
             None => return Err("Invalid square string"),
         };
-        let y = match u16::from_str(&square[1..2]) {
+        let y = match u32::from_str(&square[1..2]) {
             Ok(val) => val - 1,
             Err(_) => return Err("Invalid square string"),
         };
@@ -97,14 +97,14 @@ pub const RANK_NAMES: [&str; 8] = ["1", "2", "3", "4", "5", "6", "7", "8"];
 #[rustfmt::skip]
 pub fn ep_capture_square(ep_square: Square) -> Square {
     let table = [
-         0,  0,  0,  0,  0,  0,  0,  0, 
-         0,  0,  0,  0,  0,  0,  0,  0, 
+         0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,
         24, 25, 26, 27, 28, 29, 30, 31,
-         0,  0,  0,  0,  0,  0,  0,  0, 
-         0,  0,  0,  0,  0,  0,  0,  0, 
+         0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,
         32, 33, 34, 35, 36, 37, 38, 39,
-         0,  0,  0,  0,  0,  0,  0,  0, 
-         0,  0,  0,  0,  0,  0,  0,  0, 
+         0,  0,  0,  0,  0,  0,  0,  0,
+         0,  0,  0,  0,  0,  0,  0,  0,
     ];
     table[ep_square as usize]
 }

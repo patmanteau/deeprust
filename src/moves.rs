@@ -1,11 +1,12 @@
 use crate::common::*;
 
+use crate::piece::Piece;
 use crate::square::{Square, SquarePrimitives};
 use std::fmt;
 
 pub type MoveStack = Vec<Move>;
 
-pub type Movesize = u16;
+pub type Movesize = u32;
 #[derive(Copy, Clone)]
 pub struct Move(Movesize);
 // bit mask:
@@ -61,8 +62,8 @@ pub mod flags {
 impl Move {
     /// Constructs a new Move
     #[inline]
-    pub fn new(orig: Square, dest: Square, flags: u16) -> Self {
-        Move((((orig as u16) & 0x3f) << 10) | ((dest as u16) & 0x3f) | ((flags & 0xf) << 6))
+    pub fn new(orig: Square, dest: Square, flags: Movesize) -> Self {
+        Move((((orig as Movesize) & 0x3f) << 10) | ((dest as Movesize) & 0x3f) | ((flags & 0xf) << 6))
     }
 
     #[inline]
@@ -71,11 +72,11 @@ impl Move {
         is_promotion: bool,
         is_special_0: bool,
         is_special_1: bool,
-    ) -> u16 {
-        ((is_promotion as u16) << 3)
-            | ((is_capture as u16) << 2)
-            | ((is_special_1 as u16) << 1)
-            | (is_special_0 as u16)
+    ) -> Movesize {
+        ((is_promotion as Movesize) << 3)
+            | ((is_capture as Movesize) << 2)
+            | ((is_special_1 as Movesize) << 1)
+            | (is_special_0 as Movesize)
     }
 
     pub fn set_orig(&mut self, from: Square) {
@@ -89,7 +90,7 @@ impl Move {
     }
 
     #[inline]
-    pub fn with_flags(self, flags: u16) -> Move {
+    pub fn with_flags(self, flags: Movesize) -> Move {
         Move((self.0 & 0b1111_1100_0011_1111) | (flags << 6))
     }
 
@@ -120,7 +121,7 @@ impl Move {
     }
 
     #[inline]
-    pub fn special(self) -> u16 {
+    pub fn special(self) -> Movesize {
         self.0.extract_bits(6, 2)
     }
 
@@ -155,6 +156,11 @@ impl Move {
     #[inline]
     pub fn is_promotion(self) -> bool {
         self.0.test_bit(9)
+    }
+
+    #[inline]
+    pub fn prom_piece_code(self) -> Piece {
+        (self.special() + 3) as Piece
     }
 
     #[inline]

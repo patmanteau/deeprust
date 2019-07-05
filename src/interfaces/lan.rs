@@ -105,7 +105,7 @@ fn from_san_string(square: &str) -> Square {
         Some(val) => val,
         None => unreachable!("LAN parser error: Invalid file character"),
     };
-    let y = match u16::from_str(&square[1..2]) {
+    let y = match u32::from_str(&square[1..2]) {
         Ok(val) => val - 1,
         Err(_) => unreachable!("LAN parser error: Invalid square character"),
     };

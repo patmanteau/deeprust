@@ -204,7 +204,7 @@ impl FenInterface for Position {
         for i in 0..64 {
             if result.placement[i] != piece::EMPTY {
                 let piece = result.placement[i] as Piece;
-                position.set_piece(piece.code(), piece.color(), i as u16);
+                position.set_piece(piece.code(), piece.color(), i as Square);
             }
         }
 
