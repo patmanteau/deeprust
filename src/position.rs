@@ -12,14 +12,22 @@ pub type PositionStack = Vec<Position>;
 ///
 /// Uses 16 bitboards ((2 colors + 6 pieces) * (unflipped + flipped)) plus an occupancy array
 ///
+/// 224 Byte
 #[derive(Clone, Copy)]
 pub struct Position {
+    // 8 * 8 * 2 = 128 Byte
     pub bb: [[Bitboard; 8]; 2],
+    //  1 * 64 = 64 Byte
     pub occupied: [Piece; 64],
+    // 8 Byte
     pub to_move: Color,
+    // 4 * 2 = 8 Byte
     pub castling: [u32; 2],
+    // 4 * 2 = 8 Byte
     pub en_passant: Option<[Square; 2]>,
+    // 4 Byte
     pub halfmoves: u32,
+    // 4 Byte
     pub fullmoves: u32,
 }
 

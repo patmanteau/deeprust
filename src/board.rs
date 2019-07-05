@@ -98,8 +98,8 @@ impl Board {
     #[inline]
     pub fn make_move(&mut self, mov: Move) {
         debug_assert!(self.pcursor + 1 < PSTACK_SIZE);
-        //self.positions[self.pcursor + 1] = self.current().clone();
-        self.positions[self.pcursor + 1] = *self.current();
+        // self.positions[self.pcursor + 1] = self.current().clone();
+        self.positions[self.pcursor + 1] = self.positions[self.pcursor]; //*self.current();
         self.positions[self.pcursor + 1].make_move(mov);
         self.history.push(mov);
         self.pcursor += 1;
