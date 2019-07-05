@@ -86,7 +86,7 @@ impl Board {
     }
 
     #[inline]
-    pub fn bb(&self) -> &[[Bitboard; 8]; 2] {
+    pub fn bb(&self) -> &[Bitboard; 14] {
         &self.current().bb()
     }
 

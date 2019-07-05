@@ -12,19 +12,23 @@ pub type PositionStack = Vec<Position>;
 ///
 /// Uses 16 bitboards ((2 colors + 6 pieces) * (unflipped + flipped)) plus an occupancy array
 ///
-/// 224 Byte
+/// 204 Byte
 #[derive(Clone, Copy)]
 pub struct Position {
     // 8 * 8 * 2 = 128 Byte
-    pub bb: [[Bitboard; 8]; 2],
+    // pub bb: [[Bitboard; 8]; 2],
+    // 14 * 8 = 112 Byte
+    pub bb: [Bitboard; 14],
     //  1 * 64 = 64 Byte
     pub occupied: [Piece; 64],
     // 8 Byte
     pub to_move: Color,
     // 4 * 2 = 8 Byte
     pub castling: [u32; 2],
-    // 4 * 2 = 8 Byte
-    pub en_passant: Option<[Square; 2]>,
+    // // 4 * 2 = 8 Byte
+    // pub en_passant: Option<[Square; 2]>,
+    // 4 Byte
+    pub en_passant: Option<Square>,
     // 4 Byte
     pub halfmoves: u32,
     // 4 Byte
@@ -76,7 +80,7 @@ impl fmt::Display for Position {
                     write!(
                         f,
                         "{}    ",
-                        self.bb[0][(block * 4) + cur_bb].rank_to_debug_string(rank)
+                        self.bb[(block * 4) + cur_bb].rank_to_debug_string(rank)
                     )
                     .unwrap();
                 }
@@ -97,7 +101,7 @@ impl Default for Position {
 impl Position {
     pub fn new() -> Position {
         Position {
-            bb: [[0; 8]; 2],
+            bb: [0; 14],
             occupied: [0; 64],
             to_move: color::WHITE,
             castling: [0, 0],
@@ -108,12 +112,12 @@ impl Position {
     }
 
     pub fn equals(&self, rhs: &Position) -> bool {
-        for side in 0..2 {
-            for bb in 0..8 {
-                if self.bb[side][bb] != rhs.bb[side][bb] {
-                    return false;
-                }
+        for bb in 0..14 {
+            if self.bb[bb] != rhs.bb[bb] {
+                return false;
             }
+        }
+        for side in 0..2 {
             if self.castling[side] != rhs.castling[side] {
                 return false;
             }
@@ -177,49 +181,60 @@ impl Position {
     }
 
     #[inline]
-    pub fn bb(&self) -> &[[Bitboard; 8]; 2] {
+    fn bb_idx(color: Color, piece: Piece) -> usize {
+        usize::from((color * 6) + piece)
+    }
+
+    #[inline]
+    pub fn bb(&self) -> &[Bitboard; 14] {
         &self.bb
     }
 
     // don't actually return flipped boards for now
     #[inline]
     pub fn bb_own(&self, color: Color) -> Bitboard {
-        self.bb[0][color as usize]
+        self.bb[color as usize]
     }
 
     #[inline]
     pub fn bb_opponent(&self, color: Color) -> Bitboard {
-        self.bb[0][(1 ^ color) as usize]
+        self.bb[(1 ^ color) as usize]
     }
 
     #[inline]
     pub fn bb_pawns(&self, color: Color) -> Bitboard {
-        self.bb[0][piece::PAWN as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, piece::PAWN)]
+        // self.bb[0][piece::PAWN as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_knights(&self, color: Color) -> Bitboard {
-        self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, piece::KNIGHT)]
+        // self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_bishops(&self, color: Color) -> Bitboard {
-        self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, piece::BISHOP)]
+        // self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_rooks(&self, color: Color) -> Bitboard {
-        self.bb[0][piece::ROOK as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, piece::ROOK)]
+        // self.bb[0][piece::ROOK as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_queens(&self, color: Color) -> Bitboard {
-        self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, piece::QUEEN)]
+        // self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_king(&self, color: Color) -> Bitboard {
-        self.bb[0][piece::KING as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, piece::KING)]
+        // self.bb[0][piece::KING as usize] & self.bb_own(color)
     }
 
     #[inline]
@@ -238,7 +253,7 @@ impl Position {
     }
 
     #[inline]
-    pub fn en_passant(&self) -> Option<[Square; 2]> {
+    pub fn en_passant(&self) -> Option<Square> {
         self.en_passant
     }
 
@@ -272,29 +287,18 @@ impl Position {
 
     #[inline]
     pub fn set_piece(&mut self, piece: Piece, color: Color, to: Square) {
-        // update unflipped bb
-        self.bb[0][color as usize].set(to);
-        self.bb[0][piece as usize].set(to);
+        self.bb[color as usize].set(to);
+        self.bb[Self::bb_idx(color, piece)].set(to);
+        // self.bb[piece as usize].set(to);
 
-        // update flipped bb
-        // self.bb[1][color as usize].set(to ^ 56);
-        // self.bb[1][piece as usize].set(to ^ 56);
-
-        // update occupancy array
         self.occupied[to as usize] = Piece::new(piece, color);
     }
 
     #[inline]
     pub fn remove_piece(&mut self, piece: Piece, color: Color, from: Square) {
-        // update unflipped bb
-        self.bb[0][color as usize].clear(from);
-        self.bb[0][piece as usize].clear(from);
+        self.bb[color as usize].clear(from);
+        self.bb[Self::bb_idx(color, piece)].clear(from);
 
-        // update flipped bb
-        // self.bb[1][color as usize].clear(from ^ 56);
-        // self.bb[1][piece as usize].clear(from ^ 56);
-
-        // update occupancy array
         self.occupied[from as usize] = 0;
     }
 
@@ -305,8 +309,8 @@ impl Position {
         let to_bb = u64::bit_at(u32::from(to));
         let from_to_bb = from_bb ^ to_bb;
 
-        self.bb[0][color as usize] ^= from_to_bb;
-        self.bb[0][piece as usize] ^= from_to_bb;
+        self.bb[color as usize] ^= from_to_bb;
+        self.bb[Self::bb_idx(color, piece)] ^= from_to_bb;
 
         self.occupied[to as usize] = self.occupied[from as usize];
         self.occupied[from as usize] = 0;
@@ -327,11 +331,11 @@ impl Position {
         let to_bb = u64::bit_at(u32::from(to));
         let from_to_bb = from_bb ^ to_bb;
 
-        self.bb[0][color as usize] ^= from_to_bb;
-        self.bb[0][piece as usize] ^= from_to_bb;
+        self.bb[color as usize] ^= from_to_bb;
+        self.bb[Self::bb_idx(color, piece)] ^= from_to_bb;
 
-        self.bb[0][captured_color as usize] ^= to_bb;
-        self.bb[0][captured_piece as usize] ^= to_bb;
+        self.bb[captured_color as usize] ^= to_bb;
+        self.bb[Self::bb_idx(captured_color, captured_piece)] ^= to_bb;
 
         self.occupied[to as usize] = self.occupied[from as usize];
         self.occupied[from as usize] = 0;
@@ -346,13 +350,8 @@ impl Position {
         new_color: Color,
         square: Square,
     ) {
-        // remove from unflipped bb
-        self.bb[0][old_color as usize].clear(square);
-        self.bb[0][old_piece as usize].clear(square);
-
-        // remove from flipped bb
-        // self.bb[1][old_color as usize].clear(square ^ 56);
-        // self.bb[1][old_piece as usize].clear(square ^ 56);
+        self.bb[old_color as usize].clear(square);
+        self.bb[Self::bb_idx(old_color, old_piece)].clear(square);
 
         self.set_piece(new_piece, new_color, square);
     }
@@ -404,7 +403,7 @@ impl Position {
         } else if mov.is_double_pawn_push() {
             let new_ep_square =
                 (i64::from(dest_square) - [8i64, -8i64][orig_color as usize]) as Square;
-            self.en_passant = Some([new_ep_square, new_ep_square.flipped()]);
+            self.en_passant = Some(new_ep_square);
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
         } else if mov.is_king_castle() {
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
@@ -417,8 +416,8 @@ impl Position {
         }
 
         // clear castling rights on king or rook move
-        let orig_bb = BB_SQUARES[orig_square as usize];
-        // let orig_bb = Bitboard::bit_at(u32::from(orig_square));
+        // let orig_bb = BB_SQUARES[orig_square as usize];
+        let orig_bb = Bitboard::bit_at(u32::from(orig_square));
         if piece::KING == orig_piece {
             self.castling[self.to_move as usize].clear_bit(0);
             self.castling[self.to_move as usize].clear_bit(1);
@@ -432,8 +431,8 @@ impl Position {
         }
 
         // clear castling rights on rook capture at home square
-        let dest_bb = BB_SQUARES[dest_square as usize];
-        // let dest_bb = Bitboard::bit_at(u32::from(dest_square));
+        // let dest_bb = BB_SQUARES[dest_square as usize];
+        let dest_bb = Bitboard::bit_at(u32::from(dest_square));
         if dest_piece == piece::ROOK && (dest_bb & BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
             if dest_bb & BB_FILE_A > 0 {
                 self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
@@ -484,7 +483,7 @@ impl Position {
         }
 
         // set flags for en passant capture
-        if piece == piece::PAWN && Some([dest, dest.flipped()]) == self.en_passant {
+        if piece == piece::PAWN && Some(dest) == self.en_passant {
             is_capture = true;
             is_special_0 = true;
             is_special_1 = false;
@@ -545,8 +544,8 @@ mod tests {
                 for piece in 2..8 {
                     position.set_piece(piece, color, square);
                     assert!(position.check_piece(piece, color, square));
-                    assert!(position.bb[0][color as usize] & bb::BB_SQUARES[square as usize] != 0);
-                    assert!(position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize] != 0);
+                    assert!(position.bb[color as usize] & bb::BB_SQUARES[square as usize] != 0);
+                    assert!(position.bb[Position::bb_idx(color, piece)] & bb::BB_SQUARES[square as usize] != 0);
                     // assert!(
                     //     position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
                     //         != 0
@@ -580,8 +579,8 @@ mod tests {
                     let mut position = Position::new();
                     position.set_piece(piece, color, square);
                     assert!(position.check_piece(piece, color, square));
-                    assert!(position.bb[0][color as usize] & bb::BB_SQUARES[square as usize] != 0);
-                    assert!(position.bb[0][piece as usize] & bb::BB_SQUARES[square as usize] != 0);
+                    assert!(position.bb[color as usize] & bb::BB_SQUARES[square as usize] != 0);
+                    assert!(position.bb[Position::bb_idx(color, piece)] & bb::BB_SQUARES[square as usize] != 0);
                     // assert!(
                     //     position.bb[1][color as usize] & bb::BB_SQUARES[(square ^ 56) as usize]
                     //         != 0

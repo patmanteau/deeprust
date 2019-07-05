@@ -189,12 +189,12 @@ impl FenInterface for Position {
 
         // position
         let mut position = Self {
-            bb: [[0_u64; 8]; 2],
+            bb: [0_u64; 14],
             occupied: [piece::EMPTY; 64],
             to_move: result.to_move,   //color::WHITE,
             castling: result.castling, //[0_u32; 2],
             en_passant: match result.ep_target {
-                Some(eps) => Some([eps, eps.flipped()]),
+                Some(eps) => Some(eps),
                 None => None,
             },
             halfmoves: result.halfmoves,
@@ -270,7 +270,7 @@ impl FenInterface for Position {
         // en passant
         fen_string.push(' ');
         if let Some(eps) = self.en_passant() {
-            let san = eps[0].to_san_string();
+            let san = eps.to_san_string();
             fen_string.push_str(&san)
         } else {
             fen_string.push('-')
@@ -366,7 +366,7 @@ impl FenInterface for Board {
         // en passant
         fen_string.push(' ');
         if let Some(eps) = self.current().en_passant() {
-            let san = eps[0].to_san_string();
+            let san = eps.to_san_string();
             fen_string.push_str(&san)
         } else {
             fen_string.push('-')

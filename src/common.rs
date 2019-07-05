@@ -22,8 +22,8 @@ macro_rules! twiddle_impl {
 
             #[inline]
             fn test_bit(&self, pos: u32) -> bool {
-                //self & Self::bit_at(pos) > 0
-                unsafe { return 0 < _bittest64(&(*self as i64), pos as i64) }
+                self & Self::bit_at(pos) > 0
+                // unsafe { return 0 < _bittest64(&(*self as i64), pos as i64) }
             }
 
             #[inline]

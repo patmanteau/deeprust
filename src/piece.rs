@@ -76,10 +76,12 @@ impl PiecePrimitives for Piece {
         }
     }
 
+    #[inline]
     fn code(self) -> Piece {
         self.extract_bits(0, 3)
     }
 
+    #[inline]
     fn color(self) -> color::Color {
         self.extract_bits(3, 1)
     }

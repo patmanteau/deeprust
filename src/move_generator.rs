@@ -110,7 +110,7 @@ impl MoveGenerator for Board {
         let pawns = pos.bb_pawns(color::WHITE);
 
         let (ep_square, ep_bb) = match pos.en_passant() {
-            Some(sq) => (sq[0], bitboard::BB_SQUARES[sq[0] as usize]),
+            Some(sq) => (sq, bitboard::BB_SQUARES[sq as usize]),
             None => (0, bitboard::BB_EMPTY),
         };
 
@@ -172,7 +172,7 @@ impl MoveGenerator for Board {
         let pawns = pos.bb_pawns(color::BLACK);
 
         let (ep_square, ep_bb) = match pos.en_passant() {
-            Some(sq) => (sq[0], bitboard::BB_SQUARES[sq[0] as usize]),
+            Some(sq) => (sq, bitboard::BB_SQUARES[sq as usize]),
             None => (0, bitboard::BB_EMPTY),
         };
 
