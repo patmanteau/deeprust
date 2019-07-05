@@ -17,6 +17,9 @@ nom = "5"
 rayon = "1.1"
 ansi_term = "0.11"
 
+[dev-dependencies]
+criterion = "0.2"
+
 [[bench]]
 name = "crit"
 harness = false
