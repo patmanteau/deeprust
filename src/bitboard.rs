@@ -505,7 +505,7 @@ lazy_static! {
 //     anti_diag_mask_ex & BB_KG_FILL_UP_ATTACKS[(square & 0x7) as usize][occupied as usize]
 // }
 
-// #[inline]
+#[inline]
 pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
     //let rank_mask_ex = BB_RANKS[(square >> 0x3) as usize] ^ BB_SQUARES[square as usize];
     //let north_fill = (rank_mask_ex & occupied).overflowing_mul(BB_FILE_B);
@@ -544,7 +544,7 @@ pub fn rank_attacks(square: Square, mut occupied: Bitboard) -> Bitboard {
 //     forward & BB_ANTI_DIAG_MASK_EX[square as usize]
 // }
 
-// #[inline]
+#[inline]
 pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     let mut forward = occupied & BB_FILE_MASK_EX[square as usize];
     let mut reverse = forward.swap_bytes();
@@ -561,7 +561,7 @@ pub fn file_attacks(square: Square, occupied: Bitboard) -> Bitboard {
 //         target_feature = "avx2"
 //     )
 // )]
-// #[inline]
+#[inline]
 pub fn bishop_attacks(square: Square, occupied: Bitboard) -> Bitboard {
     #[cfg(target_arch = "x86_64")]
     use std::arch::x86_64::*;

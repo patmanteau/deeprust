@@ -57,32 +57,32 @@ macro_rules! twiddle_impl {
 }
 
 lazy_static! {
-    pub static ref BT_U8: [u8; std::mem::size_of::<u8>()] = {
-        const BT_ARRSIZE: usize = std::mem::size_of::<u8>();
+    pub static ref BT_U8: [u8; std::mem::size_of::<u8>() * 8] = {
+        const BT_ARRSIZE: usize = std::mem::size_of::<u8>() * 8;
         let mut arr: [u8; BT_ARRSIZE] = [0; BT_ARRSIZE];
         for (index, entry) in arr.iter_mut().enumerate().take(BT_ARRSIZE) {
             *entry = 1 << index;
         }
         arr
     };
-    pub static ref BT_U16: [u16; std::mem::size_of::<u16>()] = {
-        const BT_ARRSIZE: usize = std::mem::size_of::<u16>();
+    pub static ref BT_U16: [u16; std::mem::size_of::<u16>() * 8] = {
+        const BT_ARRSIZE: usize = std::mem::size_of::<u16>() * 8;
         let mut arr: [u16; BT_ARRSIZE] = [0; BT_ARRSIZE];
         for (index, entry) in arr.iter_mut().enumerate().take(BT_ARRSIZE) {
             *entry = 1 << index;
         }
         arr
     };
-    pub static ref BT_U32: [u32; std::mem::size_of::<u32>()] = {
-        const BT_ARRSIZE: usize = std::mem::size_of::<u32>();
+    pub static ref BT_U32: [u32; std::mem::size_of::<u32>() * 8] = {
+        const BT_ARRSIZE: usize = std::mem::size_of::<u32>() * 8;
         let mut arr: [u32; BT_ARRSIZE] = [0; BT_ARRSIZE];
         for (index, entry) in arr.iter_mut().enumerate().take(BT_ARRSIZE) {
             *entry = 1 << index;
         }
         arr
     };
-    pub static ref BT_U64: [u64; std::mem::size_of::<u64>()] = {
-        const BT_ARRSIZE: usize = std::mem::size_of::<u64>();
+    pub static ref BT_U64: [u64; std::mem::size_of::<u64>() * 8] = {
+        const BT_ARRSIZE: usize = std::mem::size_of::<u64>() * 8;
         let mut arr: [u64; BT_ARRSIZE] = [0; BT_ARRSIZE];
         for (index, entry) in arr.iter_mut().enumerate().take(BT_ARRSIZE) {
             *entry = 1 << index;
