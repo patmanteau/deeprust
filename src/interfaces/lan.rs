@@ -68,10 +68,10 @@ fn square(input: &str) -> IResult<&str, Square> {
 fn str_to_piececode(input: char) -> Piece {
     Piece::new(
         match input {
-            'N' | 'n' => pieces::KNIGHT,
-            'B' | 'b' => pieces::BISHOP,
-            'R' | 'r' => pieces::ROOK,
-            'Q' | 'q' => pieces::QUEEN,
+            'N' | 'n' => piece_types::KNIGHT,
+            'B' | 'b' => piece_types::BISHOP,
+            'R' | 'r' => piece_types::ROOK,
+            'Q' | 'q' => piece_types::QUEEN,
             _ => unreachable!("LAN parser error: Invalid promotion character"),
         },
         colors::WHITE,

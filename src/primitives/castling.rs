@@ -1,5 +1,5 @@
-use crate::primitives::color::Color;
 use crate::common::BitTwiddling;
+use crate::primitives::color::Color;
 
 pub type CastlingSide = u32;
 
@@ -51,4 +51,3 @@ impl Castling {
         self.0 == 0
     }
 }
-

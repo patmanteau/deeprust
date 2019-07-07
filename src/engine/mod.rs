@@ -10,4 +10,4 @@ pub use board::Board;
 pub use move_generator::MoveGenerator;
 pub use position::Position;
 pub use search::{PerftContext, Search};
-pub use zobrist::{ZobKey, Zobrist, ZobTables};
+pub use zobrist::{ZobKey, ZobTables, Zobrist};

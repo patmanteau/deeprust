@@ -21,6 +21,6 @@ mod square;
 
 pub use castling::{sides, Castling, CastlingSide};
 pub use color::{colors, Color, ColorPrimitives};
+pub use piece::{piece_types, Piece, PiecePrimitives};
 pub use r#move::{flags, Move, MoveStack};
-pub use piece::{pieces, Piece, PiecePrimitives};
-pub use square::{squares, Square, SquarePrimitives, ep_capture_square};
+pub use square::{ep_capture_square, squares, Square, SquarePrimitives};

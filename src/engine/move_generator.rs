@@ -1,7 +1,7 @@
 use crate::engine::{bitboards, Bitboard, BitboardPrimitives, Board};
 // use crate::board::Board;
-use crate::primitives::*;
 use crate::common::*;
+use crate::primitives::*;
 // use crate::primitives::r#move::flags;
 // use crate::primitives::r#move::Move;
 
@@ -144,8 +144,8 @@ impl MoveGenerator for Board {
 
         for from in norm_pawns.iter() {
             // captures
-            let mut atk =
-                bitboards::BB_WPAWN_ATTACKS[from as usize] & (pos.bb_opponent(colors::WHITE) | ep_bb);
+            let mut atk = bitboards::BB_WPAWN_ATTACKS[from as usize]
+                & (pos.bb_opponent(colors::WHITE) | ep_bb);
             for to in atk.iter() {
                 moves.push(Move::new(
                     from,
@@ -205,8 +205,8 @@ impl MoveGenerator for Board {
 
         for from in norm_pawns.iter() {
             // captures
-            let mut atk =
-                bitboards::BB_BPAWN_ATTACKS[from as usize] & (pos.bb_opponent(colors::BLACK) | ep_bb);
+            let mut atk = bitboards::BB_BPAWN_ATTACKS[from as usize]
+                & (pos.bb_opponent(colors::BLACK) | ep_bb);
             for to in atk.iter() {
                 moves.push(Move::new(
                     from,
@@ -382,8 +382,8 @@ impl MoveGenerator for Board {
 #[cfg(test)]
 mod tests {
     use crate::engine::{Board, MoveGenerator};
-    use crate::primitives::{colors, squares};
     use crate::interfaces::FenInterface;
+    use crate::primitives::{colors, squares};
     // use crate::primitives::square;
     use crate::frontends::UCIFrontend;
 

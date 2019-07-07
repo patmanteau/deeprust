@@ -28,7 +28,6 @@ impl Zobrist {
 
         let mut prng = Pcg64::seed_from_u64(0);
 
-
         for table in z.pieces.iter_mut() {
             for square in table.iter_mut() {
                 *square = prng.next_u64();
@@ -52,7 +51,5 @@ impl Zobrist {
 }
 
 lazy_static! {
-    pub static ref ZobTables: Zobrist = {
-        Zobrist::new()
-    };
+    pub static ref ZobTables: Zobrist = { Zobrist::new() };
 }

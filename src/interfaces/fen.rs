@@ -114,7 +114,7 @@ fn castling(input: &str) -> IResult<&str, Castling> {
 
     for chr in c.chars() {
         match chr {
-            '-' => {},
+            '-' => {}
             'K' => cast.set(colors::WHITE, sides::KING_SIDE),
             'Q' => cast.set(colors::WHITE, sides::QUEEN_SIDE),
             'k' => cast.set(colors::BLACK, sides::KING_SIDE),
@@ -199,7 +199,7 @@ impl FenInterface for Position {
         position.set_fullmoves(result.fullmoves);
 
         for i in 0..64 {
-            if result.placement[i] != pieces::EMPTY {
+            if result.placement[i] != piece_types::EMPTY {
                 let piece = result.placement[i] as Piece;
                 position.set_piece(piece.code(), piece.color(), i as Square);
             }

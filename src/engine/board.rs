@@ -148,8 +148,8 @@ impl Board {
 mod tests {
     use super::*;
 
-    use crate::primitives::colors;
     use crate::engine::Search;
+    use crate::primitives::colors;
     // use crate::primitives::square;
     use std::error::Error;
     use std::fs::File;

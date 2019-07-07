@@ -64,7 +64,11 @@ impl Move {
     /// Constructs a new Move
     #[inline]
     pub fn new(orig: Square, dest: Square, flags: Movesize) -> Self {
-        Move((((orig as Movesize) & 0x3f) << 10) | ((dest as Movesize) & 0x3f) | ((flags & 0xf) << 6))
+        Move(
+            (((orig as Movesize) & 0x3f) << 10)
+                | ((dest as Movesize) & 0x3f)
+                | ((flags & 0xf) << 6),
+        )
     }
 
     #[inline]

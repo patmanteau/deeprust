@@ -2,8 +2,8 @@ use std::io;
 use std::io::Write;
 
 use crate::engine::{Board, MoveGenerator, Search};
-use crate::primitives::*;
 use crate::interfaces::FenInterface;
+use crate::primitives::*;
 
 pub struct UCIFrontend {
     pub board: Board,
