@@ -85,7 +85,7 @@ impl AddAssign for PerftContext {
 
 impl fmt::Display for PerftContext {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Elapsed: {:.*}s, Nodes: {}, Captures: {}, EP: {}, Castles: {}, Promos: {}, Checks: {}, Discochecks: {}, Double checks: {}, Checkmates: {}", 
+        write!(f, "Elapsed: {:.*}s, Nodes: {}, Captures: {}, EP: {}, Castles: {}, Promos: {}, Checks: {}, Discochecks: {}, Double checks: {}, Checkmates: {}",
                 3, (self.elapsed as f64) / 1_000_000_000_f64, self.nodes, self.captures, self.ep, self.castles, self.promotions,
                 self.checks, self.disco_checks, self.double_checks, self.checkmates)
     }
@@ -312,6 +312,7 @@ impl Search for Board {
 
         //let mut nodes = 0u64;
         let moves = self.generate_moves();
+
         for mov in moves.iter() {
             self.make_move(*mov);
             if !self.is_in_check(1 ^ self.current().to_move()) {

@@ -3,16 +3,6 @@ use crate::common::*;
 
 pub type Piece = u8;
 
-enum PieceCode {
-    Empty = 0,
-    Pawn = 2,
-    Knight = 3,
-    Bishop = 4,
-    Rook = 5,
-    Queen = 6,
-    King = 7,
-}
-
 pub const EMPTY: Piece = 0;
 pub const PAWN: Piece = 2;
 pub const KNIGHT: Piece = 3;

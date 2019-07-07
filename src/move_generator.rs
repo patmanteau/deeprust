@@ -1,5 +1,6 @@
 use crate::bitboard::{self, BitboardPrimitives};
 use crate::board::Board;
+use crate::castling;
 use crate::common::*;
 use crate::moves::flags;
 use crate::moves::Move;
@@ -257,12 +258,12 @@ impl MoveGenerator for Board {
             return;
         }
 
-        let qlear = pos.castling()[color::WHITE as usize].test_bit(1)
+        let qlear = pos.castling().get(color::WHITE, castling::QUEEN_SIDE) //pos.castling()[color::WHITE as usize].test_bit(1)
             && occ.extract_bits(u32::from(square::B1), 3) == 0
             && !self.is_attacked(color::WHITE, square::C1)
             && !self.is_attacked(color::WHITE, square::D1);
 
-        let klear = pos.castling()[color::WHITE as usize].test_bit(0)
+        let klear = pos.castling().get(color::WHITE, castling::KING_SIDE) //pos.castling()[color::WHITE as usize].test_bit(0)
             && occ.extract_bits(u32::from(square::F1), 2) == 0
             && !self.is_attacked(color::WHITE, square::F1);
 
@@ -282,12 +283,12 @@ impl MoveGenerator for Board {
             return;
         }
 
-        let qlear = pos.castling()[color::BLACK as usize].test_bit(1)
+        let qlear = pos.castling().get(color::BLACK, castling::QUEEN_SIDE) //pos.castling()[color::BLACK as usize].test_bit(1)
             && occ.extract_bits(u32::from(square::B8), 3) == 0
             && !self.is_attacked(color::BLACK, square::C8)
             && !self.is_attacked(color::BLACK, square::D8);
 
-        let klear = pos.castling()[color::BLACK as usize].test_bit(0)
+        let klear = pos.castling().get(color::BLACK, castling::KING_SIDE) //pos.castling()[color::BLACK as usize].test_bit(0)
             && occ.extract_bits(u32::from(square::F8), 2) == 0
             && !self.is_attacked(color::BLACK, square::F8);
 

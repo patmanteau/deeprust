@@ -1,3 +1,4 @@
+use crate::castling::{self, Castling};
 use crate::color::{self, Color, ColorPrimitives};
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{Square, SquarePrimitives};
@@ -29,7 +30,7 @@ use nom::{
 pub struct ParsedFen {
     pub placement: Vec<Piece>,
     pub to_move: Color,
-    pub castling: [u32; 2],
+    pub castling: Castling,
     pub ep_target: Option<Square>,
     pub halfmoves: u32,
     pub fullmoves: u32,
@@ -104,18 +105,19 @@ fn to_move(input: &str) -> IResult<&str, Color> {
     map(one_of("bw"), ColorPrimitives::from_char)(input)
 }
 
-fn castling(input: &str) -> IResult<&str, [u32; 2]> {
+fn castling(input: &str) -> IResult<&str, Castling> {
     let (rest, c) = alt((tag("-"), is_a("KQkq")))(input)?;
 
-    let mut cast = [0_u32; 2];
+    //let mut cast = [0_u32; 2];
+    let mut cast = Castling::empty();
 
     for chr in c.chars() {
         match chr {
-            '-' => cast = [0, 0],
-            'K' => cast[color::WHITE as usize] |= 0x1,
-            'Q' => cast[color::WHITE as usize] |= 0x2,
-            'k' => cast[color::BLACK as usize] |= 0x1,
-            'q' => cast[color::BLACK as usize] |= 0x2,
+            '-' => {},
+            'K' => cast.set(color::WHITE, castling::KING_SIDE),
+            'Q' => cast.set(color::WHITE, castling::QUEEN_SIDE),
+            'k' => cast.set(color::BLACK, castling::KING_SIDE),
+            'q' => cast.set(color::BLACK, castling::QUEEN_SIDE),
             _ => unreachable!("Internal parser error: castling"), // _ => return Err(Error),
         }
     }
@@ -188,18 +190,12 @@ impl FenInterface for Position {
         };
 
         // position
-        let mut position = Self {
-            bb: [0_u64; 14],
-            occupied: [piece::EMPTY; 64],
-            to_move: result.to_move,   //color::WHITE,
-            castling: result.castling, //[0_u32; 2],
-            en_passant: match result.ep_target {
-                Some(eps) => Some(eps),
-                None => None,
-            },
-            halfmoves: result.halfmoves,
-            fullmoves: result.fullmoves,
-        };
+        let mut position = Self::new();
+        position.set_to_move(result.to_move);
+        position.set_castling(result.castling);
+        position.set_en_passant(result.ep_target);
+        position.set_halfmoves(result.halfmoves);
+        position.set_fullmoves(result.fullmoves);
 
         for i in 0..64 {
             if result.placement[i] != piece::EMPTY {
@@ -250,19 +246,20 @@ impl FenInterface for Position {
 
         // Castling rights
         fen_string.push(' ');
-        if self.castling() == [0, 0] {
+        let castling = self.castling();
+        if castling.is_empty() {
             fen_string.push('-');
         } else {
-            if 0 != self.castling()[WHITE as usize].extract_bits(0, 1) {
+            if castling.get(color::WHITE, castling::KING_SIDE) {
                 fen_string.push('K');
             }
-            if 0 != self.castling()[WHITE as usize].extract_bits(1, 1) {
+            if castling.get(color::WHITE, castling::QUEEN_SIDE) {
                 fen_string.push('Q');
             }
-            if 0 != self.castling()[BLACK as usize].extract_bits(0, 1) {
+            if castling.get(color::BLACK, castling::KING_SIDE) {
                 fen_string.push('k');
             }
-            if 0 != self.castling()[BLACK as usize].extract_bits(1, 1) {
+            if castling.get(color::BLACK, castling::QUEEN_SIDE) {
                 fen_string.push('q');
             }
         }
@@ -307,79 +304,80 @@ impl FenInterface for Board {
     }
 
     fn to_fen_string(&self) -> String {
-        let mut fen_string = String::new();
+        self.current().to_fen_string()
+        // let mut fen_string = String::new();
 
-        // Position
-        for y in (0..8).rev() {
-            let mut emptycount: u8 = 0;
-            for x in 0..8 {
-                if 0 == self.current().occupied()[Square::from_coords(x, y) as usize] {
-                    emptycount += 1;
-                } else {
-                    if emptycount > 0 {
-                        fen_string.push_str(&emptycount.to_string());
-                        emptycount = 0;
-                    };
-                    fen_string.push_str(
-                        self.current().occupied()[Square::from_coords(x, y) as usize]
-                            .to_san_string(),
-                    );
-                }
-            }
-            if emptycount > 0 {
-                fen_string.push_str(&emptycount.to_string());
-                // emptycount = 0;
-            };
-            if y > 0 {
-                fen_string.push('/');
-            }
-        }
+        // // Position
+        // for y in (0..8).rev() {
+        //     let mut emptycount: u8 = 0;
+        //     for x in 0..8 {
+        //         if 0 == self.current().occupied()[Square::from_coords(x, y) as usize] {
+        //             emptycount += 1;
+        //         } else {
+        //             if emptycount > 0 {
+        //                 fen_string.push_str(&emptycount.to_string());
+        //                 emptycount = 0;
+        //             };
+        //             fen_string.push_str(
+        //                 self.current().occupied()[Square::from_coords(x, y) as usize]
+        //                     .to_san_string(),
+        //             );
+        //         }
+        //     }
+        //     if emptycount > 0 {
+        //         fen_string.push_str(&emptycount.to_string());
+        //         // emptycount = 0;
+        //     };
+        //     if y > 0 {
+        //         fen_string.push('/');
+        //     }
+        // }
 
-        // To move
-        fen_string.push(' ');
-        let to_move = match self.current().to_move() {
-            WHITE => 'w',
-            BLACK => 'b',
-            _ => 'w',
-        };
-        fen_string.push(to_move);
+        // // To move
+        // fen_string.push(' ');
+        // let to_move = match self.current().to_move() {
+        //     WHITE => 'w',
+        //     BLACK => 'b',
+        //     _ => 'w',
+        // };
+        // fen_string.push(to_move);
 
-        // Castling rights
-        fen_string.push(' ');
-        if self.current().castling() == [0, 0] {
-            fen_string.push('-');
-        } else {
-            if 0 != self.current().castling()[WHITE as usize].extract_bits(0, 1) {
-                fen_string.push('K');
-            }
-            if 0 != self.current().castling()[WHITE as usize].extract_bits(1, 1) {
-                fen_string.push('Q');
-            }
-            if 0 != self.current().castling()[BLACK as usize].extract_bits(0, 1) {
-                fen_string.push('k');
-            }
-            if 0 != self.current().castling()[BLACK as usize].extract_bits(1, 1) {
-                fen_string.push('q');
-            }
-        }
+        // // Castling rights
+        // fen_string.push(' ');
+        // if self.current().castling() == [0, 0] {
+        //     fen_string.push('-');
+        // } else {
+        //     if 0 != self.current().castling()[WHITE as usize].extract_bits(0, 1) {
+        //         fen_string.push('K');
+        //     }
+        //     if 0 != self.current().castling()[WHITE as usize].extract_bits(1, 1) {
+        //         fen_string.push('Q');
+        //     }
+        //     if 0 != self.current().castling()[BLACK as usize].extract_bits(0, 1) {
+        //         fen_string.push('k');
+        //     }
+        //     if 0 != self.current().castling()[BLACK as usize].extract_bits(1, 1) {
+        //         fen_string.push('q');
+        //     }
+        // }
 
-        // en passant
-        fen_string.push(' ');
-        if let Some(eps) = self.current().en_passant() {
-            let san = eps.to_san_string();
-            fen_string.push_str(&san)
-        } else {
-            fen_string.push('-')
-        }
+        // // en passant
+        // fen_string.push(' ');
+        // if let Some(eps) = self.current().en_passant() {
+        //     let san = eps.to_san_string();
+        //     fen_string.push_str(&san)
+        // } else {
+        //     fen_string.push('-')
+        // }
 
-        // Halfmoves
-        fen_string.push(' ');
-        fen_string.push_str(&self.current().halfmoves().to_string());
+        // // Halfmoves
+        // fen_string.push(' ');
+        // fen_string.push_str(&self.current().halfmoves().to_string());
 
-        // Fullmoves
-        fen_string.push(' ');
-        fen_string.push_str(&self.current().fullmoves().to_string());
+        // // Fullmoves
+        // fen_string.push(' ');
+        // fen_string.push_str(&self.current().fullmoves().to_string());
 
-        fen_string
+        // fen_string
     }
 }

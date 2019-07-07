@@ -1,9 +1,12 @@
 use crate::bitboard::*;
+use crate::castling::{self, Castling};
 use crate::color::{self, Color};
 use crate::common::BitTwiddling;
 use crate::moves::Move;
 use crate::piece::{self, Piece, PiecePrimitives};
 use crate::square::{self, Square, SquarePrimitives};
+use crate::zobrist::{self, ZobKey};
+
 use std::fmt;
 
 pub type PositionStack = Vec<Position>;
@@ -12,27 +15,29 @@ pub type PositionStack = Vec<Position>;
 ///
 /// Uses 16 bitboards ((2 colors + 6 pieces) * (unflipped + flipped)) plus an occupancy array
 ///
-/// 204 Byte
+/// 208 Byte
 #[derive(Clone, Copy)]
 pub struct Position {
     // 8 * 8 * 2 = 128 Byte
     // pub bb: [[Bitboard; 8]; 2],
     // 14 * 8 = 112 Byte
-    pub bb: [Bitboard; 14],
+    bb: [Bitboard; 14],
     //  1 * 64 = 64 Byte
-    pub occupied: [Piece; 64],
+    occupied: [Piece; 64],
     // 8 Byte
-    pub to_move: Color,
-    // 4 * 2 = 8 Byte
-    pub castling: [u32; 2],
+    to_move: Color,
+    // 4 Byte
+    castling: Castling,
     // // 4 * 2 = 8 Byte
     // pub en_passant: Option<[Square; 2]>,
     // 4 Byte
-    pub en_passant: Option<Square>,
+    en_passant: Option<Square>,
     // 4 Byte
-    pub halfmoves: u32,
+    halfmoves: u32,
     // 4 Byte
-    pub fullmoves: u32,
+    fullmoves: u32,
+    // 8 Byte
+    zobrist: ZobKey,
 }
 
 impl fmt::Debug for Position {
@@ -69,18 +74,18 @@ impl fmt::Display for Position {
         writeln!(f).unwrap();
 
         let bb_titles: [&'static str; 2] = [
-            "bb_own      bb_opponent bb_pawns    bb_knights",
-            "bb_bishops  bb_rooks    bb_queens   bb_king",
+            "bb_own      bb_opponent bb_wpawns   bb_wknights bb_wbishops bb_wrooks   bb_wqueens",
+            "bb_wking    bb_bpawns   bb_bknights bb_bbishops bb_brooks   bb_bqueens  bb_bking",
         ];
 
         for (block, title) in bb_titles.iter().enumerate() {
             writeln!(f, "{}", title).unwrap();
             for rank in (0..8).rev() {
-                for cur_bb in 0..4 {
+                for cur_bb in 0..7 {
                     write!(
                         f,
                         "{}    ",
-                        self.bb[(block * 4) + cur_bb].rank_to_debug_string(rank)
+                        self.bb[(block * 7) + cur_bb].rank_to_debug_string(rank)
                     )
                     .unwrap();
                 }
@@ -104,10 +109,11 @@ impl Position {
             bb: [0; 14],
             occupied: [0; 64],
             to_move: color::WHITE,
-            castling: [0, 0],
+            castling: Castling::empty(),
             en_passant: None,
             halfmoves: 0,
             fullmoves: 1,
+            zobrist: 0,
         }
     }
 
@@ -117,11 +123,11 @@ impl Position {
                 return false;
             }
         }
-        for side in 0..2 {
-            if self.castling[side] != rhs.castling[side] {
-                return false;
-            }
+
+        if self.castling != rhs.castling {
+            return false;
         }
+
         for sq in 0..64 {
             if self.occupied[sq] != rhs.occupied[sq] {
                 return false;
@@ -248,7 +254,7 @@ impl Position {
     }
 
     #[inline]
-    pub fn castling(&self) -> [u32; 2] {
+    pub fn castling(&self) -> Castling {
         self.castling
     }
 
@@ -270,6 +276,30 @@ impl Position {
     #[inline]
     pub fn fullmoves(&self) -> u32 {
         self.fullmoves
+    }
+
+    pub fn set_to_move(&mut self, to_move: Color) {
+        if self.to_move == color::WHITE && to_move == color::BLACK {
+            self.zobrist ^= zobrist::ZT.black_to_move;
+        }
+        self.to_move = to_move;
+
+    }
+
+    pub fn set_castling(&mut self, castling: Castling) {
+        self.castling = castling;
+    }
+
+    pub fn set_en_passant(&mut self, ep_target: Option<Square>) {
+        self.en_passant = ep_target;
+    }
+
+    pub fn set_halfmoves(&mut self, halfmoves: u32) {
+        self.halfmoves = halfmoves;
+    }
+
+    pub fn set_fullmoves(&mut self, fullmoves: u32) {
+        self.fullmoves = fullmoves;
     }
 
     #[inline]
@@ -419,14 +449,17 @@ impl Position {
         // let orig_bb = BB_SQUARES[orig_square as usize];
         let orig_bb = Bitboard::bit_at(u32::from(orig_square));
         if piece::KING == orig_piece {
-            self.castling[self.to_move as usize].clear_bit(0);
-            self.castling[self.to_move as usize].clear_bit(1);
+            self.castling.clear_color(self.to_move);
+            // self.castling[self.to_move as usize].clear_bit(0);
+            // self.castling[self.to_move as usize].clear_bit(1);
         } else if orig_piece == piece::ROOK && (orig_bb & BB_ROOK_HOMES[self.to_move as usize] > 0)
         {
             if orig_bb & BB_FILE_A > 0 {
-                self.castling[self.to_move as usize].clear_bit(1);
+                self.castling.clear(self.to_move, castling::QUEEN_SIDE);
+                // self.castling[self.to_move as usize].clear_bit(1);
             } else {
-                self.castling[self.to_move as usize].clear_bit(0);
+                self.castling.clear(self.to_move, castling::KING_SIDE);
+                // self.castling[self.to_move as usize].clear_bit(0);
             }
         }
 
@@ -435,9 +468,11 @@ impl Position {
         let dest_bb = Bitboard::bit_at(u32::from(dest_square));
         if dest_piece == piece::ROOK && (dest_bb & BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
             if dest_bb & BB_FILE_A > 0 {
-                self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
+                self.castling.clear(1 ^ self.to_move, castling::QUEEN_SIDE);
+                // self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
             } else {
-                self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
+                self.castling.clear(1 ^ self.to_move, castling::KING_SIDE);
+                // self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
             }
         }
 

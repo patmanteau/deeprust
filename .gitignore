@@ -1,3 +1,4 @@
+/deeprust/
 /target/
 **/*.rs.bk
 **/*.log

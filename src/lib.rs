@@ -15,6 +15,7 @@ extern crate test;
 
 pub mod bitboard;
 pub mod board;
+pub mod castling;
 pub mod cli;
 pub mod color;
 pub mod common;
@@ -26,3 +27,4 @@ pub mod position;
 pub mod search;
 pub mod square;
 pub mod uci;
+pub mod zobrist;
