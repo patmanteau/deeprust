@@ -1,5 +1,5 @@
-use crate::board::Board;
-use crate::move_generator::MoveGenerator;
+use crate::engine::Board;
+use crate::engine::MoveGenerator;
 
 use quanta::Clock;
 use rayon::prelude::*;

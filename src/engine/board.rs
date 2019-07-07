@@ -1,14 +1,16 @@
 use std::fmt;
 
-use crate::bitboard::*;
+use crate::engine::bitboard::*;
 
 use crate::interfaces::lan;
 use crate::interfaces::lan::LanParseError;
 use crate::interfaces::FenInterface;
-use crate::moves::{Move, MoveStack};
-use crate::piece::Piece;
-use crate::position::{Position, PositionStack};
-use crate::square::{Square, SquarePrimitives};
+// use crate::primitives::r#move::{Move, MoveStack};
+// use crate::primitives::piece::Piece;
+use crate::engine::position::{Position, PositionStack};
+// use crate::primitives::square::{Square, SquarePrimitives};
+
+use crate::primitives::*;
 
 //use regex::Regex;
 
@@ -146,9 +148,9 @@ impl Board {
 mod tests {
     use super::*;
 
-    use crate::color::*;
-    use crate::search::Search;
-    use crate::square;
+    use crate::primitives::colors;
+    use crate::engine::Search;
+    // use crate::primitives::square;
     use std::error::Error;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
@@ -160,28 +162,28 @@ mod tests {
         let pos = b.current();
 
         // color boards
-        assert_eq!(pos.bb_own(WHITE), 0xffff_u64);
-        assert_eq!(pos.bb_opponent(WHITE), 0xffff << (6 * 8));
+        assert_eq!(pos.bb_own(colors::WHITE), 0xffff_u64);
+        assert_eq!(pos.bb_opponent(colors::WHITE), 0xffff << (6 * 8));
 
         // pawn boards
-        assert_eq!(pos.bb_pawns(WHITE), 0xff << 8);
-        assert_eq!(pos.bb_pawns(BLACK), 0xff << (6 * 8));
+        assert_eq!(pos.bb_pawns(colors::WHITE), 0xff << 8);
+        assert_eq!(pos.bb_pawns(colors::BLACK), 0xff << (6 * 8));
 
         // rook boards
-        assert_eq!(pos.bb_rooks(WHITE), 0x81);
-        assert_eq!(pos.bb_rooks(BLACK), 0x81 << (7 * 8));
+        assert_eq!(pos.bb_rooks(colors::WHITE), 0x81);
+        assert_eq!(pos.bb_rooks(colors::BLACK), 0x81 << (7 * 8));
 
         // bishop boards
-        assert_eq!(pos.bb_bishops(WHITE), 0x24);
-        assert_eq!(pos.bb_bishops(BLACK), 0x24 << (7 * 8));
+        assert_eq!(pos.bb_bishops(colors::WHITE), 0x24);
+        assert_eq!(pos.bb_bishops(colors::BLACK), 0x24 << (7 * 8));
 
         // queen boards
-        assert_eq!(pos.bb_queens(WHITE), 0x8);
-        assert_eq!(pos.bb_queens(BLACK), 0x8 << (7 * 8));
+        assert_eq!(pos.bb_queens(colors::WHITE), 0x8);
+        assert_eq!(pos.bb_queens(colors::BLACK), 0x8 << (7 * 8));
 
         // king boards
-        assert_eq!(pos.bb_king(WHITE), 0x10);
-        assert_eq!(pos.bb_king(BLACK), 0x10 << (7 * 8));
+        assert_eq!(pos.bb_king(colors::WHITE), 0x10);
+        assert_eq!(pos.bb_king(colors::BLACK), 0x10 << (7 * 8));
 
         assert!(b.history().is_empty());
     }
@@ -251,18 +253,18 @@ mod tests {
             Board::from_fen_str("rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1")
         {
             assert_eq!(0, board.history().len());
-            board.input_move(square::D7, square::D6, None).unwrap();
+            board.input_move(squares::D7, squares::D6, None).unwrap();
             assert_eq!(1, board.history().len());
             assert_eq!(None, board.current().en_passant());
             let last_move = board.history().last().unwrap();
-            assert_eq!(last_move.orig(), square::D7);
-            assert_eq!(last_move.dest(), square::D6);
+            assert_eq!(last_move.orig(), squares::D7);
+            assert_eq!(last_move.dest(), squares::D6);
         }
 
         let mut board = Board::from_fen_str("8/3p4/8/4P3/8/8/8/8 b - - 0 1").unwrap();
-        board.input_move(square::D7, square::D5, None).unwrap();
-        board.input_move(square::E5, square::D6, None).unwrap();
-        assert_eq!(0, board.current().occupied()[square::D5 as usize]);
+        board.input_move(squares::D7, squares::D5, None).unwrap();
+        board.input_move(squares::E5, squares::D6, None).unwrap();
+        assert_eq!(0, board.current().occupied()[squares::D5 as usize]);
     }
 
     // TODO: move to UCI tests

@@ -1,28 +1,25 @@
 use std::io;
 use std::io::Write;
 
-use crate::board::*;
-use crate::color;
+use crate::engine::{Board, MoveGenerator, Search};
+use crate::primitives::*;
 use crate::interfaces::FenInterface;
-use crate::move_generator::MoveGenerator;
-use crate::search::Search;
-use crate::square::{Square, SquarePrimitives};
 
-pub struct UCIInterface {
+pub struct UCIFrontend {
     pub board: Board,
     // gen: MoveGenerator,
     run: bool,
 }
 
-impl Default for UCIInterface {
+impl Default for UCIFrontend {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl UCIInterface {
-    pub fn new() -> UCIInterface {
-        UCIInterface {
+impl UCIFrontend {
+    pub fn new() -> UCIFrontend {
+        UCIFrontend {
             board: Board::new(),
             //gen: MoveGenerator::new(),
             run: true,
@@ -86,8 +83,8 @@ impl UCIInterface {
         println!("{}", self.board);
         println!(
             "w in check: {}, b in check: {}",
-            MoveGenerator::is_in_check(&self.board, color::WHITE),
-            MoveGenerator::is_in_check(&self.board, color::BLACK)
+            MoveGenerator::is_in_check(&self.board, colors::WHITE),
+            MoveGenerator::is_in_check(&self.board, colors::BLACK)
         );
         if !self.board.history().is_empty() {
             println!("last_move: {:#?}", self.board.history().last());
@@ -188,7 +185,7 @@ mod tests {
 
     #[test]
     fn it_handles_startpos() {
-        let mut c = UCIInterface::new();
+        let mut c = UCIFrontend::new();
         c.parse(String::from("position startpos"));
         assert_eq!(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -198,7 +195,7 @@ mod tests {
 
     #[test]
     fn it_handles_fen_positions() {
-        let mut c = UCIInterface::new();
+        let mut c = UCIFrontend::new();
         c.parse(String::from(
             "position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         ));
@@ -219,7 +216,7 @@ mod tests {
     // TODO: make full UCI commands
     // #[test]
     fn it_handles_moves() {
-        let mut c = UCIInterface::new();
+        let mut c = UCIFrontend::new();
         let one_move_strs = vec![
             (
                 "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1",

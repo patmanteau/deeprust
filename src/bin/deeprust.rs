@@ -25,9 +25,8 @@ extern crate deeprust;
 // pub mod uci;
 
 // use clap::{App, Arg};
-use deeprust::board::Board;
+use deeprust::engine::{Board, Search};
 use deeprust::interfaces::FenInterface;
-use deeprust::search::Search;
 
 use ansi_term::Colour::{Cyan, Green, Red};
 use log::LevelFilter;
@@ -144,14 +143,14 @@ fn main() {
     .get_matches();
 
     if matches.is_present("cli") {
-        deeprust::cli::run();
+        deeprust::frontends::cli::run();
     } else if matches.is_present("FENFILE") {
         let config = matches
             .value_of("FENFILE")
             .unwrap_or("tests/perftsuite.epd");
         batchperft(config);
     } else {
-        let mut c = deeprust::uci::UCIInterface::new();
+        let mut c = deeprust::frontends::UCIFrontend::new();
         c.run();
     }
 }

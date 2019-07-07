@@ -1,7 +1,10 @@
 pub type Color = u8;
 
-pub const WHITE: Color = 0;
-pub const BLACK: Color = 1;
+pub mod colors {
+    use super::*;
+    pub const WHITE: Color = 0;
+    pub const BLACK: Color = 1;
+}
 
 pub trait ColorPrimitives {
     fn from_char(c: char) -> Self;
@@ -11,16 +14,16 @@ pub trait ColorPrimitives {
 impl ColorPrimitives for Color {
     fn from_char(c: char) -> Self {
         match c {
-            'b' => BLACK,
-            'w' => WHITE,
+            'b' => colors::BLACK,
+            'w' => colors::WHITE,
             _ => unreachable!("Internal error: unknown color code {}", c),
         }
     }
 
     fn to_char(self) -> char {
         match self {
-            BLACK => 'b',
-            WHITE => 'w',
+            colors::BLACK => 'b',
+            colors::WHITE => 'w',
             _ => unreachable!("Internal error: invalid color code {}", self),
         }
     }
@@ -32,7 +35,7 @@ mod tests {
 
     #[test]
     fn it_has_correct_color_enum_values() {
-        assert_eq!(0, WHITE as usize);
-        assert_eq!(1, BLACK as usize);
+        assert_eq!(0, colors::WHITE as usize);
+        assert_eq!(1, colors::BLACK as usize);
     }
 }

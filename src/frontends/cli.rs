@@ -4,7 +4,7 @@ extern crate indoc;
 use std::io;
 use std::io::Write;
 
-use crate::uci;
+use crate::frontends::UCIFrontend;
 
 fn print_version() {
     println!("deeprust v{}", env!("CARGO_PKG_VERSION"));
@@ -43,7 +43,7 @@ pub fn run() {
             "help" => print_help(),
             "version" => print_version(),
             "uci" => {
-                uci::UCIInterface::new().run();
+                UCIFrontend::new().run();
                 break;
             }
             unknown => println!("Unknown command: {}", unknown),

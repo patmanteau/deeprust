@@ -1,12 +1,13 @@
-use crate::castling::{self, Castling};
-use crate::color::{self, Color, ColorPrimitives};
-use crate::piece::{self, Piece, PiecePrimitives};
-use crate::square::{Square, SquarePrimitives};
+// use crate::primitives::castling::{self, Castling};
+// use crate::primitives::color::{self, Color, ColorPrimitives};
+use crate::primitives::*;
+// use crate::primitives::piece::{self, Piece, PiecePrimitives};
+// use crate::primitives::square::{Square, SquarePrimitives};
 
-use crate::board::Board;
-use crate::color::*;
-use crate::common::BitTwiddling;
-use crate::position::Position;
+use crate::engine::Board;
+// use crate::color::*;
+// use crate::common::BitTwiddling;
+use crate::engine::Position;
 
 //use regex::Regex;
 // use pest::Parser;
@@ -114,10 +115,10 @@ fn castling(input: &str) -> IResult<&str, Castling> {
     for chr in c.chars() {
         match chr {
             '-' => {},
-            'K' => cast.set(color::WHITE, castling::KING_SIDE),
-            'Q' => cast.set(color::WHITE, castling::QUEEN_SIDE),
-            'k' => cast.set(color::BLACK, castling::KING_SIDE),
-            'q' => cast.set(color::BLACK, castling::QUEEN_SIDE),
+            'K' => cast.set(colors::WHITE, sides::KING_SIDE),
+            'Q' => cast.set(colors::WHITE, sides::QUEEN_SIDE),
+            'k' => cast.set(colors::BLACK, sides::KING_SIDE),
+            'q' => cast.set(colors::BLACK, sides::QUEEN_SIDE),
             _ => unreachable!("Internal parser error: castling"), // _ => return Err(Error),
         }
     }
@@ -198,7 +199,7 @@ impl FenInterface for Position {
         position.set_fullmoves(result.fullmoves);
 
         for i in 0..64 {
-            if result.placement[i] != piece::EMPTY {
+            if result.placement[i] != pieces::EMPTY {
                 let piece = result.placement[i] as Piece;
                 position.set_piece(piece.code(), piece.color(), i as Square);
             }
@@ -238,8 +239,8 @@ impl FenInterface for Position {
         // To move
         fen_string.push(' ');
         let to_move = match self.to_move() {
-            WHITE => 'w',
-            BLACK => 'b',
+            colors::WHITE => 'w',
+            colors::BLACK => 'b',
             _ => 'w',
         };
         fen_string.push(to_move);
@@ -250,16 +251,16 @@ impl FenInterface for Position {
         if castling.is_empty() {
             fen_string.push('-');
         } else {
-            if castling.get(color::WHITE, castling::KING_SIDE) {
+            if castling.get(colors::WHITE, sides::KING_SIDE) {
                 fen_string.push('K');
             }
-            if castling.get(color::WHITE, castling::QUEEN_SIDE) {
+            if castling.get(colors::WHITE, sides::QUEEN_SIDE) {
                 fen_string.push('Q');
             }
-            if castling.get(color::BLACK, castling::KING_SIDE) {
+            if castling.get(colors::BLACK, sides::KING_SIDE) {
                 fen_string.push('k');
             }
-            if castling.get(color::BLACK, castling::QUEEN_SIDE) {
+            if castling.get(colors::BLACK, sides::QUEEN_SIDE) {
                 fen_string.push('q');
             }
         }
@@ -267,7 +268,7 @@ impl FenInterface for Position {
         // en passant
         fen_string.push(' ');
         if let Some(eps) = self.en_passant() {
-            let san = eps.to_san_string();
+            let san: String = eps.to_san_string();
             fen_string.push_str(&san)
         } else {
             fen_string.push('-')

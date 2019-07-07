@@ -1,11 +1,11 @@
-use crate::bitboard::*;
-use crate::castling::{self, Castling};
-use crate::color::{self, Color};
+use crate::engine::bitboard::*;
+use crate::primitives::*;
+// use crate::primitives::color::{self, Color};
 use crate::common::BitTwiddling;
-use crate::moves::Move;
-use crate::piece::{self, Piece, PiecePrimitives};
-use crate::square::{self, Square, SquarePrimitives};
-use crate::zobrist::{self, ZobKey};
+// use crate::primitives::r#move::Move;
+// use crate::primitives::piece::{self, Piece, PiecePrimitives};
+// use crate::primitives::square::{self, Square, SquarePrimitives};
+use crate::engine::{Zobrist, ZobKey, ZobTables};
 
 use std::fmt;
 
@@ -108,7 +108,7 @@ impl Position {
         Position {
             bb: [0; 14],
             occupied: [0; 64],
-            to_move: color::WHITE,
+            to_move: colors::WHITE,
             castling: Castling::empty(),
             en_passant: None,
             halfmoves: 0,
@@ -209,43 +209,43 @@ impl Position {
 
     #[inline]
     pub fn bb_pawns(&self, color: Color) -> Bitboard {
-        self.bb[Self::bb_idx(color, piece::PAWN)]
-        // self.bb[0][piece::PAWN as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, pieces::PAWN)]
+        // self.bb[0][pieces::PAWN as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_knights(&self, color: Color) -> Bitboard {
-        self.bb[Self::bb_idx(color, piece::KNIGHT)]
-        // self.bb[0][piece::KNIGHT as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, pieces::KNIGHT)]
+        // self.bb[0][pieces::KNIGHT as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_bishops(&self, color: Color) -> Bitboard {
-        self.bb[Self::bb_idx(color, piece::BISHOP)]
-        // self.bb[0][piece::BISHOP as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, pieces::BISHOP)]
+        // self.bb[0][pieces::BISHOP as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_rooks(&self, color: Color) -> Bitboard {
-        self.bb[Self::bb_idx(color, piece::ROOK)]
-        // self.bb[0][piece::ROOK as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, pieces::ROOK)]
+        // self.bb[0][pieces::ROOK as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_queens(&self, color: Color) -> Bitboard {
-        self.bb[Self::bb_idx(color, piece::QUEEN)]
-        // self.bb[0][piece::QUEEN as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, pieces::QUEEN)]
+        // self.bb[0][pieces::QUEEN as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_king(&self, color: Color) -> Bitboard {
-        self.bb[Self::bb_idx(color, piece::KING)]
-        // self.bb[0][piece::KING as usize] & self.bb_own(color)
+        self.bb[Self::bb_idx(color, pieces::KING)]
+        // self.bb[0][pieces::KING as usize] & self.bb_own(color)
     }
 
     #[inline]
     pub fn bb_empty(&self) -> Bitboard {
-        !(self.bb_own(color::WHITE) | self.bb_opponent(color::WHITE))
+        !(self.bb_own(colors::WHITE) | self.bb_opponent(colors::WHITE))
     }
 
     #[inline]
@@ -279,8 +279,8 @@ impl Position {
     }
 
     pub fn set_to_move(&mut self, to_move: Color) {
-        if self.to_move == color::WHITE && to_move == color::BLACK {
-            self.zobrist ^= zobrist::ZT.black_to_move;
+        if self.to_move == colors::WHITE && to_move == colors::BLACK {
+            self.zobrist ^= ZobTables.black_to_move;
         }
         self.to_move = to_move;
 
@@ -335,8 +335,8 @@ impl Position {
     #[inline]
     pub fn quiet_move_piece(&mut self, piece: Piece, color: Color, from: Square, to: Square) {
         // see https://www.chessprogramming.org/General_Setwise_Operations
-        let from_bb = u64::bit_at(u32::from(from));
-        let to_bb = u64::bit_at(u32::from(to));
+        let from_bb = u64::bit_at(from);
+        let to_bb = u64::bit_at(to);
         let from_to_bb = from_bb ^ to_bb;
 
         self.bb[color as usize] ^= from_to_bb;
@@ -357,8 +357,8 @@ impl Position {
     ) {
         // see https://www.chessprogramming.org/General_Setwise_Operations
         let captured_color = 1 ^ color;
-        let from_bb = u64::bit_at(u32::from(from));
-        let to_bb = u64::bit_at(u32::from(to));
+        let from_bb = u64::bit_at(from);
+        let to_bb = u64::bit_at(to);
         let from_to_bb = from_bb ^ to_bb;
 
         self.bb[color as usize] ^= from_to_bb;
@@ -418,12 +418,12 @@ impl Position {
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
         } else if mov.is_capture_en_passant() {
             self.remove_piece(orig_piece, orig_color, orig_square);
-            dest_piece = piece::PAWN;
+            dest_piece = pieces::PAWN;
             dest_color = 1 ^ orig_color;
             self.remove_piece(
                 dest_piece,
                 dest_color,
-                square::ep_capture_square(dest_square),
+                ep_capture_square(dest_square),
             );
             self.set_piece(orig_piece, orig_color, dest_square);
         } else if is_capture {
@@ -437,51 +437,51 @@ impl Position {
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
         } else if mov.is_king_castle() {
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
-            self.quiet_move_piece(piece::ROOK, orig_color, dest_square + 1, dest_square - 1);
+            self.quiet_move_piece(pieces::ROOK, orig_color, dest_square + 1, dest_square - 1);
         } else if mov.is_queen_castle() {
             self.quiet_move_piece(orig_piece, orig_color, orig_square, dest_square);
-            self.quiet_move_piece(piece::ROOK, orig_color, dest_square - 2, dest_square + 1);
+            self.quiet_move_piece(pieces::ROOK, orig_color, dest_square - 2, dest_square + 1);
         } else {
             panic!("shouldn't come here")
         }
 
         // clear castling rights on king or rook move
         // let orig_bb = BB_SQUARES[orig_square as usize];
-        let orig_bb = Bitboard::bit_at(u32::from(orig_square));
-        if piece::KING == orig_piece {
+        let orig_bb = Bitboard::bit_at(orig_square);
+        if pieces::KING == orig_piece {
             self.castling.clear_color(self.to_move);
             // self.castling[self.to_move as usize].clear_bit(0);
             // self.castling[self.to_move as usize].clear_bit(1);
-        } else if orig_piece == piece::ROOK && (orig_bb & BB_ROOK_HOMES[self.to_move as usize] > 0)
+        } else if orig_piece == pieces::ROOK && (orig_bb & bitboards::BB_ROOK_HOMES[self.to_move as usize] > 0)
         {
-            if orig_bb & BB_FILE_A > 0 {
-                self.castling.clear(self.to_move, castling::QUEEN_SIDE);
+            if orig_bb & bitboards::BB_FILE_A > 0 {
+                self.castling.clear(self.to_move, sides::QUEEN_SIDE);
                 // self.castling[self.to_move as usize].clear_bit(1);
             } else {
-                self.castling.clear(self.to_move, castling::KING_SIDE);
+                self.castling.clear(self.to_move, sides::KING_SIDE);
                 // self.castling[self.to_move as usize].clear_bit(0);
             }
         }
 
         // clear castling rights on rook capture at home square
         // let dest_bb = BB_SQUARES[dest_square as usize];
-        let dest_bb = Bitboard::bit_at(u32::from(dest_square));
-        if dest_piece == piece::ROOK && (dest_bb & BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
-            if dest_bb & BB_FILE_A > 0 {
-                self.castling.clear(1 ^ self.to_move, castling::QUEEN_SIDE);
+        let dest_bb = Bitboard::bit_at(dest_square);
+        if dest_piece == pieces::ROOK && (dest_bb & bitboards::BB_ROOK_HOMES[1 ^ self.to_move as usize] > 0) {
+            if dest_bb & bitboards::BB_FILE_A > 0 {
+                self.castling.clear(1 ^ self.to_move, sides::QUEEN_SIDE);
                 // self.castling[(1 ^ self.to_move) as usize].clear_bit(1);
             } else {
-                self.castling.clear(1 ^ self.to_move, castling::KING_SIDE);
+                self.castling.clear(1 ^ self.to_move, sides::KING_SIDE);
                 // self.castling[(1 ^ self.to_move) as usize].clear_bit(0);
             }
         }
 
         // Full move clock needs to be incremented after black moves
-        // piece::WHITE == 0 and piece::BLACK == 1, so we use that to save an if :-)
+        // pieces::WHITE == 0 and pieces::BLACK == 1, so we use that to save an if :-)
         self.fullmoves += u32::from(self.to_move);
 
         // set half move clock
-        if orig_piece == piece::PAWN || is_capture {
+        if orig_piece == pieces::PAWN || is_capture {
             self.halfmoves = 0; // reset half move clock on pawn moves and captures
         } else {
             self.halfmoves += 1;
@@ -512,13 +512,13 @@ impl Position {
         // is_capture = 0 != cap_piece;
 
         // set special flags for double pawn push
-        if piece == piece::PAWN && ((orig + 16 == dest) || (dest + 16 == orig)) {
+        if piece == pieces::PAWN && ((orig + 16 == dest) || (dest + 16 == orig)) {
             is_special_0 = true;
             is_special_1 = false;
         }
 
         // set flags for en passant capture
-        if piece == piece::PAWN && Some(dest) == self.en_passant {
+        if piece == pieces::PAWN && Some(dest) == self.en_passant {
             is_capture = true;
             is_special_0 = true;
             is_special_1 = false;
@@ -534,16 +534,16 @@ impl Position {
             is_special_0 = false;
             is_special_1 = false;
             is_promotion = true;
-            if (piece::BISHOP == promoted_piece) || (piece::QUEEN == promoted_piece) {
+            if (pieces::BISHOP == promoted_piece) || (pieces::QUEEN == promoted_piece) {
                 is_special_0 = true;
             }
-            if (piece::ROOK == promoted_piece) || (piece::QUEEN == promoted_piece) {
+            if (pieces::ROOK == promoted_piece) || (pieces::QUEEN == promoted_piece) {
                 is_special_1 = true;
             }
         }
 
         // set flags for castling
-        if piece == piece::KING {
+        if piece == pieces::KING {
             if 2 == dest.wrapping_sub(orig) {
                 // King castle
                 is_special_0 = false;
@@ -568,7 +568,7 @@ impl Position {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::bitboard as bb;
+    use crate::engine::bitboards as bb;
 
     #[test]
     fn it_sets_pieces() {
@@ -646,12 +646,12 @@ mod tests {
             // white
             assert_eq!(
                 Square::from_coords(x, 3),
-                square::ep_capture_square(Square::from_coords(x, 2))
+                ep_capture_square(Square::from_coords(x, 2))
             );
             // black
             assert_eq!(
                 Square::from_coords(x, 4),
-                square::ep_capture_square(Square::from_coords(x, 5))
+                ep_capture_square(Square::from_coords(x, 5))
             );
         }
     }

@@ -1,12 +1,12 @@
-use crate::bitboard::{self, BitboardPrimitives};
-use crate::board::Board;
-use crate::castling;
+use crate::engine::{bitboards, Bitboard, BitboardPrimitives, Board};
+// use crate::board::Board;
+use crate::primitives::*;
 use crate::common::*;
-use crate::moves::flags;
-use crate::moves::Move;
+// use crate::primitives::r#move::flags;
+// use crate::primitives::r#move::Move;
 
-use crate::color::{self, Color};
-use crate::square::{self, Square};
+// use crate::primitives::color::{self, Color};
+// use crate::primitives::square::{self, Square};
 
 pub trait MoveGenerator {
     fn generate_moves(&self) -> Vec<Move>;
@@ -52,23 +52,23 @@ impl MoveGenerator for Board {
         debug_assert!(target < 64);
 
         // by knights
-        if (bitboard::BB_KNIGHT_ATTACKS[target as usize] & pos.bb_knights(1 ^ color)) > 0 {
+        if (bitboards::BB_KNIGHT_ATTACKS[target as usize] & pos.bb_knights(1 ^ color)) > 0 {
             return true;
         }
 
         // by pawns
-        if bitboard::BB_PAWN_ATTACKS[color as usize][target as usize] & pos.bb_pawns(1 ^ color) > 0
+        if bitboards::BB_PAWN_ATTACKS[color as usize][target as usize] & pos.bb_pawns(1 ^ color) > 0
         {
             return true;
         }
 
         // by king?!?
-        if (bitboard::BB_KING_ATTACKS[target as usize] & pos.bb_king(1 ^ color)) > 0 {
+        if (bitboards::BB_KING_ATTACKS[target as usize] & pos.bb_king(1 ^ color)) > 0 {
             return true;
         }
 
         // by bishops or queens
-        if bitboard::bishop_attacks(target, occupied)
+        if bitboards::bishop_attacks(target, occupied)
             & (pos.bb_bishops(1 ^ color) | pos.bb_queens(1 ^ color))
             > 0
         {
@@ -76,7 +76,7 @@ impl MoveGenerator for Board {
         }
 
         // by rooks or queens
-        if (bitboard::rank_attacks(target, occupied) | bitboard::file_attacks(target, occupied))
+        if (bitboards::rank_attacks(target, occupied) | bitboards::file_attacks(target, occupied))
             & (pos.bb_rooks(1 ^ color) | pos.bb_queens(1 ^ color))
             > 0
         {
@@ -90,7 +90,7 @@ impl MoveGenerator for Board {
         let mut moves = Vec::with_capacity(512);
         let to_move = self.current().to_move();
 
-        if to_move == color::WHITE {
+        if to_move == colors::WHITE {
             self.gen_white_pawn_moves(&mut moves);
             self.gen_wking_castle(&mut moves);
         } else {
@@ -108,20 +108,20 @@ impl MoveGenerator for Board {
 
     fn gen_white_pawn_moves(&self, moves: &mut Vec<Move>) {
         let pos = self.current();
-        let pawns = pos.bb_pawns(color::WHITE);
+        let pawns = pos.bb_pawns(colors::WHITE);
 
         let (ep_square, ep_bb) = match pos.en_passant() {
-            Some(sq) => (sq, bitboard::BB_SQUARES[sq as usize]),
-            None => (0, bitboard::BB_EMPTY),
+            Some(sq) => (sq, bitboards::BB_SQUARES[sq as usize]),
+            None => (0, bitboards::BB_EMPTY),
         };
 
-        let mut norm_pawns = pawns & bitboard::BB_NOT_RANK_78;
-        let mut prom_pawns = pawns & bitboard::BB_RANK_7;
+        let mut norm_pawns = pawns & bitboards::BB_NOT_RANK_78;
+        let mut prom_pawns = pawns & bitboards::BB_RANK_7;
 
         for from in prom_pawns.iter() {
             // captures
             for to in
-                (bitboard::BB_WPAWN_ATTACKS[from as usize] & pos.bb_opponent(color::WHITE)).iter()
+                (bitboards::BB_WPAWN_ATTACKS[from as usize] & pos.bb_opponent(colors::WHITE)).iter()
             {
                 // promotion
                 let mov = Move::new(from, to, flags::MOV_QUIET);
@@ -132,7 +132,7 @@ impl MoveGenerator for Board {
             }
 
             // pushes
-            for to in (bitboard::BB_WPAWN_PUSHES[from as usize] & pos.bb_empty()).iter() {
+            for to in (bitboards::BB_WPAWN_PUSHES[from as usize] & pos.bb_empty()).iter() {
                 // promotion
                 let mov = Move::new(from, to, flags::MOV_QUIET);
                 moves.push(mov.with_flags(flags::MOV_PROM_QUEEN));
@@ -145,7 +145,7 @@ impl MoveGenerator for Board {
         for from in norm_pawns.iter() {
             // captures
             let mut atk =
-                bitboard::BB_WPAWN_ATTACKS[from as usize] & (pos.bb_opponent(color::WHITE) | ep_bb);
+                bitboards::BB_WPAWN_ATTACKS[from as usize] & (pos.bb_opponent(colors::WHITE) | ep_bb);
             for to in atk.iter() {
                 moves.push(Move::new(
                     from,
@@ -156,9 +156,9 @@ impl MoveGenerator for Board {
 
             // pushes
             let mut single_push =
-                bitboard::north_one(bitboard::BB_SQUARES[from as usize]) & pos.bb_empty();
+                bitboards::north_one(bitboards::BB_SQUARES[from as usize]) & pos.bb_empty();
             let mut double_push =
-                bitboard::north_one(single_push) & pos.bb_empty() & bitboard::BB_RANK_4;
+                bitboards::north_one(single_push) & pos.bb_empty() & bitboards::BB_RANK_4;
             for to in single_push.iter() {
                 moves.push(Move::new(from, to, flags::MOV_QUIET));
             }
@@ -170,21 +170,21 @@ impl MoveGenerator for Board {
 
     fn gen_black_pawn_moves(&self, moves: &mut Vec<Move>) {
         let pos = self.current();
-        let pawns = pos.bb_pawns(color::BLACK);
+        let pawns = pos.bb_pawns(colors::BLACK);
 
         let (ep_square, ep_bb) = match pos.en_passant() {
-            Some(sq) => (sq, bitboard::BB_SQUARES[sq as usize]),
-            None => (0, bitboard::BB_EMPTY),
+            Some(sq) => (sq, bitboards::BB_SQUARES[sq as usize]),
+            None => (0, bitboards::BB_EMPTY),
         };
 
-        let mut norm_pawns = pawns & bitboard::BB_NOT_RANK_12;
-        let mut prom_pawns = pawns & bitboard::BB_RANK_2;
+        let mut norm_pawns = pawns & bitboards::BB_NOT_RANK_12;
+        let mut prom_pawns = pawns & bitboards::BB_RANK_2;
 
         // promotions
         for from in prom_pawns.iter() {
             // captures
             for to in
-                (bitboard::BB_BPAWN_ATTACKS[from as usize] & pos.bb_opponent(color::BLACK)).iter()
+                (bitboards::BB_BPAWN_ATTACKS[from as usize] & pos.bb_opponent(colors::BLACK)).iter()
             {
                 let mov = Move::new(from, to, flags::MOV_QUIET);
                 moves.push(mov.with_flags(flags::MOV_CAPTURE | flags::MOV_PROM_QUEEN));
@@ -194,7 +194,7 @@ impl MoveGenerator for Board {
             }
 
             // pushes
-            for to in (bitboard::BB_BPAWN_PUSHES[from as usize] & pos.bb_empty()).iter() {
+            for to in (bitboards::BB_BPAWN_PUSHES[from as usize] & pos.bb_empty()).iter() {
                 let mov = Move::new(from, to, flags::MOV_QUIET);
                 moves.push(mov.with_flags(flags::MOV_PROM_QUEEN));
                 moves.push(mov.with_flags(flags::MOV_PROM_ROOK));
@@ -206,7 +206,7 @@ impl MoveGenerator for Board {
         for from in norm_pawns.iter() {
             // captures
             let mut atk =
-                bitboard::BB_BPAWN_ATTACKS[from as usize] & (pos.bb_opponent(color::BLACK) | ep_bb);
+                bitboards::BB_BPAWN_ATTACKS[from as usize] & (pos.bb_opponent(colors::BLACK) | ep_bb);
             for to in atk.iter() {
                 moves.push(Move::new(
                     from,
@@ -217,9 +217,9 @@ impl MoveGenerator for Board {
 
             // pushes
             let mut single_push =
-                bitboard::south_one(bitboard::BB_SQUARES[from as usize]) & pos.bb_empty();
+                bitboards::south_one(bitboards::BB_SQUARES[from as usize]) & pos.bb_empty();
             let mut double_push =
-                bitboard::south_one(single_push) & pos.bb_empty() & bitboard::BB_RANK_5;
+                bitboards::south_one(single_push) & pos.bb_empty() & bitboards::BB_RANK_5;
             for to in single_push.iter() {
                 moves.push(Move::new(from, to, flags::MOV_QUIET));
             }
@@ -235,14 +235,14 @@ impl MoveGenerator for Board {
 
         for from in knights.iter() {
             // captures
-            let mut atk = bitboard::BB_KNIGHT_ATTACKS[from as usize] & pos.bb_opponent(color);
+            let mut atk = bitboards::BB_KNIGHT_ATTACKS[from as usize] & pos.bb_opponent(color);
 
             for to in atk.iter() {
                 moves.push(Move::new(from, to, flags::MOV_CAPTURE));
             }
 
             // quiets
-            let mut mov = bitboard::BB_KNIGHT_ATTACKS[from as usize] & pos.bb_empty();
+            let mut mov = bitboards::BB_KNIGHT_ATTACKS[from as usize] & pos.bb_empty();
 
             for to in mov.iter() {
                 moves.push(Move::new(from, to, flags::MOV_QUIET));
@@ -252,51 +252,51 @@ impl MoveGenerator for Board {
 
     fn gen_wking_castle(&self, moves: &mut Vec<Move>) {
         let pos = self.current();
-        let occ = pos.bb_own(color::WHITE) | pos.bb_opponent(color::WHITE);
+        let occ = pos.bb_own(colors::WHITE) | pos.bb_opponent(colors::WHITE);
 
-        if self.is_attacked(color::WHITE, square::E1) {
+        if self.is_attacked(colors::WHITE, squares::E1) {
             return;
         }
 
-        let qlear = pos.castling().get(color::WHITE, castling::QUEEN_SIDE) //pos.castling()[color::WHITE as usize].test_bit(1)
-            && occ.extract_bits(u32::from(square::B1), 3) == 0
-            && !self.is_attacked(color::WHITE, square::C1)
-            && !self.is_attacked(color::WHITE, square::D1);
+        let qlear = pos.castling().get(colors::WHITE, sides::QUEEN_SIDE) //pos.castling()[colors::WHITE as usize].test_bit(1)
+            && occ.extract_bits(squares::B1, 3) == 0
+            && !self.is_attacked(colors::WHITE, squares::C1)
+            && !self.is_attacked(colors::WHITE, squares::D1);
 
-        let klear = pos.castling().get(color::WHITE, castling::KING_SIDE) //pos.castling()[color::WHITE as usize].test_bit(0)
-            && occ.extract_bits(u32::from(square::F1), 2) == 0
-            && !self.is_attacked(color::WHITE, square::F1);
+        let klear = pos.castling().get(colors::WHITE, sides::KING_SIDE) //pos.castling()[colors::WHITE as usize].test_bit(0)
+            && occ.extract_bits(squares::F1, 2) == 0
+            && !self.is_attacked(colors::WHITE, squares::F1);
 
         if qlear {
-            moves.push(Move::new(square::E1, square::C1, flags::MOV_Q_CASTLE));
+            moves.push(Move::new(squares::E1, squares::C1, flags::MOV_Q_CASTLE));
         }
         if klear {
-            moves.push(Move::new(square::E1, square::G1, flags::MOV_K_CASTLE));
+            moves.push(Move::new(squares::E1, squares::G1, flags::MOV_K_CASTLE));
         }
     }
 
     fn gen_bking_castle(&self, moves: &mut Vec<Move>) {
         let pos = self.current();
-        let occ = pos.bb_own(color::BLACK) | pos.bb_opponent(color::BLACK);
+        let occ = pos.bb_own(colors::BLACK) | pos.bb_opponent(colors::BLACK);
 
-        if self.is_attacked(color::BLACK, square::E8) {
+        if self.is_attacked(colors::BLACK, squares::E8) {
             return;
         }
 
-        let qlear = pos.castling().get(color::BLACK, castling::QUEEN_SIDE) //pos.castling()[color::BLACK as usize].test_bit(1)
-            && occ.extract_bits(u32::from(square::B8), 3) == 0
-            && !self.is_attacked(color::BLACK, square::C8)
-            && !self.is_attacked(color::BLACK, square::D8);
+        let qlear = pos.castling().get(colors::BLACK, sides::QUEEN_SIDE) //pos.castling()[colors::BLACK as usize].test_bit(1)
+            && occ.extract_bits(squares::B8, 3) == 0
+            && !self.is_attacked(colors::BLACK, squares::C8)
+            && !self.is_attacked(colors::BLACK, squares::D8);
 
-        let klear = pos.castling().get(color::BLACK, castling::KING_SIDE) //pos.castling()[color::BLACK as usize].test_bit(0)
-            && occ.extract_bits(u32::from(square::F8), 2) == 0
-            && !self.is_attacked(color::BLACK, square::F8);
+        let klear = pos.castling().get(colors::BLACK, sides::KING_SIDE) //pos.castling()[colors::BLACK as usize].test_bit(0)
+            && occ.extract_bits(squares::F8, 2) == 0
+            && !self.is_attacked(colors::BLACK, squares::F8);
 
         if qlear {
-            moves.push(Move::new(square::E8, square::C8, flags::MOV_Q_CASTLE));
+            moves.push(Move::new(squares::E8, squares::C8, flags::MOV_Q_CASTLE));
         }
         if klear {
-            moves.push(Move::new(square::E8, square::G8, flags::MOV_K_CASTLE));
+            moves.push(Move::new(squares::E8, squares::G8, flags::MOV_K_CASTLE));
         }
     }
 
@@ -313,14 +313,14 @@ impl MoveGenerator for Board {
         }
 
         // captures
-        let mut atk = bitboard::BB_KING_ATTACKS[from as usize] & pos.bb_opponent(color);
+        let mut atk = bitboards::BB_KING_ATTACKS[from as usize] & pos.bb_opponent(color);
 
         for to in atk.iter() {
             moves.push(Move::new(from, to, flags::MOV_CAPTURE));
         }
 
         // quiets
-        let mut mov = bitboard::BB_KING_ATTACKS[from as usize] & pos.bb_empty();
+        let mut mov = bitboards::BB_KING_ATTACKS[from as usize] & pos.bb_empty();
 
         for to in mov.iter() {
             moves.push(Move::new(from, to, flags::MOV_QUIET));
@@ -333,9 +333,9 @@ impl MoveGenerator for Board {
         let occupied = pos.bb_own(color) | pos.bb_opponent(color);
 
         for from in bishops.iter() {
-            // let rays = bitboard::diagonal_attacks(from, occupied)
-            //     | bitboard::anti_diagonal_attacks(from, occupied);
-            let rays = bitboard::bishop_attacks(from, occupied);
+            // let rays = bitboards::diagonal_attacks(from, occupied)
+            //     | bitboards::anti_diagonal_attacks(from, occupied);
+            let rays = bitboards::bishop_attacks(from, occupied);
 
             // captures
             let mut atk = rays & pos.bb_opponent(color);
@@ -360,7 +360,7 @@ impl MoveGenerator for Board {
 
         for from in rooks.iter() {
             let rays =
-                bitboard::rank_attacks(from, occupied) | bitboard::file_attacks(from, occupied);
+                bitboards::rank_attacks(from, occupied) | bitboards::file_attacks(from, occupied);
 
             // captures
             let mut atk = rays & pos.bb_opponent(color);
@@ -381,12 +381,11 @@ impl MoveGenerator for Board {
 
 #[cfg(test)]
 mod tests {
-    use crate::board::Board;
-    use crate::color;
+    use crate::engine::{Board, MoveGenerator};
+    use crate::primitives::{colors, squares};
     use crate::interfaces::FenInterface;
-    use crate::move_generator::MoveGenerator;
-    use crate::square;
-    use crate::uci::UCIInterface;
+    // use crate::primitives::square;
+    use crate::frontends::UCIFrontend;
 
     // #[test]
     // fn it_generates_pawn_moves() {
@@ -448,14 +447,14 @@ mod tests {
     fn it_generates_king_moves() {
         let mut board = Board::startpos();
         let mut moves = Vec::with_capacity(512);
-        board.input_move(square::E2, square::E4, None).unwrap();
-        board.input_move(square::E7, square::E5, None).unwrap();
-        board.input_move(square::G1, square::F3, None).unwrap();
-        board.input_move(square::G8, square::F6, None).unwrap();
-        board.input_move(square::F1, square::D3, None).unwrap();
-        board.input_move(square::F8, square::D6, None).unwrap();
+        board.input_move(squares::E2, squares::E4, None).unwrap();
+        board.input_move(squares::E7, squares::E5, None).unwrap();
+        board.input_move(squares::G1, squares::F3, None).unwrap();
+        board.input_move(squares::G8, squares::F6, None).unwrap();
+        board.input_move(squares::F1, squares::D3, None).unwrap();
+        board.input_move(squares::F8, squares::D6, None).unwrap();
 
-        MoveGenerator::gen_king_moves(&board, &mut moves, color::WHITE);
+        MoveGenerator::gen_king_moves(&board, &mut moves, colors::WHITE);
         assert_eq!(2, moves.len());
         moves.clear();
 
@@ -467,7 +466,7 @@ mod tests {
     // TODO: move to UCI tests
     // #[test]
     fn it_generates_castles() {
-        let mut c = UCIInterface::new();
+        let mut c = UCIFrontend::new();
         c.parse(String::from(
             "position startpos moves e2e4 d7d5 g1f3 b8c6 f1e2 c8e6 e1g1 d8d6 d2d4",
         ));

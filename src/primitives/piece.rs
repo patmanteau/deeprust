@@ -1,15 +1,19 @@
-use crate::color;
+use crate::primitives::*;
 use crate::common::*;
 
 pub type Piece = u8;
 
-pub const EMPTY: Piece = 0;
-pub const PAWN: Piece = 2;
-pub const KNIGHT: Piece = 3;
-pub const BISHOP: Piece = 4;
-pub const ROOK: Piece = 5;
-pub const QUEEN: Piece = 6;
-pub const KING: Piece = 7;
+pub mod pieces {
+    use super::*;
+
+    pub const EMPTY: Piece = 0;
+    pub const PAWN: Piece = 2;
+    pub const KNIGHT: Piece = 3;
+    pub const BISHOP: Piece = 4;
+    pub const ROOK: Piece = 5;
+    pub const QUEEN: Piece = 6;
+    pub const KING: Piece = 7;
+}
 
 pub trait PiecePrimitives {
     fn new(piece: u8, color: u8) -> Self;
@@ -26,23 +30,23 @@ impl PiecePrimitives for Piece {
     }
 
     fn empty() -> Self {
-        Self::new(EMPTY, color::WHITE)
+        Self::new(pieces::EMPTY, colors::WHITE)
     }
 
     fn from_char(c: char) -> Self {
         let (piece_code, color) = match c {
-            'P' => (PAWN, color::WHITE),
-            'N' => (KNIGHT, color::WHITE),
-            'B' => (BISHOP, color::WHITE),
-            'R' => (ROOK, color::WHITE),
-            'Q' => (QUEEN, color::WHITE),
-            'K' => (KING, color::WHITE),
-            'p' => (PAWN, color::BLACK),
-            'n' => (KNIGHT, color::BLACK),
-            'b' => (BISHOP, color::BLACK),
-            'r' => (ROOK, color::BLACK),
-            'q' => (QUEEN, color::BLACK),
-            'k' => (KING, color::BLACK),
+            'P' => (pieces::PAWN, colors::WHITE),
+            'N' => (pieces::KNIGHT, colors::WHITE),
+            'B' => (pieces::BISHOP, colors::WHITE),
+            'R' => (pieces::ROOK, colors::WHITE),
+            'Q' => (pieces::QUEEN, colors::WHITE),
+            'K' => (pieces::KING, colors::WHITE),
+            'p' => (pieces::PAWN, colors::BLACK),
+            'n' => (pieces::KNIGHT, colors::BLACK),
+            'b' => (pieces::BISHOP, colors::BLACK),
+            'r' => (pieces::ROOK, colors::BLACK),
+            'q' => (pieces::QUEEN, colors::BLACK),
+            'k' => (pieces::KING, colors::BLACK),
             _ => unreachable!("Internal error: unknown piece code {}", c),
         };
         Self::new(piece_code, color)
@@ -83,11 +87,11 @@ mod tests {
 
     #[test]
     fn it_has_correct_piece_enum_values() {
-        assert_eq!(2, PAWN);
-        assert_eq!(3, KNIGHT);
-        assert_eq!(4, BISHOP);
-        assert_eq!(5, ROOK);
-        assert_eq!(6, QUEEN);
-        assert_eq!(7, KING);
+        assert_eq!(2, pieces::PAWN);
+        assert_eq!(3, pieces::KNIGHT);
+        assert_eq!(4, pieces::BISHOP);
+        assert_eq!(5, pieces::ROOK);
+        assert_eq!(6, pieces::QUEEN);
+        assert_eq!(7, pieces::KING);
     }
 }

@@ -1,10 +1,13 @@
-use crate::color::Color;
+use crate::primitives::color::Color;
 use crate::common::BitTwiddling;
 
 pub type CastlingSide = u32;
 
-pub const KING_SIDE: CastlingSide = 0;
-pub const QUEEN_SIDE: CastlingSide = 1;
+pub mod sides {
+    use super::*;
+    pub const KING_SIDE: CastlingSide = 0;
+    pub const QUEEN_SIDE: CastlingSide = 1;
+}
 
 #[derive(Clone, Copy, Debug, Eq)]
 pub struct Castling(pub u32);

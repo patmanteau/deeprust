@@ -1,7 +1,8 @@
 use crate::common::*;
 
-use crate::piece::Piece;
-use crate::square::{Square, SquarePrimitives};
+use crate::primitives::*;
+// use crate::primitives::square::{Square, SquarePrimitives};
+
 use std::fmt;
 
 pub type MoveStack = Vec<Move>;

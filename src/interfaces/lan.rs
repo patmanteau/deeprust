@@ -1,6 +1,6 @@
-use crate::color;
-use crate::piece::{self, Piece, PiecePrimitives};
-use crate::square::Square;
+use crate::primitives::*;
+// use crate::primitives::piece::{self, Piece, PiecePrimitives};
+// use crate::primitives::square::Square;
 
 use nom::IResult;
 
@@ -48,10 +48,10 @@ pub fn lan(input: &str) -> Result<ParsedMove, LanParseError> {
 
     match result {
         Ok(tup) => {
-            let (rest, (from, to, prom)) = tup;
+            let (_rest, (from, to, prom)) = tup;
             Ok(ParsedMove { from, to, prom })
         }
-        Err(e) => Err(LanParseError::Invalid),
+        Err(_e) => Err(LanParseError::Invalid),
     }
 }
 
@@ -68,13 +68,13 @@ fn square(input: &str) -> IResult<&str, Square> {
 fn str_to_piececode(input: char) -> Piece {
     Piece::new(
         match input {
-            'N' | 'n' => piece::KNIGHT,
-            'B' | 'b' => piece::BISHOP,
-            'R' | 'r' => piece::ROOK,
-            'Q' | 'q' => piece::QUEEN,
+            'N' | 'n' => pieces::KNIGHT,
+            'B' | 'b' => pieces::BISHOP,
+            'R' | 'r' => pieces::ROOK,
+            'Q' | 'q' => pieces::QUEEN,
             _ => unreachable!("LAN parser error: Invalid promotion character"),
         },
-        color::WHITE,
+        colors::WHITE,
     )
 }
 

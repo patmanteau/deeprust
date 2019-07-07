@@ -52,7 +52,7 @@ impl Zobrist {
 }
 
 lazy_static! {
-    pub static ref ZT: Zobrist = {
+    pub static ref ZobTables: Zobrist = {
         Zobrist::new()
     };
 }

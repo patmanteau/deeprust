@@ -1,8 +1,8 @@
 extern crate deeprust;
 
-use deeprust::bitboard as bb;
+use deeprust::engine::{bitboards as bb, Bitboard};
 
-fn print_array_of_bbs(vals: &[bb::Bitboard]) {
+fn print_array_of_bbs(vals: &[Bitboard]) {
     print!("[");
     for val in vals {
         print!("0x{:016X}, ", val);
