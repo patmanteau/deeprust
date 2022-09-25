@@ -134,8 +134,7 @@ impl Board {
 
     pub fn input_san_move(&mut self, san_move: &str) -> Result<(), LanParseError> {
         let lan_mov = lan(san_move)?;
-        self.input_move(lan_mov.from, lan_mov.to, lan_mov.prom)
-            .unwrap();
+        self.input_move(lan_mov.from, lan_mov.to, lan_mov.prom).unwrap();
         Ok(())
     }
 
